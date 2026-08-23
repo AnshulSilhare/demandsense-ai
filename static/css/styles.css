@@ -1510,7 +1510,7 @@ body.dark .upload-caution-caption {
   }
 }
 
-/* ─── STICKY KPI COMMAND BAR (Inline 4-Col -> Vertical Right HUD on Scroll) ─── */
+/* ─── STICKY KPI COMMAND BAR ─── */
 .kpi-bar-wrapper {
   position: relative;
   min-height: 120px;
@@ -1524,143 +1524,18 @@ body.dark .upload-caution-caption {
   width: 100%;
 }
 
-/* ─── FLEXIBLE QUANTUM SNAKE CANVAS (Curving Ribbon Physics) ─── */
-.kpi-snake-canvas {
-  position: fixed;
-  inset: 0;
-  width: 100vw;
-  height: 100vh;
-  pointer-events: none;
-  z-index: 0; /* Positioned below cards for elegant layered depth */
-}
-
 .kpi-card {
   background: var(--glass-bg);
   border-radius: var(--radius2);
   border: 1px solid var(--glass-border);
-  border-top: 6px solid var(--teal); /* Bold 6px thick top accent bar in resting horizontal grid */
+  border-top: 6px solid var(--teal); /* Bold 6px thick top accent bar */
   box-shadow: var(--glass-shadow);
   backdrop-filter: var(--glass-blur);
   -webkit-backdrop-filter: var(--glass-blur);
   padding: .85rem 1.1rem;
   position: relative;
   overflow: hidden;
-  transform-origin: center top;
-  transition: border-color .25s ease, box-shadow .25s ease;
-  will-change: transform, opacity, box-shadow;
-}
-
-/* When card is docked along the vertical edge rail (Left Dock) */
-.kpi-card.is-docked-rail {
-  width: 210px !important;
-  max-width: 210px !important;
-  z-index: 60 !important;
-  border-top: 1px solid var(--glass-border) !important;
-  border-left: 6px solid var(--teal) !important;
-  border-right: 1px solid var(--glass-border) !important;
-  transform-origin: left center !important;
-  text-align: left;
-  display: flex;
-  flex-direction: column;
-  align-items: flex-start;
-  padding: .72rem .95rem !important;
-}
-
-.kpi-card.is-docked-rail .kpi-icon-chip {
-  margin-left: 0;
-  margin-right: auto;
-  margin-bottom: .2rem;
-}
-
-.kpi-card.is-docked-rail .kpi-label {
-  text-align: left;
-  width: 100%;
-  margin-bottom: .15rem;
-}
-
-.kpi-card.is-docked-rail .kpi-value {
-  text-align: left;
-  width: 100%;
-  font-size: 1.25rem;
-  line-height: 1.1;
-}
-
-.kpi-card.is-docked-rail .kpi-delta {
-  margin-left: 0;
-  margin-right: auto;
-  margin-top: .2rem;
-}
-
-.kpi-card.is-docked-rail .kpi-sparkline {
-  display: flex;
-  justify-content: flex-start;
-  width: 100%;
-}
-
-/* When card is docked along the right edge rail (Right Dock) */
-body.kpi-dock-right .kpi-card.is-docked-rail {
-  width: 210px !important;
-  max-width: 210px !important;
-  z-index: 60 !important;
-  border-top: 1px solid var(--glass-border) !important;
-  border-left: 1px solid var(--glass-border) !important;
-  border-right: 6px solid var(--teal) !important;
-  transform-origin: right center !important;
-  text-align: left;
-  display: flex;
-  flex-direction: column;
-  align-items: flex-start;
-  padding: .72rem .95rem !important;
-}
-
-body.kpi-dock-right .kpi-card.is-docked-rail .kpi-icon-chip {
-  margin-left: 0;
-  margin-right: auto;
-  margin-bottom: .2rem;
-}
-
-body.kpi-dock-right .kpi-card.is-docked-rail .kpi-label {
-  text-align: left;
-  width: 100%;
-  margin-bottom: .15rem;
-}
-
-body.kpi-dock-right .kpi-card.is-docked-rail .kpi-value {
-  text-align: left;
-  width: 100%;
-  font-size: 1.25rem;
-  line-height: 1.1;
-}
-
-body.kpi-dock-right .kpi-card.is-docked-rail .kpi-delta {
-  margin-left: 0;
-  margin-right: auto;
-  margin-top: .2rem;
-}
-
-body.kpi-dock-right .kpi-card.is-docked-rail .kpi-sparkline {
-  display: flex;
-  justify-content: flex-start;
-  width: 100%;
-}
-
-body.kpi-dock-right .kpi-card.is-docked-rail:hover {
-  transform: translateX(-6px);
-  border-color: var(--teal);
-  box-shadow: var(--glass-shadow-hover);
-}
-
-.kpi-card > * {
-  transition: opacity .16s cubic-bezier(.4, 0, .2, 1), transform .16s ease;
-}
-
-/* Card Morph State - Clean rounded-rectangle fold without oval distortion */
-.kpi-card.is-beam-morph {
-  pointer-events: none;
-}
-
-.kpi-card.is-beam-morph > * {
-  opacity: 0 !important;
+  transition: transform .25s ease, border-color .25s ease, box-shadow .25s ease;
 }
 
 body.dark .kpi-card {
@@ -1679,71 +1554,7 @@ body.dark .kpi-card {
 #kpiBarWrapper {
   min-height: 82px;
   width: 100%;
-  margin-bottom: 1.2rem;
-}
-
-/* ─── BIG TOP-LEFT BRAND ICON (Clean floating emblem beside nav) ─── */
-.top-left-brand-icon {
-  position: fixed;
-  top: 0.75rem;
-  left: 4.25rem;
-  z-index: 105;
-  width: 76px;
-  height: 76px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  background: transparent;
-  border: none;
-  box-shadow: none;
-  backdrop-filter: none;
-  -webkit-backdrop-filter: none;
-  cursor: pointer;
-  text-decoration: none;
-  padding: 0;
-  transition: transform .3s cubic-bezier(0.22, 1, 0.36, 1), filter .25s ease;
-}
-
-.top-left-brand-icon svg {
-  width: 76px;
-  height: 76px;
-  filter: drop-shadow(0 4px 20px rgba(13, 148, 136, 0.4));
-  transition: transform .3s ease, filter .3s ease;
-}
-
-.top-left-brand-icon:hover svg {
-  transform: scale(1.08) rotate(4deg);
-  filter: drop-shadow(0 8px 28px rgba(13, 148, 136, 0.65));
-}
-
-@media (max-width: 1023px) {
-  .top-left-brand-icon {
-    display: none;
-  }
-}
-
-@media (min-width: 1024px) {
-  .kpi-bar.docked-left {
-    position: fixed;
-    top: 5.5rem;
-    left: 1.5rem;
-    z-index: 95;
-    width: 210px;
-    display: flex;
-    flex-direction: column-reverse; /* Leftmost card (Card 0) is at the bottom, others on top */
-    gap: 14px;
-    padding: 0;
-    background: transparent;
-    border: none;
-    box-shadow: none;
-    pointer-events: auto;
-  }
-
-  .kpi-bar.docked-left .kpi-card:hover {
-    transform: translateX(6px);
-    border-color: var(--teal);
-    box-shadow: var(--glass-shadow-hover);
-  }
+  margin-bottom: 1.5rem;
 }
 
 .kpi-header-row {
