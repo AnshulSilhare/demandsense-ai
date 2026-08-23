@@ -570,11 +570,19 @@ body.dark .card-title {
   margin-top: .15rem;
 }
 
-/* ─── CHART CONTAINERS ─────────────────────────────────────── */
+/* ─── CHART CONTAINERS & TOOLTIPS ───────────────────────────── */
 .chart-container {
   position: relative;
   width: 100%;
   min-height: 300px;
+}
+
+/* Frosted glass backdrop blur for all ECharts tooltips */
+div[style*="z-index: 9999999"],
+.echarts-tooltip {
+  backdrop-filter: blur(14px) !important;
+  -webkit-backdrop-filter: blur(14px) !important;
+  border-radius: 10px !important;
 }
 
 #heroChart {

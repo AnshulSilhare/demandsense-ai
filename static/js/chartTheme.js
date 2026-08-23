@@ -14,28 +14,30 @@
          * @returns {Object} Colors object
          */
         getColors: function() {
-            const rootStyle = getComputedStyle(document.documentElement);
+            const isDark = document.body.classList.contains('dark');
+            const targetEl = document.body || document.documentElement;
+            const rootStyle = getComputedStyle(targetEl);
             const getVar = (name) => rootStyle.getPropertyValue(name).trim();
 
             return {
-                text: getVar('--text') || '#0f172a',
-                text2: getVar('--text2') || '#475569',
-                text3: getVar('--text3') || '#94a3b8',
-                border: getVar('--border') || '#e2e8f0',
-                border2: getVar('--border2') || '#cbd5e1',
-                accent: getVar('--accent') || '#1e3a5f',
-                accentTitle: getVar('--accent-title') || '#1d4ed8',
-                accent2: getVar('--accent2') || '#0d9488',
-                teal: getVar('--teal') || '#0d9488',
-                amber: getVar('--amber') || '#d97706',
-                green: getVar('--green') || '#16a34a',
-                red: getVar('--red') || '#dc2626',
-                surface: getVar('--surface') || '#ffffff',
-                bg: getVar('--bg') || '#f8fafc',
-                bg2: getVar('--bg2') || '#f1f5f9',
-                bg3: getVar('--bg3') || '#e2e8f0',
-                glassBg: getVar('--glass-bg') || 'rgba(255, 255, 255, 0.7)',
-                glassBorder: getVar('--glass-border') || 'rgba(255, 255, 255, 0.2)',
+                text: getVar('--text') || (isDark ? '#f8fafc' : '#0f172a'),
+                text2: getVar('--text2') || (isDark ? '#cbd5e1' : '#475569'),
+                text3: getVar('--text3') || (isDark ? '#94a3b8' : '#94a3b8'),
+                border: getVar('--border') || (isDark ? 'rgba(255,255,255,.06)' : 'rgba(15,23,42,.08)'),
+                border2: getVar('--border2') || (isDark ? 'rgba(255,255,255,.12)' : 'rgba(15,23,42,.15)'),
+                accent: getVar('--accent') || (isDark ? '#3b82f6' : '#1e3a5f'),
+                accentTitle: getVar('--accent-title') || (isDark ? '#38bdf8' : '#1d4ed8'),
+                accent2: getVar('--accent2') || (isDark ? '#2dd4bf' : '#0d9488'),
+                teal: getVar('--teal') || (isDark ? '#2dd4bf' : '#0d9488'),
+                amber: getVar('--amber') || (isDark ? '#fbbf24' : '#d97706'),
+                green: getVar('--green') || (isDark ? '#34d399' : '#16a34a'),
+                red: getVar('--red') || (isDark ? '#f87171' : '#dc2626'),
+                surface: getVar('--surface') || (isDark ? '#1e293b' : '#ffffff'),
+                bg: getVar('--bg') || (isDark ? '#0b0f19' : '#f8fafc'),
+                bg2: getVar('--bg2') || (isDark ? '#111827' : '#f1f5f9'),
+                bg3: getVar('--bg3') || (isDark ? '#161f30' : '#e2e8f0'),
+                tooltipBg: isDark ? 'rgba(15, 23, 42, 0.90)' : 'rgba(255, 255, 255, 0.92)',
+                tooltipBorder: isDark ? 'rgba(255, 255, 255, 0.14)' : 'rgba(15, 23, 42, 0.12)',
                 displayFont: getVar('--display') || "'Syne', sans-serif",
                 bodyFont: getVar('--body') || "'DM Sans', sans-serif",
                 monoFont: getVar('--mono') || "'JetBrains Mono', monospace"
@@ -69,10 +71,11 @@
                 },
                 tooltip: {
                     confine: true,
-                    backgroundColor: colors.glassBg,
-                    borderColor: colors.glassBorder,
-                    textStyle: { color: colors.text },
-                    extraCssText: 'backdrop-filter: blur(8px); border-radius: 8px; box-shadow: 0 8px 32px rgba(0,0,0,.18);'
+                    backgroundColor: colors.tooltipBg,
+                    borderColor: colors.tooltipBorder,
+                    borderWidth: 1,
+                    textStyle: { color: colors.text, fontFamily: colors.bodyFont, fontSize: 12 },
+                    extraCssText: 'backdrop-filter: blur(14px); -webkit-backdrop-filter: blur(14px); border-radius: 10px; box-shadow: 0 12px 36px rgba(0,0,0,.22); padding: 10px 14px;'
                 },
                 color: [colors.accent, colors.teal, colors.amber, colors.green, colors.red, colors.accentTitle, '#8b5cf6'],
                 categoryAxis: {
