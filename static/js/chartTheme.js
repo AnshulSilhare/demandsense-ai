@@ -68,6 +68,7 @@
                     }
                 },
                 tooltip: {
+                    confine: true,
                     backgroundColor: colors.glassBg,
                     borderColor: colors.glassBorder,
                     textStyle: { color: colors.text },
@@ -148,6 +149,7 @@
             // Clear any loading shimmer/spinner HTML before initializing ECharts canvas
             dom.innerHTML = '';
             this.register();
+            this.attachOrientationListener();
 
             const instance = echarts.init(dom, 'demandsense', opts);
             _instances.set(containerId, instance);
@@ -165,6 +167,21 @@
             _observers.set(containerId, observer);
 
             return instance;
+        },
+
+        /**
+         * Attaches a window orientationchange listener to automatically resize charts on mobile rotation.
+         */
+        attachOrientationListener: function() {
+            if (this._orientationAttached) return;
+            this._orientationAttached = true;
+            window.addEventListener('orientationchange', () => {
+                setTimeout(() => {
+                    for (const inst of _instances.values()) {
+                        if (inst && !inst.isDisposed()) inst.resize();
+                    }
+                }, 300);
+            });
         },
 
         /**

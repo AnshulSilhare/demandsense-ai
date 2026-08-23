@@ -2665,18 +2665,16 @@ body.dark .guide-protip-box {
   opacity: .95;
 }
 
-/* ─── HAMBURGER ANIMATION ─── */
-.hamburger.open span:nth-child(1) {
-  transform: rotate(45deg) translate(5px, 5px);
-}
-.hamburger.open span:nth-child(2) {
-  opacity: 0;
-}
-.hamburger.open span:nth-child(3) {
-  transform: rotate(-45deg) translate(5px, -5px);
+/* ══════════════════════════════════════════════════════════════
+   BOTTOM TAB BAR (Mobile <768px — iOS/Android native pattern)
+   ════════════════════════════════════════════════════════════ */
+.bottom-tab-bar {
+  display: none; /* Hidden on desktop/tablet */
 }
 
-/* ─── RESPONSIVE BREAKPOINTS (Mobile & Tablet Overhaul) ──────── */
+/* ═══ RESPONSIVE BREAKPOINTS ═══════════════════════════════════ */
+
+/* ── TABLET: 768–1024px ── */
 @media (max-width: 1024px) {
   .kpi-bar {
     grid-template-columns: repeat(2, 1fr) !important;
@@ -2694,103 +2692,146 @@ body.dark .guide-protip-box {
   }
 }
 
-@media (max-width: 768px) {
+/* ── MOBILE: <768px ── */
+@media (max-width: 767px) {
+
+  /* ─── BODY & LAYOUT HYGIENE ─── */
+  body {
+    overflow-x: hidden !important;
+    padding-bottom: calc(64px + env(safe-area-inset-bottom)) !important;
+  }
+
   .app-container {
     padding: 0 0.85rem !important;
-    padding-top: 4.6rem !important;
-    padding-bottom: 3.5rem !important;
+    padding-top: 4.2rem !important;
+    padding-bottom: calc(80px + env(safe-area-inset-bottom)) !important;
   }
 
-  /* ─── FLOATING PILL NAV ON MOBILE ─── */
+  /* Prevent iOS Safari zoom-on-focus for inputs */
+  select, input, textarea {
+    font-size: 16px !important;
+  }
+
+  /* ─── FLOATING PILL NAV (simplified on mobile) ─── */
   nav.top-nav {
-    padding: 0 0.85rem !important;
-    height: 48px !important;
-    top: 0.65rem !important;
-    width: calc(100% - 1.25rem) !important;
+    padding: 0 0.75rem !important;
+    height: 44px !important;
+    top: 0.5rem !important;
+    width: calc(100% - 1rem) !important;
   }
 
-  /* Hide desktop-only controls on mobile */
+  /* Hide desktop-only chrome on mobile */
   .rail-toggle-nav,
   .top-left-brand-icon,
-  .brand-emblem-link {
+  .brand-emblem-link,
+  .hamburger {
     display: none !important;
   }
 
-  /* Guide button condensed to icon on mobile */
+  /* Hide the top tab strip — replaced by bottom tab bar */
+  .nav-tabs {
+    display: none !important;
+  }
+
+  /* Guide button: icon only */
   .guide-toggle-nav {
-    padding: 0.28rem 0.5rem !important;
+    padding: 0.22rem 0.45rem !important;
   }
   .guide-toggle-nav .guide-nav-label {
     display: none !important;
   }
 
   .nav-brand {
-    font-size: 0.88rem !important;
+    font-size: 0.85rem !important;
   }
   .brand-version {
     display: none !important;
   }
 
-  .hamburger {
+  /* ─── BOTTOM TAB BAR ─── */
+  .bottom-tab-bar {
     display: flex !important;
-  }
-
-  /* ─── MOBILE MENU DROPDOWN ─── */
-  .nav-tabs {
-    display: none !important;
-  }
-
-  .nav-tabs.open {
-    display: flex !important;
-    flex-direction: column !important;
-    position: absolute !important;
-    top: 54px !important;
+    position: fixed !important;
+    bottom: 0 !important;
     left: 0 !important;
     right: 0 !important;
+    z-index: 200 !important;
+    height: 60px !important;
+    padding-bottom: env(safe-area-inset-bottom) !important;
     background: var(--surface) !important;
     backdrop-filter: blur(16px) !important;
     -webkit-backdrop-filter: blur(16px) !important;
-    border: 1px solid var(--border2) !important;
-    border-radius: var(--radius2) !important;
-    padding: 0.75rem !important;
-    box-shadow: var(--glow-md), 0 12px 36px rgba(0, 0, 0, 0.25) !important;
-    gap: 0.35rem !important;
-    z-index: 250 !important;
+    border-top: 1px solid var(--border) !important;
+    box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.08) !important;
+    align-items: stretch !important;
+    justify-content: space-around !important;
+  }
+  body.dark .bottom-tab-bar {
+    box-shadow: 0 -4px 24px rgba(0, 0, 0, 0.35) !important;
   }
 
-  .nav-tabs.open .nav-tab {
-    width: 100% !important;
-    text-align: left !important;
-    padding: 0.65rem 1rem !important;
-    border-radius: var(--radius) !important;
-    font-size: 0.88rem !important;
-    font-weight: 500 !important;
-    color: var(--text) !important;
-    background: var(--bg3) !important;
+  .bottom-tab-bar .btab {
+    flex: 1 !important;
     display: flex !important;
+    flex-direction: column !important;
     align-items: center !important;
-    justify-content: space-between !important;
-    transition: all 0.2s ease !important;
+    justify-content: center !important;
+    gap: 2px !important;
+    background: none !important;
+    border: none !important;
+    border-top: 3px solid transparent !important;
+    padding: 4px 0 !important;
+    cursor: pointer !important;
+    color: var(--text3) !important;
+    font-family: var(--body) !important;
+    font-size: 0.62rem !important;
+    font-weight: 500 !important;
+    letter-spacing: 0.01em !important;
+    transition: color 0.2s ease, border-color 0.2s ease !important;
+    -webkit-tap-highlight-color: transparent !important;
+    min-width: 0 !important;
   }
 
-  .nav-tabs.open .nav-tab:hover,
-  .nav-tabs.open .nav-tab.active {
-    background: rgba(13, 148, 136, 0.15) !important;
+  .bottom-tab-bar .btab svg {
+    width: 20px !important;
+    height: 20px !important;
+    stroke: var(--text3) !important;
+    transition: stroke 0.2s ease !important;
+    flex-shrink: 0 !important;
+  }
+
+  .bottom-tab-bar .btab.active {
     color: var(--teal) !important;
-    border-left: 3px solid var(--teal) !important;
+    border-top-color: var(--teal) !important;
     font-weight: 600 !important;
   }
 
-  body.dark .nav-tabs.open .nav-tab.active {
-    background: rgba(45, 212, 191, 0.18) !important;
-    color: var(--accent2) !important;
+  .bottom-tab-bar .btab.active svg {
+    stroke: var(--teal) !important;
   }
 
-  .nav-tabs.open .nav-tab::after {
+  /* ─── KPI COMMAND BAR: HORIZONTAL SCROLL-SNAP ─── */
+  .kpi-bar {
+    display: flex !important;
+    overflow-x: auto !important;
+    scroll-snap-type: x mandatory !important;
+    -webkit-overflow-scrolling: touch !important;
+    gap: 0.75rem !important;
+    padding: 0.5rem 0 !important;
+    scrollbar-width: none !important;
+    position: static !important;
+  }
+  .kpi-bar::-webkit-scrollbar {
     display: none !important;
   }
+  .kpi-card {
+    scroll-snap-align: start !important;
+    min-width: 82vw !important;
+    flex-shrink: 0 !important;
+    padding: 0.85rem 1rem !important;
+  }
 
-  /* ─── PARAMETER SUITE ON MOBILE ─── */
+  /* ─── PARAMETER SUITE: SINGLE COLUMN ─── */
   .control-clusters {
     grid-template-columns: 1fr !important;
     gap: 0.85rem !important;
@@ -2806,22 +2847,29 @@ body.dark .guide-protip-box {
 
   .segmented-btn {
     flex: 1 !important;
-    padding: 0.45rem 0.3rem !important;
+    padding: 0.5rem 0.3rem !important;
     font-size: 0.72rem !important;
     text-align: center !important;
+    min-height: 38px !important;
   }
 
   .stepper-input-group {
-    height: 38px !important;
+    height: 40px !important;
+  }
+
+  .stepper-input-group button {
+    min-width: 40px !important;
+    min-height: 40px !important;
   }
 
   .filter-summary-bar {
     padding: 0.6rem 0.85rem !important;
     font-size: 0.72rem !important;
     gap: 0.35rem !important;
+    flex-wrap: wrap !important;
   }
 
-  /* ─── CARDS, GRIDS & CHARTS ON MOBILE ─── */
+  /* ─── CARDS, GRIDS & CHARTS ─── */
   .card {
     padding: 1rem !important;
     margin-bottom: 1rem !important;
@@ -2876,7 +2924,29 @@ body.dark .guide-protip-box {
     flex-wrap: wrap !important;
   }
 
-  /* ─── DETAIL DRAWER & WALKTHROUGH ON MOBILE ─── */
+  /* ─── WHAT-IF FOCUS: FULL-SCREEN ON MOBILE ─── */
+  .focus-overlay .focus-card,
+  .sim-focus-card,
+  .focus-card {
+    width: 100% !important;
+    height: 100dvh !important;
+    height: 100vh !important; /* fallback for older browsers */
+    max-width: none !important;
+    max-height: none !important;
+    margin: 0 !important;
+    border-radius: 0 !important;
+    overflow-y: auto !important;
+  }
+
+  @supports (height: 100dvh) {
+    .focus-overlay .focus-card,
+    .sim-focus-card,
+    .focus-card {
+      height: 100dvh !important;
+    }
+  }
+
+  /* ─── DETAIL DRAWER: BOTTOM SHEET ─── */
   .detail-drawer {
     top: auto !important;
     bottom: 0 !important;
@@ -2894,8 +2964,9 @@ body.dark .guide-protip-box {
     transform: translateY(0) !important;
   }
 
+  /* ─── WALKTHROUGH GUIDE ON MOBILE ─── */
   .guide-steps-grid { grid-template-columns: 1fr !important; }
-  .guide-modal-container { max-height: 95vh !important; margin: 0.8rem !important; }
+  .guide-modal-container { max-height: 95vh !important; margin: 0.6rem !important; }
   .guide-tab-switcher { padding: 0.5rem 0.8rem !important; }
   .guide-modal-header { padding: 0.85rem 1rem !important; }
   .guide-modal-body { padding: 0.85rem 1rem !important; }
@@ -2903,12 +2974,10 @@ body.dark .guide-protip-box {
   .guide-footer-right { width: 100% !important; justify-content: flex-end !important; }
 }
 
+/* ── SMALL PHONE: ≤480px ── */
 @media (max-width: 480px) {
-  .kpi-bar {
-    grid-template-columns: repeat(2, 1fr) !important;
-    gap: 0.55rem !important;
-  }
   .kpi-card {
+    min-width: 85vw !important;
     padding: 0.65rem 0.75rem !important;
   }
   .kpi-label {
@@ -2922,14 +2991,29 @@ body.dark .guide-protip-box {
     padding: 1px 5px !important;
   }
   .console-title {
-    font-size: 0.92rem !important;
+    font-size: 0.88rem !important;
   }
   .btn-ghost-sm {
     padding: 0.3rem 0.55rem !important;
     font-size: 0.7rem !important;
   }
+  .bottom-tab-bar .btab {
+    font-size: 0.58rem !important;
+  }
+  .bottom-tab-bar .btab svg {
+    width: 18px !important;
+    height: 18px !important;
+  }
 }
 
+/* ── EXPLICIT 600px CONTROL PANEL FALLBACK ── */
+@media (max-width: 600px) {
+  .control-clusters {
+    grid-template-columns: 1fr !important;
+  }
+}
+
+/* ── REDUCED MOTION ── */
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after {
     animation-duration: 0.01ms !important;
@@ -2937,3 +3021,4 @@ body.dark .guide-protip-box {
   }
   .gradient-mesh { display: none; }
 }
+

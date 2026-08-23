@@ -63,7 +63,6 @@
     setupNav();
     setupFilters();
     setupModal();
-    setupHamburger();
 
     try {
       state.config = await API.get('/api/config');
@@ -112,75 +111,90 @@
     el('themeToggle').textContent = document.body.classList.contains('dark') ? '☀️' : '🌙';
   }
 
-  // ═══ NAV TABS ═══
+  // ═══ NAV TABS & MOBILE BOTTOM TAB BAR ═══
+  function switchTab(target) {
+    if (!target || target === state.activeTab) return;
+
+    // Sync top nav tabs
+    $$('.nav-tab').forEach(t => {
+      t.classList.toggle('active', t.dataset.tab === target);
+    });
+
+    // Sync mobile bottom tab bar
+    $$('.bottom-tab-bar .btab').forEach(t => {
+      t.classList.toggle('active', t.dataset.tab === target);
+    });
+
+    // Switch tab contents
+    $$('.tab-content').forEach(tc => tc.classList.remove('active'));
+    el(target)?.classList.add('active');
+    state.activeTab = target;
+
+    // Render / refresh charts in the newly activated tab
+    setTimeout(() => {
+      if (target === 'tab1') {
+        if (state.forecastData) renderHeroChart();
+        if (!state.decompData) loadDecomp(); else {
+          const { dates, trend, seasonal, residual } = state.decompData;
+          Charts.decompChart('decompTrend', 'decompSeasonal', 'decompResidual', dates, trend, seasonal, residual);
+        }
+        if (!state.festivalData) loadFestival(); else {
+          Charts.festivalChart('festivalChart', state.festivalData.festivals, (festName) => {
+            state.festivalFilter = state.festivalFilter === festName ? null : festName;
+            renderHeroChart();
+          });
+        }
+      }
+      if (target === 'tab2') {
+        if (state.forecastData) renderTab2();
+        if (!state.fiData) loadFeatureImportance(); else {
+          Charts.featureImportanceChart('fiChart', state.fiData.features);
+        }
+      }
+      if (target === 'tab3') {
+        renderInventory();
+        if (!state.abcData) loadAbc(); else {
+          Charts.abcTreemap('abcTreemap', state.abcData.table);
+        }
+        if (!state.regionalData) loadRegional(); else {
+          Charts.mapChart('mapChart', state.regionalData.regions);
+        }
+      }
+      if (target === 'tab4') {
+        renderSimSliders();
+        if (!state.simData && state.forecastData?.impact_data) {
+          state.simData = {
+            base_trajectory: state.forecastData.impact_data.inventory_trajectory,
+            sim_impact: state.forecastData.impact_data,
+            eff_lt: state.leadTime,
+            eff_dem_scale: 1.0,
+          };
+          renderSimMetrics();
+        }
+        renderSimChart(false);
+      }
+      if (target === 'tab5') {
+        renderTab5();
+      }
+
+      // Trigger resize on all active chart instances
+      if (window.ChartTheme?._instances) {
+        for (const inst of ChartTheme._instances.values()) {
+          if (inst && !inst.isDisposed()) inst.resize();
+        }
+      }
+    }, 50);
+  }
+
   function setupNav() {
     $$('.nav-tab').forEach(tab => {
-      tab.addEventListener('click', () => {
-        const target = tab.dataset.tab;
-        if (target === state.activeTab) return;
-
-        $$('.nav-tab').forEach(t => t.classList.remove('active'));
-        tab.classList.add('active');
-        $$('.tab-content').forEach(tc => tc.classList.remove('active'));
-        el(target).classList.add('active');
-        state.activeTab = target;
-
-        // Render / refresh charts in the newly activated tab
-        setTimeout(() => {
-          if (target === 'tab1') {
-            if (state.forecastData) renderHeroChart();
-            if (!state.decompData) loadDecomp(); else {
-              const { dates, trend, seasonal, residual } = state.decompData;
-              Charts.decompChart('decompTrend', 'decompSeasonal', 'decompResidual', dates, trend, seasonal, residual);
-            }
-            if (!state.festivalData) loadFestival(); else {
-              Charts.festivalChart('festivalChart', state.festivalData.festivals, (festName) => {
-                state.festivalFilter = state.festivalFilter === festName ? null : festName;
-                renderHeroChart();
-              });
-            }
-          }
-          if (target === 'tab2') {
-            if (state.forecastData) renderTab2();
-            if (!state.fiData) loadFeatureImportance(); else {
-              Charts.featureImportanceChart('fiChart', state.fiData.features);
-            }
-          }
-          if (target === 'tab3') {
-            renderInventory();
-            if (!state.abcData) loadAbc(); else {
-              Charts.abcTreemap('abcTreemap', state.abcData.table);
-            }
-            if (!state.regionalData) loadRegional(); else {
-              Charts.mapChart('mapChart', state.regionalData.regions);
-            }
-          }
-          if (target === 'tab4') {
-            renderSimSliders();
-            if (!state.simData && state.forecastData?.impact_data) {
-              state.simData = {
-                base_trajectory: state.forecastData.impact_data.inventory_trajectory,
-                sim_impact: state.forecastData.impact_data,
-                eff_lt: state.leadTime,
-                eff_dem_scale: 1.0,
-              };
-              renderSimMetrics();
-            }
-            renderSimChart(false);
-          }
-          if (target === 'tab5') {
-            renderTab5();
-          }
-
-          // Trigger resize on all active chart instances
-          if (window.ChartTheme?._instances) {
-            for (const inst of ChartTheme._instances.values()) {
-              if (inst && !inst.isDisposed()) inst.resize();
-            }
-          }
-        }, 50);
-      });
+      tab.addEventListener('click', () => switchTab(tab.dataset.tab));
     });
+
+    $$('.bottom-tab-bar .btab').forEach(btab => {
+      btab.addEventListener('click', () => switchTab(btab.dataset.tab));
+    });
+  }
 
     // ═══ PURE CONTINUOUS SCROLL CONVEYOR (Zero Detach/Attach Jumps) ═══
     const nav = el('topNav');
@@ -558,33 +572,6 @@
     measureMetrics();
   }
 
-  // ═══ HAMBURGER MENU (mobile) ═══
-  function setupHamburger() {
-    const btn = el('hamburger');
-    const tabs = el('navTabs');
-    btn?.addEventListener('click', (e) => {
-      e.stopPropagation();
-      btn.classList.toggle('open');
-      tabs?.classList.toggle('open');
-    });
-
-    // Close menu when clicking any nav-tab
-    $$('.nav-tab').forEach(tab => {
-      tab.addEventListener('click', () => {
-        btn?.classList.remove('open');
-        tabs?.classList.remove('open');
-      });
-    });
-
-    // Close menu when clicking outside
-    document.addEventListener('click', (e) => {
-      if (tabs && tabs.classList.contains('open') && !tabs.contains(e.target) && !btn?.contains(e.target)) {
-        btn?.classList.remove('open');
-        tabs?.classList.remove('open');
-      }
-    });
-  }
-
   // ═══ FILTERS & COLLAPSIBLE EXECUTIVE PARAMETER SUITE ═══
   function updateCollapsedSummary() {
     const skuObj = state.config?.products?.find(p => p.sku_id === state.sku);
@@ -614,9 +601,10 @@
     const collapseLabel = el('collapseLabel');
     const summaryBar = el('filterSummaryBar');
 
-    // Restore saved state from localStorage
-    const savedCollapsed = localStorage.getItem('ds-filter-collapsed') === '1';
-    if (savedCollapsed && panel) {
+    // Restore saved state from localStorage (or default collapsed on first mobile load)
+    const savedCollapsed = localStorage.getItem('ds-filter-collapsed');
+    const shouldCollapse = savedCollapsed === '1' || (savedCollapsed === null && window.innerWidth < 768);
+    if (shouldCollapse && panel) {
       panel.classList.add('is-collapsed');
       if (collapseLabel) collapseLabel.textContent = 'Expand';
     }

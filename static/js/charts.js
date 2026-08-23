@@ -154,11 +154,15 @@ const Charts = (() => {
     const option = {
       tooltip: {
         trigger: 'axis',
+        confine: true,
         axisPointer: { type: 'cross', lineStyle: { color: c.border2 } },
       },
       legend: {
         data: ['Raw Daily Demand', '7-Day Rolling Avg', '30-Day Forecast', '95% Confidence'],
         bottom: 0,
+        itemWidth: 14,
+        itemHeight: 14,
+        itemGap: 16,
       },
       toolbox: {
         feature: {
@@ -430,6 +434,7 @@ const Charts = (() => {
     const option = {
       tooltip: {
         trigger: 'item',
+        confine: true,
         formatter: params => {
           if (!params.value) return '';
           return `<b>${params.name}</b><br/>` + metrics.map((m, i) => `${m}: ${params.value[i].toFixed(1)}`).join('<br/>');
@@ -437,6 +442,7 @@ const Charts = (() => {
       },
       legend: {
         data: modelNames, bottom: 0,
+        itemWidth: 14, itemHeight: 14, itemGap: 16,
         textStyle: { fontSize: 10, fontFamily: c.bodyFont },
       },
       radar: {
@@ -1020,9 +1026,17 @@ const Charts = (() => {
     const option = {
       grid: { left: 56, right: 24, top: 16, bottom: 48, containLabel: false },
       tooltip: {
-        trigger: 'axis', axisPointer: { type: 'cross' },
+        trigger: 'axis',
+        confine: true,
+        axisPointer: { type: 'cross' },
       },
-      legend: { data: ['Baseline', 'Simulated'], bottom: 0 },
+      legend: {
+        data: ['Baseline', 'Simulated'],
+        bottom: 0,
+        itemWidth: 14,
+        itemHeight: 14,
+        itemGap: 16,
+      },
       xAxis: {
         type: 'category', data: allDates, boundaryGap: false,
         axisLabel: { fontSize: 10, fontFamily: c.monoFont, color: c.text3,
