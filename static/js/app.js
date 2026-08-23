@@ -743,8 +743,8 @@
       if (panel && panel.classList.contains('is-collapsed')) {
         toggleCollapse();
       }
-      panel?.scrollIntoView({ behavior: 'smooth', block: 'start' });
-      setTimeout(() => el('skuSelect')?.focus(), 400);
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+      setTimeout(() => el('skuSelect')?.focus(), 450);
     }
 
     collapseBtn?.addEventListener('click', (e) => {

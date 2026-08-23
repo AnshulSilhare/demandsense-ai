@@ -3060,6 +3060,11 @@ body.dark .guide-protip-box {
     font-size: 0.75rem !important;
   }
 
+  .satellite-pill-btn.rail-btn,
+  #railSideToggle {
+    display: none !important;
+  }
+
   .satellite-pill-btn.theme-btn {
     width: 40px !important;
     height: 40px !important;
@@ -3309,7 +3314,8 @@ body.dark .guide-protip-box {
     display: none !important;
   }
 
-  .satellite-pill-btn.rail-btn {
+  .satellite-pill-btn.rail-btn,
+  #railSideToggle {
     display: none !important;
   }
 
