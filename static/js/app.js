@@ -953,10 +953,12 @@
       const spark = kpi.sparkline?.length > 2 ? generateSparkline(kpi.sparkline) : '';
 
       card.innerHTML = `
-        <div class="kpi-icon-chip ${kpi.chip_color}">${kpi.chip}</div>
+        <div class="kpi-header-row">
+          <div class="kpi-icon-chip ${kpi.chip_color}">${kpi.chip}</div>
+          <span class="kpi-delta ${deltaClass}">${arrow} ${Math.abs(kpi.delta_pct).toFixed(1)}%</span>
+        </div>
         <div class="kpi-label">${kpi.label}</div>
         <div class="kpi-value">${kpi.value_fmt}</div>
-        <span class="kpi-delta ${deltaClass}">${arrow} ${Math.abs(kpi.delta_pct).toFixed(1)}%</span>
         <div class="kpi-sparkline">${spark}</div>
       `;
     });
@@ -964,15 +966,15 @@
 
   function generateSparkline(values) {
     if (!values || values.length < 2) return '';
-    const w = 100, h = 28, pad = 2;
+    const w = 100, h = 22, pad = 2;
     const min = Math.min(...values), max = Math.max(...values);
     const range = max - min || 1;
     const points = values.map((v, i) =>
       `${pad + (i / (values.length - 1)) * (w - 2 * pad)},${pad + (1 - (v - min) / range) * (h - 2 * pad)}`
     ).join(' ');
 
-    return `<svg width="${w}" height="${h}" viewBox="0 0 ${w} ${h}" xmlns="http://www.w3.org/2000/svg">
-      <polyline fill="none" stroke="var(--accent)" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" points="${points}"/>
+    return `<svg width="100%" height="${h}" viewBox="0 0 ${w} ${h}" preserveAspectRatio="none" xmlns="http://www.w3.org/2000/svg">
+      <polyline fill="none" stroke="var(--teal)" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" points="${points}"/>
     </svg>`;
   }
 
