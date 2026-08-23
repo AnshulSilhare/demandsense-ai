@@ -2665,65 +2665,268 @@ body.dark .guide-protip-box {
   opacity: .95;
 }
 
-/* ─── RESPONSIVE BREAKPOINTS (Matching ins_index.html) ──────── */
+/* ─── HAMBURGER ANIMATION ─── */
+.hamburger.open span:nth-child(1) {
+  transform: rotate(45deg) translate(5px, 5px);
+}
+.hamburger.open span:nth-child(2) {
+  opacity: 0;
+}
+.hamburger.open span:nth-child(3) {
+  transform: rotate(-45deg) translate(5px, -5px);
+}
+
+/* ─── RESPONSIVE BREAKPOINTS (Mobile & Tablet Overhaul) ──────── */
 @media (max-width: 1024px) {
-  .kpi-bar { grid-template-columns: repeat(2, 1fr); }
-  .ai-cards-grid { grid-template-columns: repeat(2, 1fr); }
+  .kpi-bar {
+    grid-template-columns: repeat(2, 1fr) !important;
+    gap: 0.85rem !important;
+    position: static !important;
+  }
+  .kpi-card {
+    padding: 0.85rem 1rem !important;
+  }
+  .ai-cards-grid {
+    grid-template-columns: repeat(2, 1fr) !important;
+  }
+  .control-clusters {
+    grid-template-columns: repeat(2, 1fr) !important;
+  }
 }
 
 @media (max-width: 768px) {
-  .guide-steps-grid { grid-template-columns: 1fr; }
-  .guide-modal-container { max-height: 95vh; margin: 1rem; }
-  .guide-tab-switcher { padding: .6rem 1rem; }
-  .guide-modal-header { padding: 1rem 1.2rem; }
-  .guide-modal-body { padding: 1rem 1.2rem; }
-  .guide-modal-footer { padding: .8rem 1.2rem; flex-wrap: wrap; gap: .6rem; }
-  .guide-footer-right { width: 100%; justify-content: flex-end; }
+  .app-container {
+    padding: 0 0.85rem !important;
+    padding-top: 4.6rem !important;
+    padding-bottom: 3.5rem !important;
+  }
 
+  /* ─── FLOATING PILL NAV ON MOBILE ─── */
   nav.top-nav {
-    padding: 0 1rem;
-    height: 50px;
-    width: calc(100% - 1.5rem);
+    padding: 0 0.85rem !important;
+    height: 48px !important;
+    top: 0.65rem !important;
+    width: calc(100% - 1.25rem) !important;
   }
-  .nav-tabs {
-    display: none;
-  }
-  .nav-tabs.open {
-    display: flex;
-    flex-direction: column;
-    position: absolute;
-    top: 60px;
-    left: 0;
-    right: 0;
-    background: var(--nav-mobile-bg);
-    backdrop-filter: blur(12px);
-    border: 1px solid var(--glass-border);
-    border-radius: var(--radius2);
-    padding: 1.2rem;
-    box-shadow: var(--glow-md);
-    gap: .8rem;
-  }
-  .hamburger { display: flex; }
-  .kpi-bar { grid-template-columns: 1fr; position: static; }
-  .grid-2, .grid-3, .grid-4 { grid-template-columns: 1fr; }
-  .ai-cards-grid { grid-template-columns: 1fr; }
-  .filter-row { flex-direction: column; }
 
+  /* Hide desktop-only controls on mobile */
+  .rail-toggle-nav,
+  .top-left-brand-icon,
+  .brand-emblem-link {
+    display: none !important;
+  }
+
+  /* Guide button condensed to icon on mobile */
+  .guide-toggle-nav {
+    padding: 0.28rem 0.5rem !important;
+  }
+  .guide-toggle-nav .guide-nav-label {
+    display: none !important;
+  }
+
+  .nav-brand {
+    font-size: 0.88rem !important;
+  }
+  .brand-version {
+    display: none !important;
+  }
+
+  .hamburger {
+    display: flex !important;
+  }
+
+  /* ─── MOBILE MENU DROPDOWN ─── */
+  .nav-tabs {
+    display: none !important;
+  }
+
+  .nav-tabs.open {
+    display: flex !important;
+    flex-direction: column !important;
+    position: absolute !important;
+    top: 54px !important;
+    left: 0 !important;
+    right: 0 !important;
+    background: var(--surface) !important;
+    backdrop-filter: blur(16px) !important;
+    -webkit-backdrop-filter: blur(16px) !important;
+    border: 1px solid var(--border2) !important;
+    border-radius: var(--radius2) !important;
+    padding: 0.75rem !important;
+    box-shadow: var(--glow-md), 0 12px 36px rgba(0, 0, 0, 0.25) !important;
+    gap: 0.35rem !important;
+    z-index: 250 !important;
+  }
+
+  .nav-tabs.open .nav-tab {
+    width: 100% !important;
+    text-align: left !important;
+    padding: 0.65rem 1rem !important;
+    border-radius: var(--radius) !important;
+    font-size: 0.88rem !important;
+    font-weight: 500 !important;
+    color: var(--text) !important;
+    background: var(--bg3) !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: space-between !important;
+    transition: all 0.2s ease !important;
+  }
+
+  .nav-tabs.open .nav-tab:hover,
+  .nav-tabs.open .nav-tab.active {
+    background: rgba(13, 148, 136, 0.15) !important;
+    color: var(--teal) !important;
+    border-left: 3px solid var(--teal) !important;
+    font-weight: 600 !important;
+  }
+
+  body.dark .nav-tabs.open .nav-tab.active {
+    background: rgba(45, 212, 191, 0.18) !important;
+    color: var(--accent2) !important;
+  }
+
+  .nav-tabs.open .nav-tab::after {
+    display: none !important;
+  }
+
+  /* ─── PARAMETER SUITE ON MOBILE ─── */
+  .control-clusters {
+    grid-template-columns: 1fr !important;
+    gap: 0.85rem !important;
+  }
+
+  .cluster-card {
+    padding: 0.85rem !important;
+  }
+
+  .segmented-group {
+    width: 100% !important;
+  }
+
+  .segmented-btn {
+    flex: 1 !important;
+    padding: 0.45rem 0.3rem !important;
+    font-size: 0.72rem !important;
+    text-align: center !important;
+  }
+
+  .stepper-input-group {
+    height: 38px !important;
+  }
+
+  .filter-summary-bar {
+    padding: 0.6rem 0.85rem !important;
+    font-size: 0.72rem !important;
+    gap: 0.35rem !important;
+  }
+
+  /* ─── CARDS, GRIDS & CHARTS ON MOBILE ─── */
+  .card {
+    padding: 1rem !important;
+    margin-bottom: 1rem !important;
+  }
+
+  .card-header {
+    flex-direction: column !important;
+    align-items: flex-start !important;
+    gap: 0.5rem !important;
+  }
+
+  .card-actions,
+  .chart-actions {
+    width: 100% !important;
+    justify-content: flex-start !important;
+    flex-wrap: wrap !important;
+  }
+
+  .section-header-compact {
+    flex-direction: column !important;
+    align-items: flex-start !important;
+    gap: 0.5rem !important;
+  }
+
+  .section-header-actions {
+    width: 100% !important;
+    justify-content: flex-start !important;
+    flex-wrap: wrap !important;
+  }
+
+  .grid-2, .grid-3, .grid-4 {
+    grid-template-columns: 1fr !important;
+    gap: 1rem !important;
+  }
+
+  .ai-cards-grid {
+    grid-template-columns: 1fr !important;
+    gap: 0.85rem !important;
+  }
+
+  .chart-container {
+    min-height: 270px !important;
+    width: 100% !important;
+  }
+
+  .data-table-container {
+    overflow-x: auto !important;
+    -webkit-overflow-scrolling: touch !important;
+  }
+
+  .preset-scenarios-strip {
+    flex-wrap: wrap !important;
+  }
+
+  /* ─── DETAIL DRAWER & WALKTHROUGH ON MOBILE ─── */
   .detail-drawer {
-    top: auto;
-    bottom: 0;
-    right: 0;
-    width: 100%;
-    height: auto;
-    max-height: 85vh;
-    border-radius: 16px 16px 0 0;
-    border-left: none;
-    border-top: 1px solid var(--glass-border);
-    transform: translateY(100%);
+    top: auto !important;
+    bottom: 0 !important;
+    right: 0 !important;
+    width: 100% !important;
+    height: auto !important;
+    max-height: 85vh !important;
+    border-radius: 16px 16px 0 0 !important;
+    border-left: none !important;
+    border-top: 1px solid var(--glass-border) !important;
+    transform: translateY(100%) !important;
   }
 
   .detail-drawer-overlay.open .detail-drawer {
-    transform: translateY(0);
+    transform: translateY(0) !important;
+  }
+
+  .guide-steps-grid { grid-template-columns: 1fr !important; }
+  .guide-modal-container { max-height: 95vh !important; margin: 0.8rem !important; }
+  .guide-tab-switcher { padding: 0.5rem 0.8rem !important; }
+  .guide-modal-header { padding: 0.85rem 1rem !important; }
+  .guide-modal-body { padding: 0.85rem 1rem !important; }
+  .guide-modal-footer { padding: 0.75rem 1rem !important; flex-wrap: wrap !important; gap: 0.5rem !important; }
+  .guide-footer-right { width: 100% !important; justify-content: flex-end !important; }
+}
+
+@media (max-width: 480px) {
+  .kpi-bar {
+    grid-template-columns: repeat(2, 1fr) !important;
+    gap: 0.55rem !important;
+  }
+  .kpi-card {
+    padding: 0.65rem 0.75rem !important;
+  }
+  .kpi-label {
+    font-size: 0.66rem !important;
+  }
+  .kpi-value {
+    font-size: 1.05rem !important;
+  }
+  .kpi-delta {
+    font-size: 0.64rem !important;
+    padding: 1px 5px !important;
+  }
+  .console-title {
+    font-size: 0.92rem !important;
+  }
+  .btn-ghost-sm {
+    padding: 0.3rem 0.55rem !important;
+    font-size: 0.7rem !important;
   }
 }
 

@@ -286,7 +286,7 @@
         ctx.clearRect(0, 0, canvas.width, canvas.height);
       }
 
-      if (currentY <= scrollStart) {
+      if (currentY <= scrollStart || window.innerWidth <= 1024) {
         cards.forEach(c => {
           c.style.transform = '';
           c.style.opacity = '';
@@ -562,8 +562,26 @@
   function setupHamburger() {
     const btn = el('hamburger');
     const tabs = el('navTabs');
-    btn?.addEventListener('click', () => {
-      tabs.classList.toggle('open');
+    btn?.addEventListener('click', (e) => {
+      e.stopPropagation();
+      btn.classList.toggle('open');
+      tabs?.classList.toggle('open');
+    });
+
+    // Close menu when clicking any nav-tab
+    $$('.nav-tab').forEach(tab => {
+      tab.addEventListener('click', () => {
+        btn?.classList.remove('open');
+        tabs?.classList.remove('open');
+      });
+    });
+
+    // Close menu when clicking outside
+    document.addEventListener('click', (e) => {
+      if (tabs && tabs.classList.contains('open') && !tabs.contains(e.target) && !btn?.contains(e.target)) {
+        btn?.classList.remove('open');
+        tabs?.classList.remove('open');
+      }
     });
   }
 
