@@ -114,6 +114,7 @@ def _load_default_data() -> pd.DataFrame:
 # ═══════════════════════════════════════════════════════════════
 def _get_session_df(request: Request) -> pd.DataFrame:
     """Return session-scoped DataFrame if uploaded, else default."""
+    global DEFAULT_DF
     sid = request.cookies.get("ds_session_id")
     if sid and sid in SESSION_STORE:
         entry = SESSION_STORE[sid]
@@ -121,6 +122,8 @@ def _get_session_df(request: Request) -> pd.DataFrame:
             return entry["df"]
         else:
             del SESSION_STORE[sid]
+    if DEFAULT_DF is None or DEFAULT_DF.empty:
+        DEFAULT_DF = _load_default_data()
     return DEFAULT_DF
 
 

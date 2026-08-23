@@ -98,13 +98,13 @@
     }
     updateThemeIcon();
 
-    el('themeToggle').addEventListener('click', () => {
+    el('themeToggle')?.addEventListener('click', () => {
       document.body.classList.toggle('dark');
       const isDark = document.body.classList.contains('dark');
       localStorage.setItem('ds-theme', isDark ? 'dark' : 'light');
       updateThemeIcon();
       reRenderAllCharts();
-      renderKpiConveyor(smoothScroll);
+      if (typeof window !== 'undefined') window.dispatchEvent(new Event('scroll'));
     });
   }
 
@@ -1565,6 +1565,16 @@ ${llm.model_rationale || 'N/A'}`;
 
     renderKpiBar();
   }
+
+  // ═══ GLOBAL CONTROLLER EXPORT ═══
+  window.DemandSenseApp = {
+    retryLoad: () => {
+      clearCachedData();
+      loadForecast();
+    },
+    state,
+    switchTab
+  };
 
   // ═══ BOOT ═══
   if (document.readyState === 'loading') {
