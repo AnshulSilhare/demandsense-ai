@@ -30,18 +30,13 @@ class ARIMAForecaster(BaseForecaster):
         series = train_df["units_sold"].astype(float).values
 
         try:
-            model = SARIMAX(
-                series,
-                order=self.order,
-                seasonal_order=self.seasonal_order,
-                enforce_stationarity=False,
-                enforce_invertibility=False,
-            )
-            self.model_fit = model.fit(disp=False, maxiter=100)
+            from statsmodels.tsa.arima.model import ARIMA
+            model = ARIMA(series, order=self.order)
+            self.model_fit = model.fit()
         except Exception:
-            # Fallback simple ARIMA if SARIMAX fails to converge
+            # Fallback simple auto-regressive / mean model
             model = SARIMAX(series, order=(1, 1, 0), enforce_stationarity=False)
-            self.model_fit = model.fit(disp=False, maxiter=50)
+            self.model_fit = model.fit(disp=False, maxiter=25)
 
         self.last_train_date = train_df["date"].max()
         self.is_fitted = True

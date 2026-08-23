@@ -75,6 +75,12 @@ def _load_default_data() -> pd.DataFrame:
     if processed.exists():
         logger.info(f"Loading processed data from {processed}")
         df = pd.read_csv(processed, parse_dates=["date"])
+        # Optimize memory footprint for free-tier containers
+        for col in df.select_dtypes(include=["float64"]).columns:
+            df[col] = df[col].astype("float32")
+        for col in df.select_dtypes(include=["int64"]).columns:
+            if col != "date":
+                df[col] = df[col].astype("int32")
         return df
 
     if raw.exists():
@@ -84,6 +90,8 @@ def _load_default_data() -> pd.DataFrame:
             from src.feature_engine import IndianSeasonalityEngine
             engine = IndianSeasonalityEngine()
             df = engine.engineer_features(df)
+            for col in df.select_dtypes(include=["float64"]).columns:
+                df[col] = df[col].astype("float32")
         except Exception as e:
             logger.warning(f"Feature engineering failed: {e}")
         return df
@@ -357,20 +365,51 @@ async def startup():
     else:
         logger.info("GEMINI_API_KEY not set — using offline rule-based AI engine")
 
+    # Warm up cache for default SKU001
+    try:
+        filtered = _filter_data(DEFAULT_DF, "SKU001", "ALL")
+        forecast_res, impact_data, llm_report = _run_forecast_pipeline(
+            filtered, "SKU001", DEFAULT_LEAD_TIME_DAYS, "A", 25000
+        )
+        sku_info = _get_product_info("SKU001")
+        kpi_bar = _compute_kpi_bar(filtered, forecast_res["winning_forecast"], impact_data, sku_info)
+        chart_history = filtered[["date", "units_sold"]].copy()
+        chart_history["date"] = chart_history["date"].dt.strftime("%Y-%m-%d")
+        chart_history["rolling_7d"] = filtered["units_sold"].rolling(7, min_periods=1).mean().round(1)
+        res = {
+            "forecast_res": _serialize_forecast_res(forecast_res),
+            "impact_data": _serialize_impact(impact_data),
+            "llm_report": llm_report,
+            "kpi_bar": kpi_bar,
+            "chart_history": chart_history.to_dict(orient="records"),
+            "sku_info": sku_info,
+            "data_summary": {
+                "data_start": filtered["date"].min().strftime("%b %d, %Y"),
+                "data_end": filtered["date"].max().strftime("%b %d, %Y"),
+                "total_days": int((filtered["date"].max() - filtered["date"].min()).days),
+                "total_skus": int(DEFAULT_DF["sku_id"].nunique()),
+            }
+        }
+        ck = _cache_key(None, "SKU001", "ALL", DEFAULT_LEAD_TIME_DAYS, "A", 25000)
+        _set_cached_forecast(ck, res)
+        logger.info("Default SKU001 cache warmed up successfully")
+    except Exception as e:
+        logger.warning(f"Cache warmup skipped: {e}")
+
 
 # ── Serve the SPA ──
 app.mount("/static", StaticFiles(directory=str(PROJECT_ROOT / "static")), name="static")
 
 
 @app.get("/health")
-async def health():
+def health():
     """Lightweight health check — no computation, no DB reads.
     Used by Render's health check and optional keep-alive cron (cron-job.org)."""
     return {"status": "ok", "version": VERSION}
 
 
 @app.get("/")
-async def root():
+def root():
     return FileResponse(str(PROJECT_ROOT / "static" / "index.html"))
 
 
@@ -379,7 +418,7 @@ async def root():
 # ═══════════════════════════════════════════════════════════════
 
 @app.get("/api/config")
-async def get_config():
+def get_config():
     """Return app configuration: products, regions, service levels, festivals, defaults."""
     return {
         "project_name": PROJECT_NAME,
@@ -396,7 +435,7 @@ async def get_config():
 
 
 @app.get("/api/forecast")
-async def get_forecast(
+def get_forecast(
     request: Request,
     sku: str = Query(default="SKU001"),
     region: str = Query(default="ALL"),
@@ -452,7 +491,7 @@ async def get_forecast(
 
 
 @app.get("/api/decomposition")
-async def get_decomposition(
+def get_decomposition(
     request: Request,
     sku: str = Query(default="SKU001"),
     region: str = Query(default="ALL")
@@ -473,7 +512,7 @@ async def get_decomposition(
 
 
 @app.get("/api/festival-impact")
-async def get_festival_impact(sku: str = Query(default="SKU001")):
+def get_festival_impact(sku: str = Query(default="SKU001")):
     """Festival multiplier summary for Tab 1."""
     fest_df = get_festival_impact_summary(sku)
     if fest_df.empty:
@@ -484,7 +523,7 @@ async def get_festival_impact(sku: str = Query(default="SKU001")):
 
 
 @app.get("/api/abc-classification")
-async def get_abc_classification(request: Request):
+def get_abc_classification(request: Request):
     """Pareto ABC classification table for Tab 3."""
     df = _get_session_df(request)
     calc = OperationsImpactCalculator()
@@ -496,7 +535,7 @@ async def get_abc_classification(request: Request):
 
 
 @app.get("/api/regional-summary")
-async def get_regional_summary(request: Request, sku: str = Query(default="SKU001")):
+def get_regional_summary(request: Request, sku: str = Query(default="SKU001")):
     """Regional demand/revenue summary for Tab 3 map."""
     df = _get_session_df(request)
     sku_data = df[df["sku_id"] == sku]
@@ -526,7 +565,7 @@ async def get_regional_summary(request: Request, sku: str = Query(default="SKU00
 
 
 @app.get("/api/feature-importance")
-async def get_feature_importance(
+def get_feature_importance(
     request: Request,
     sku: str = Query(default="SKU001"),
     region: str = Query(default="ALL")
@@ -557,9 +596,8 @@ async def get_feature_importance(
 
 
 @app.post("/api/simulate")
-async def simulate_scenario(request: Request):
+def simulate_scenario(request: Request, body: dict):
     """What-If scenario simulation for Tab 4."""
-    body = await request.json()
     sku = body.get("sku", "SKU001")
     region = body.get("region", "ALL")
     lead_time = body.get("lead_time", DEFAULT_LEAD_TIME_DAYS)
@@ -676,7 +714,7 @@ async def upload_csv(request: Request, response: Response, file: UploadFile = Fi
 
 
 @app.get("/api/export/po-csv")
-async def export_po_csv(
+def export_po_csv(
     request: Request,
     sku: str = Query(default="SKU001"),
     region: str = Query(default="ALL"),
@@ -728,7 +766,7 @@ async def export_po_csv(
 
 
 @app.get("/api/export/brief-pdf")
-async def export_brief_pdf(
+def export_brief_pdf(
     request: Request,
     sku: str = Query(default="SKU001"),
     region: str = Query(default="ALL"),
