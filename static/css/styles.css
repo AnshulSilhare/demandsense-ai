@@ -1524,6 +1524,16 @@ body.dark .upload-caution-caption {
   width: 100%;
 }
 
+/* ─── FLEXIBLE QUANTUM SNAKE CANVAS (Curving Ribbon Physics) ─── */
+.kpi-snake-canvas {
+  position: fixed;
+  inset: 0;
+  width: 100vw;
+  height: 100vh;
+  pointer-events: none;
+  z-index: 0; /* Positioned below cards for elegant layered depth */
+}
+
 .kpi-card {
   background: var(--glass-bg);
   border-radius: var(--radius2);
@@ -1535,7 +1545,121 @@ body.dark .upload-caution-caption {
   padding: .85rem 1.1rem;
   position: relative;
   overflow: hidden;
-  transition: transform .25s ease, border-color .25s ease, box-shadow .25s ease;
+  transform-origin: center top;
+  will-change: transform, opacity, box-shadow;
+}
+
+/* When card is docked along the vertical edge rail (Left Dock) */
+.kpi-card.is-docked-rail {
+  width: 210px !important;
+  max-width: 210px !important;
+  z-index: 60 !important;
+  border-top: 1px solid var(--glass-border) !important;
+  border-left: 6px solid var(--teal) !important;
+  border-right: 1px solid var(--glass-border) !important;
+  transform-origin: left center !important;
+  text-align: left;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  padding: .72rem .95rem !important;
+}
+
+.kpi-card.is-docked-rail .kpi-icon-chip {
+  margin-left: 0;
+  margin-right: auto;
+  margin-bottom: .2rem;
+}
+
+.kpi-card.is-docked-rail .kpi-label {
+  text-align: left;
+  width: 100%;
+  margin-bottom: .15rem;
+}
+
+.kpi-card.is-docked-rail .kpi-value {
+  text-align: left;
+  width: 100%;
+  font-size: 1.25rem;
+  line-height: 1.1;
+}
+
+.kpi-card.is-docked-rail .kpi-delta {
+  margin-left: 0;
+  margin-right: auto;
+  margin-top: .2rem;
+}
+
+.kpi-card.is-docked-rail .kpi-sparkline {
+  display: flex;
+  justify-content: flex-start;
+  width: 100%;
+}
+
+/* When card is docked along the right edge rail (Right Dock) */
+body.kpi-dock-right .kpi-card.is-docked-rail {
+  width: 210px !important;
+  max-width: 210px !important;
+  z-index: 60 !important;
+  border-top: 1px solid var(--glass-border) !important;
+  border-left: 1px solid var(--glass-border) !important;
+  border-right: 6px solid var(--teal) !important;
+  transform-origin: right center !important;
+  text-align: left;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  padding: .72rem .95rem !important;
+}
+
+body.kpi-dock-right .kpi-card.is-docked-rail .kpi-icon-chip {
+  margin-left: 0;
+  margin-right: auto;
+  margin-bottom: .2rem;
+}
+
+body.kpi-dock-right .kpi-card.is-docked-rail .kpi-label {
+  text-align: left;
+  width: 100%;
+  margin-bottom: .15rem;
+}
+
+body.kpi-dock-right .kpi-card.is-docked-rail .kpi-value {
+  text-align: left;
+  width: 100%;
+  font-size: 1.25rem;
+  line-height: 1.1;
+}
+
+body.kpi-dock-right .kpi-card.is-docked-rail .kpi-delta {
+  margin-left: 0;
+  margin-right: auto;
+  margin-top: .2rem;
+}
+
+body.kpi-dock-right .kpi-card.is-docked-rail .kpi-sparkline {
+  display: flex;
+  justify-content: flex-start;
+  width: 100%;
+}
+
+body.kpi-dock-right .kpi-card.is-docked-rail:hover {
+  transform: translateX(-6px);
+  border-color: var(--teal);
+  box-shadow: var(--glass-shadow-hover);
+}
+
+.kpi-card > * {
+  transition: opacity .16s cubic-bezier(.4, 0, .2, 1), transform .16s ease;
+}
+
+/* Card Morph State */
+.kpi-card.is-beam-morph {
+  pointer-events: none;
+}
+
+.kpi-card.is-beam-morph > * {
+  opacity: 0 !important;
 }
 
 body.dark .kpi-card {

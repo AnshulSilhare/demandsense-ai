@@ -192,10 +192,36 @@
     indicator.style.width = `${width}px`;
   }
 
+  // ═══ CUSTOM CINEMATIC EASED SMOOTH SCROLL CONTROLLER ═══
+  function gracefulScrollTo(targetY, duration = 950) {
+    const startY = window.scrollY;
+    const diff = targetY - startY;
+    if (Math.abs(diff) < 5) {
+      window.scrollTo(0, targetY);
+      return;
+    }
+    const startTime = performance.now();
+
+    function step(currentTime) {
+      const elapsed = currentTime - startTime;
+      const progress = Math.min(1, elapsed / duration);
+      // Cosine ease-in-out curve for luxurious fluid acceleration & deceleration
+      const ease = 0.5 * (1 - Math.cos(Math.PI * progress));
+
+      const currentPos = startY + diff * ease;
+      window.scrollTo(0, currentPos);
+
+      if (progress < 1) {
+        requestAnimationFrame(step);
+      }
+    }
+    requestAnimationFrame(step);
+  }
+
   function switchTab(target) {
     if (!target || target === state.activeTab) return;
 
-    // Sync top nav tabs
+    // Sync top nav tabs & slide indicator chip
     $$('.nav-tab').forEach(t => {
       t.classList.toggle('active', t.dataset.tab === target);
     });
@@ -213,16 +239,13 @@
     activePanel?.classList.add('active');
     state.activeTab = target;
 
-    // Smoothly scroll up or down to the start of that tab heading
+    // Gracefully scroll down/up to the tab heading at a controlled speed so the KPI train animation plays visibly
     if (activePanel) {
       const headerOffset = window.innerWidth < 768 ? 64 : 80;
       const elementPosition = activePanel.getBoundingClientRect().top;
       const offsetPosition = elementPosition + window.pageYOffset - headerOffset;
 
-      window.scrollTo({
-        top: Math.max(0, offsetPosition),
-        behavior: 'smooth'
-      });
+      gracefulScrollTo(Math.max(0, offsetPosition), 950);
     }
 
     // Render / refresh charts in the newly activated tab
@@ -301,33 +324,347 @@
     }, 150), { passive: true });
   }
 
-  // ═══ PURE HARDWARE-ACCELERATED SCROLL EFFECTS ═══
+  // ═══ PURE CONTINUOUS SCROLL CONVEYOR & QUANTUM SNAKE ENGINE ═══
   function setupScrollEffects() {
     const nav = el('topNav');
-    const stickyPill = el('stickyContextPill');
-    const filterPanel = el('filterPanel');
-    let isRafScheduled = false;
+    const kpiBar = el('kpiBar');
+    const kpiWrapper = el('kpiBarWrapper');
+    let cachedMetrics = null;
 
-    function onScrollFrame() {
-      const y = window.scrollY;
+    function measureMetrics() {
+      if (!kpiWrapper || window.innerWidth < 1360) return;
+      const cards = [el('kpi0'), el('kpi1'), el('kpi2'), el('kpi3')].filter(Boolean);
+      if (cards.length < 4) return;
 
-      // 1. Top Navbar slight shrink / glass densification
-      if (y > 30) {
+      const wrapperRect = kpiWrapper.getBoundingClientRect();
+      const colWidth = (wrapperRect.width - 3 * 19.2) / 4;
+
+      cachedMetrics = {
+        wrapperLeft: wrapperRect.left,
+        wrapperTop: wrapperRect.top + window.scrollY, // document-relative top
+        colWidth: colWidth,
+        scrollStart: 10,
+        scrollEnd: 460 // Generous 450px travel range gives each phase full visibility and silky flow
+      };
+    }
+
+    // C2 Quintic Smootherstep (Ken Perlin curve: zero velocity & zero acceleration at endpoints)
+    function smootherstep(x) {
+      const c = Math.max(0, Math.min(1, x));
+      return c * c * c * (c * (c * 6 - 15) + 10);
+    }
+
+    // ═══ DOCK SIDE TOGGLE (Left vs Right) ═══
+    let dockSide = localStorage.getItem('ds-kpi-dock-side') || 'left';
+
+    function updateDockSideUI() {
+      const sideIcon = el('railSideIcon');
+      const sideText = el('railSideText');
+
+      if (dockSide === 'right') {
+        document.body.classList.add('kpi-dock-right');
+        document.body.classList.remove('kpi-dock-left');
+        if (sideIcon) sideIcon.textContent = '◨';
+        if (sideText) sideText.textContent = 'Right';
+      } else {
+        document.body.classList.add('kpi-dock-left');
+        document.body.classList.remove('kpi-dock-right');
+        if (sideIcon) sideIcon.textContent = '◧';
+        if (sideText) sideText.textContent = 'Left';
+      }
+    }
+
+    el('railSideToggle')?.addEventListener('click', () => {
+      dockSide = dockSide === 'left' ? 'right' : 'left';
+      localStorage.setItem('ds-kpi-dock-side', dockSide);
+      updateDockSideUI();
+      cachedMetrics = null;
+      handleScroll();
+    });
+
+    updateDockSideUI();
+
+    function initCanvas() {
+      const canvas = el('kpiSnakeCanvas');
+      if (!canvas) return;
+      const dpr = Math.min(2, window.devicePixelRatio || 1);
+      const w = window.innerWidth;
+      const h = window.innerHeight;
+      if (canvas.width !== Math.round(w * dpr) || canvas.height !== Math.round(h * dpr)) {
+        canvas.width = Math.round(w * dpr);
+        canvas.height = Math.round(h * dpr);
+        canvas.style.width = w + 'px';
+        canvas.style.height = h + 'px';
+      }
+    }
+
+    function renderKpiConveyor(currentY) {
+      // 1. Navbar shrink
+      if (currentY > 30) {
         nav?.classList.add('scrolled');
       } else {
         nav?.classList.remove('scrolled');
       }
 
-      // 2. Smart Floating Sticky Context Pill reveal below parameter panel
-      if (stickyPill && filterPanel) {
-        const triggerY = filterPanel.offsetTop + filterPanel.offsetHeight - 40;
-        if (y > triggerY) {
-          stickyPill.classList.add('is-visible');
+      const canvas = el('kpiSnakeCanvas');
+      const ctx = canvas?.getContext('2d');
+      const dpr = Math.min(2, window.devicePixelRatio || 1);
+
+      if (canvas && ctx) {
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+      }
+
+      // Check widescreen desktop viewport (Docking only on wide displays >= 1360px)
+      if (!kpiBar || !kpiWrapper || window.innerWidth < 1360) {
+        const cards = [el('kpi0'), el('kpi1'), el('kpi2'), el('kpi3')].filter(Boolean);
+        cards.forEach((c, i) => {
+          c.style.transform = '';
+          c.style.opacity = '';
+          c.classList.remove('is-beam-morph', 'is-docked-rail');
+          const snake = el(`snake${i}`);
+          if (snake) snake.style.opacity = '0';
+        });
+        return;
+      }
+
+      const cards = [el('kpi0'), el('kpi1'), el('kpi2'), el('kpi3')].filter(Boolean);
+      if (cards.length < 4) return;
+
+      if (!cachedMetrics) measureMetrics();
+      if (!cachedMetrics) return;
+
+      const { scrollStart, scrollEnd, wrapperLeft, wrapperTop, colWidth } = cachedMetrics;
+
+      if (currentY <= scrollStart || window.innerWidth < 1360) {
+        cards.forEach(c => {
+          c.style.transform = '';
+          c.style.opacity = '';
+          c.style.transformOrigin = 'center top';
+          c.classList.remove('is-beam-morph', 'is-docked-rail');
+        });
+        return;
+      }
+
+      // Calculate continuous scroll alpha (0.0 at scrollStart to 1.0 at scrollEnd)
+      const alpha = Math.min(1.0, (currentY - scrollStart) / (scrollEnd - scrollStart));
+      const isRight = (dockSide === 'right');
+
+      const cardH = 136; // Calibrated actual card height (including sparkline)
+      const cardW = colWidth;
+      const gap = 19.2;
+      const startY = 96; // Top rail baseline below nav & emblem
+      const slotSpacing = 164; // Generous 28px visual gap between cards (164 - 136 = 28px)
+
+      // Bounding span of all 4 cards in the resting horizontal row
+      const spanLeft = wrapperLeft;
+      const spanRight = wrapperLeft + 3 * (cardW + gap) + cardW;
+      const initLen = spanRight - spanLeft;
+
+      // Final span of all 4 cards along the vertical edge rail
+      const railMargin = 14;
+      const dockedCardW = 210;
+      const railX = isRight ? (window.innerWidth - railMargin) : railMargin;
+      const finalRailSpan = 3 * slotSpacing + cardH;
+
+      const topY = (wrapperTop - currentY) + 3; // Center Y of 6px top border
+      const R = 28; // Smooth corner bend radius
+
+      // Total track distance for the single unified snake line
+      const startX = isRight ? spanRight : spanLeft;
+      const cornerX = isRight ? (railX - R) : (railX + R);
+      const L1 = Math.max(1, Math.abs(startX - cornerX));
+      const L2 = (Math.PI / 2) * R; // 90° corner fillet arc
+      const bottomSlotY = startY + 3 * slotSpacing + cardH;
+      const L3 = Math.max(1, bottomSlotY - (topY + R));
+      const totalPathDist = L1 + L2 + L3;
+
+      function getTrackPoint(d) {
+        if (d <= L1) {
+          // 1. Horizontal track along top grid
+          const x = isRight ? (startX + d) : (startX - d);
+          return { x, y: topY };
+        } else if (d <= L1 + L2) {
+          // 2. Smooth 90° Corner Fillet (Flexes naturally like a rope/snake!)
+          const arcDist = d - L1;
+          const angle = (arcDist / L2) * (Math.PI / 2);
+          const cx = isRight ? (railX - R) : (railX + R);
+          const cy = topY + R;
+          const x = isRight ? (cx + R * Math.sin(angle)) : (cx - R * Math.sin(angle));
+          const y = cy - R * Math.cos(angle);
+          return { x, y };
         } else {
-          stickyPill.classList.remove('is-visible');
+          // 3. Vertical rail track down the edge
+          const vertDist = d - (L1 + L2);
+          return { x: railX, y: (topY + R) + vertDist };
         }
       }
 
+      // Draw Bold 6px Unified Single Snake Ribbon on Canvas
+      function drawUnifiedSnakeRibbon(sHead, sTail, alphaGlow) {
+        if (!ctx || sHead <= sTail) return;
+        const numPts = 32; // Smooth 32-point arc spline
+        const pts = [];
+        for (let k = 0; k <= numPts; k++) {
+          const dist = sTail + (sHead - sTail) * (k / numPts);
+          pts.push(getTrackPoint(dist));
+        }
+
+        ctx.save();
+        ctx.scale(dpr, dpr);
+        ctx.globalAlpha = Math.max(0, Math.min(1, alphaGlow));
+
+        const isDark = document.body.classList.contains('dark');
+        const tealColor = isDark ? '#2dd4bf' : '#0d9488';
+        const shadowColor = isDark ? 'rgba(45, 212, 191, 0.45)' : 'rgba(13, 148, 136, 0.35)';
+
+        ctx.beginPath();
+        ctx.moveTo(pts[0].x, pts[0].y);
+        for (let k = 1; k < pts.length; k++) ctx.lineTo(pts[k].x, pts[k].y);
+        ctx.strokeStyle = tealColor;
+        ctx.lineWidth = 6.0;
+        ctx.lineCap = 'round';
+        ctx.lineJoin = 'round';
+        ctx.shadowColor = shadowColor;
+        ctx.shadowBlur = 8;
+        ctx.stroke();
+
+        ctx.restore();
+      }
+
+      // ═══ 5-PHASE TWO-AXIS SEQUENTIAL WATER-DROPLET RELEASE & SHORTENING SNAKE ENGINE ═══
+      if (alpha <= 0.28) {
+        // PHASE 1 (Horizontal Axis): Sequential Droplet Fold
+        const foldProgress = [0, 0, 0, 0];
+
+        cards.forEach((card, i) => {
+          const foldOrder = isRight ? (cards.length - 1 - i) : i;
+          const foldStart = foldOrder * 0.055;
+          const foldEnd = foldStart + 0.09;
+          const tFold = Math.max(0, Math.min(1, (alpha - foldStart) / (foldEnd - foldStart)));
+          const pFold = smootherstep(tFold);
+          foldProgress[i] = pFold;
+
+          const scaleY = 1.0 - (1.0 - 0.05) * pFold;
+          card.style.transformOrigin = 'center top';
+          card.style.transform = `translate3d(0, 0, 0) scaleY(${scaleY})`;
+          card.style.opacity = '1';
+          card.classList.remove('is-docked-rail');
+
+          if (pFold > 0.35) {
+            card.classList.add('is-beam-morph');
+          } else {
+            card.classList.remove('is-beam-morph');
+          }
+        });
+
+        // Dynamic Horizontal Line Growth / Shortening as cards fold/unfold one by one
+        const totalFolded = foldProgress[0] + foldProgress[1] + foldProgress[2] + foldProgress[3];
+        if (totalFolded > 0.15) {
+          const uGlide = smootherstep(Math.max(0, (alpha - 0.15) / 0.13));
+          const sHead = (L1 * 0.4) * uGlide;
+          const curLen = Math.min(initLen, (colWidth + gap) * totalFolded);
+          const sTail = sHead - curLen;
+          drawUnifiedSnakeRibbon(sHead, sTail, Math.min(1.0, totalFolded / 1.5));
+        }
+
+      } else {
+        // PHASES 2-5 (Vertical Rail Axis): Snake Plunges to Bottom Slot, Drops Card 0 First, Then Stacks Upward!
+        const uPlunge = smootherstep(Math.min(1.0, (alpha - 0.28) / 0.22));
+        const sPlungeHead = totalPathDist * uPlunge;
+
+        const dropProgress = [0, 0, 0, 0];
+
+        cards.forEach((card, i) => {
+          const orderIndex = isRight ? (cards.length - 1 - i) : i;
+          const slotIndex = isRight ? i : (cards.length - 1 - i);
+
+          const dropStart = 0.44 + orderIndex * 0.125;
+          const dropEnd = dropStart + 0.125;
+          const tDrop = Math.max(0, Math.min(1, (alpha - dropStart) / (dropEnd - dropStart)));
+          const pDrop = smootherstep(tDrop);
+          dropProgress[orderIndex] = pDrop;
+
+          const naturalX = i * (colWidth + gap);
+          const dockedScreenX = isRight ? (window.innerWidth - dockedCardW - railMargin) : railMargin;
+          const dockedScreenY = startY + slotIndex * slotSpacing;
+
+          const totalDeltaX = dockedScreenX - (wrapperLeft + naturalX);
+          const totalDeltaY = dockedScreenY - (wrapperTop - currentY);
+
+          if (alpha < dropStart) {
+            card.style.opacity = '0';
+            card.classList.remove('is-beam-morph', 'is-docked-rail');
+          } else {
+            const scaleX = 0.04 + (1.0 - 0.04) * pDrop;
+            card.classList.add('is-docked-rail');
+            card.style.transformOrigin = isRight ? 'right center' : 'left center';
+            card.style.transform = `translate3d(${totalDeltaX}px, ${totalDeltaY}px, 0) scaleX(${scaleX})`;
+            card.style.opacity = pDrop.toFixed(3);
+            card.classList.remove('is-beam-morph');
+          }
+        });
+
+        // Dynamic Snake Line Shortening on the vertical rail:
+        const totalReleased = dropProgress[0] + dropProgress[1] + dropProgress[2] + dropProgress[3];
+        const unreleasedCount = Math.max(0, 4.0 - totalReleased);
+
+        let sHead = 0;
+        let curLen = 0;
+
+        if (alpha < 0.44) {
+          sHead = sPlungeHead;
+          const uTurn = smootherstep((alpha - 0.28) / 0.16);
+          curLen = initLen - (initLen - (4 * (cardH + slotSpacing * 0.25))) * uTurn;
+        } else {
+          sHead = totalPathDist - (totalReleased * slotSpacing * 0.95);
+          curLen = (cardH + slotSpacing * 0.25) * unreleasedCount;
+        }
+
+        const sTail = sHead - curLen;
+
+        if (curLen > 3 && alpha < 0.98) {
+          drawUnifiedSnakeRibbon(sHead, sTail, Math.min(1.0, unreleasedCount));
+        }
+      }
+
+      if (alpha >= 1.0) {
+        cards.forEach((card, i) => {
+          const slotIndex = isRight ? i : (cards.length - 1 - i);
+          const naturalX = i * (colWidth + gap);
+          const dockedScreenX = isRight ? (window.innerWidth - dockedCardW - railMargin) : railMargin;
+          const dockedScreenY = startY + slotIndex * slotSpacing;
+
+          const totalDeltaX = dockedScreenX - (wrapperLeft + naturalX);
+          const totalDeltaY = dockedScreenY - (wrapperTop - currentY);
+
+          card.classList.add('is-docked-rail');
+          card.style.transformOrigin = isRight ? 'right center' : 'left center';
+          card.style.transform = `translate3d(${totalDeltaX}px, ${totalDeltaY}px, 0) scale(1, 1)`;
+          card.style.opacity = '1';
+          card.classList.remove('is-beam-morph');
+        });
+      }
+    }
+
+    const stickyPill = el('stickyContextPill');
+    const filterPanel = el('filterPanel');
+
+    function updateStickyPill(y) {
+      if (!stickyPill || !filterPanel) return;
+      const triggerY = filterPanel.offsetTop + filterPanel.offsetHeight - 40;
+      if (y > triggerY) {
+        stickyPill.classList.add('is-visible');
+      } else {
+        stickyPill.classList.remove('is-visible');
+      }
+    }
+
+    let isRafScheduled = false;
+
+    function onScrollFrame() {
+      const y = window.scrollY;
+      renderKpiConveyor(y);
+      updateStickyPill(y);
       isRafScheduled = false;
     }
 
@@ -339,8 +676,16 @@
     }
 
     window.addEventListener('scroll', handleScroll, { passive: true });
-    window.addEventListener('resize', handleScroll, { passive: true });
-    handleScroll();
+    window.addEventListener('resize', () => {
+      initCanvas();
+      cachedMetrics = null;
+      handleScroll();
+    }, { passive: true });
+
+    initCanvas();
+    measureMetrics();
+    updateStickyPill(window.scrollY);
+    renderKpiConveyor(window.scrollY);
   }
 
   // ═══ FILTERS & COLLAPSIBLE EXECUTIVE PARAMETER SUITE ═══
@@ -404,7 +749,7 @@
       if (panel && panel.classList.contains('is-collapsed')) {
         toggleCollapse();
       }
-      window.scrollTo({ top: 0, behavior: 'smooth' });
+      gracefulScrollTo(0, 850);
       setTimeout(() => el('skuSelect')?.focus(), 450);
     }
 
