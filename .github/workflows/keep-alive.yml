@@ -12,4 +12,4 @@ jobs:
     steps:
       - name: Ping DemandSense AI Health Endpoint
         run: |
-          curl -s -f https://demandsense-ai.onrender.com/health || echo "Ping failed, but workflow completed."
+          curl -s -f https://demandsense-ai-0wu4.onrender.com/health || echo "Ping failed, but workflow completed."
