@@ -364,12 +364,34 @@
 
     updateDockSideUI();
 
+    function initCanvas() {
+      const canvas = el('kpiSnakeCanvas');
+      if (!canvas) return;
+      const dpr = Math.min(2, window.devicePixelRatio || 1);
+      const w = window.innerWidth;
+      const h = window.innerHeight;
+      if (canvas.width !== Math.round(w * dpr) || canvas.height !== Math.round(h * dpr)) {
+        canvas.width = Math.round(w * dpr);
+        canvas.height = Math.round(h * dpr);
+        canvas.style.width = w + 'px';
+        canvas.style.height = h + 'px';
+      }
+    }
+
     function renderKpiConveyor(currentY) {
       // 1. Navbar shrink
       if (currentY > 30) {
         nav?.classList.add('scrolled');
       } else {
         nav?.classList.remove('scrolled');
+      }
+
+      const canvas = el('kpiSnakeCanvas');
+      const ctx = canvas?.getContext('2d');
+      const dpr = Math.min(2, window.devicePixelRatio || 1);
+
+      if (canvas && ctx) {
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
       }
 
       // Check widescreen desktop viewport (Docking only on wide displays >= 1360px)
@@ -398,19 +420,6 @@
       if (!cachedMetrics) return;
 
       const { scrollStart, scrollEnd, wrapperLeft, wrapperTop, colWidth } = cachedMetrics;
-
-      // When at the very top (currentY <= scrollStart), cleanly reset transform to 0
-      const canvas = el('kpiSnakeCanvas');
-      const ctx = canvas?.getContext('2d');
-      const dpr = window.devicePixelRatio || 1;
-
-      if (canvas && ctx) {
-        if (canvas.width !== window.innerWidth * dpr || canvas.height !== window.innerHeight * dpr) {
-          canvas.width = window.innerWidth * dpr;
-          canvas.height = window.innerHeight * dpr;
-        }
-        ctx.clearRect(0, 0, canvas.width, canvas.height);
-      }
 
       if (currentY <= scrollStart || window.innerWidth < 1360) {
         cards.forEach(c => {
@@ -501,8 +510,8 @@
 
       // Draw Bold 6px Unified Single Snake Ribbon on Canvas
       function drawUnifiedSnakeRibbon(sHead, sTail, alphaGlow) {
-        if (!ctx) return;
-        const numPts = 48; // Dense sampling for silky curvature across long body
+        if (!ctx || sHead <= sTail) return;
+        const numPts = 32; // Smooth 32-point arc spline
         const pts = [];
         for (let k = 0; k <= numPts; k++) {
           const dist = sTail + (sHead - sTail) * (k / numPts);
@@ -537,9 +546,6 @@
         const foldProgress = [0, 0, 0, 0];
 
         cards.forEach((card, i) => {
-          // Card i (0 = leftmost, 3 = rightmost)
-          // On scroll down: 0 folds first, then 1, then 2, then 3
-          // On scroll up: 3 releases first (rightmost), then 2, then 1, then 0 (leftmost)
           const foldOrder = isRight ? (cards.length - 1 - i) : i;
           const foldStart = foldOrder * 0.055;
           const foldEnd = foldStart + 0.09;
@@ -579,8 +585,6 @@
         const dropProgress = [0, 0, 0, 0];
 
         cards.forEach((card, i) => {
-          // Card i (0 = leftmost) is released in order: orderIndex = i
-          // Card i is placed at: slotIndex = (3 - i) (so Card 0 at Bottom Slot 3, Card 3 at Top Slot 0)
           const orderIndex = isRight ? (cards.length - 1 - i) : i;
           const slotIndex = isRight ? i : (cards.length - 1 - i);
 
@@ -598,11 +602,9 @@
           const totalDeltaY = dockedScreenY - (wrapperTop - currentY);
 
           if (alpha < dropStart) {
-            // Card is in-flight within the snake line (hidden)
             card.style.opacity = '0';
             card.classList.remove('is-beam-morph', 'is-docked-rail');
           } else {
-            // Card drops/unfolds outward horizontally from the line at its slot
             const scaleX = 0.04 + (1.0 - 0.04) * pDrop;
             card.classList.add('is-docked-rail');
             card.style.transformOrigin = isRight ? 'right center' : 'left center';
@@ -620,12 +622,10 @@
         let curLen = 0;
 
         if (alpha < 0.44) {
-          // Plunging down the rail to the bottom slot
           sHead = sPlungeHead;
           const uTurn = smootherstep((alpha - 0.28) / 0.16);
           curLen = initLen - (initLen - (4 * (cardH + slotSpacing * 0.25))) * uTurn;
         } else {
-          // Stacking upward: head is at the currently releasing slot, shortening as each card drops
           sHead = totalPathDist - (totalReleased * slotSpacing * 0.95);
           curLen = (cardH + slotSpacing * 0.25) * unreleasedCount;
         }
@@ -669,36 +669,33 @@
       }
     }
 
-    function physicsLoop() {
-      // Smooth LERP momentum damping: moves 16% closer to targetScroll each frame (silky inertia)
-      smoothScroll += (targetScroll - smoothScroll) * 0.16;
+    let isRafScheduled = false;
 
-      renderKpiConveyor(smoothScroll);
-      updateStickyPill(smoothScroll);
-
-      if (Math.abs(targetScroll - smoothScroll) > 0.15) {
-        requestAnimationFrame(physicsLoop);
-      } else {
-        smoothScroll = targetScroll;
-        renderKpiConveyor(smoothScroll);
-        updateStickyPill(smoothScroll);
-        isRenderLoopRunning = false;
-      }
+    function onScrollFrame() {
+      const y = window.scrollY;
+      renderKpiConveyor(y);
+      updateStickyPill(y);
+      isRafScheduled = false;
     }
 
     function handleScroll() {
-      targetScroll = window.scrollY;
-      updateStickyPill(targetScroll);
-      if (!isRenderLoopRunning) {
-        isRenderLoopRunning = true;
-        requestAnimationFrame(physicsLoop);
+      if (!isRafScheduled) {
+        isRafScheduled = true;
+        requestAnimationFrame(onScrollFrame);
       }
     }
 
     window.addEventListener('scroll', handleScroll, { passive: true });
-    window.addEventListener('resize', () => { cachedMetrics = null; handleScroll(); }, { passive: true });
+    window.addEventListener('resize', () => {
+      initCanvas();
+      cachedMetrics = null;
+      handleScroll();
+    }, { passive: true });
+
+    initCanvas();
     measureMetrics();
     updateStickyPill(window.scrollY);
+    renderKpiConveyor(window.scrollY);
   }
 
   // ═══ FILTERS & COLLAPSIBLE EXECUTIVE PARAMETER SUITE ═══
