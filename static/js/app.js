@@ -630,9 +630,11 @@
   }
 
   function populateFilters(config) {
+    if (!config) return;
+
     // SKU
     const skuSel = el('skuSelect');
-    if (skuSel) {
+    if (skuSel && config.products) {
       skuSel.innerHTML = '';
       config.products.forEach(p => {
         const opt = document.createElement('option');
@@ -645,7 +647,7 @@
 
     // Region
     const regSel = el('regionSelect');
-    if (regSel) {
+    if (regSel && config.regions) {
       regSel.innerHTML = '';
       const allOpt = document.createElement('option');
       allOpt.value = 'ALL';
@@ -661,9 +663,11 @@
     }
 
     // Lead time
-    if (el('leadTimeSlider')) el('leadTimeSlider').value = config.default_lead_time;
-    state.leadTime = config.default_lead_time;
-    if (el('leadTimeValue')) el('leadTimeValue').textContent = `${state.leadTime}d`;
+    if (config.default_lead_time !== undefined) {
+      if (el('leadTimeSlider')) el('leadTimeSlider').value = config.default_lead_time;
+      state.leadTime = config.default_lead_time;
+      if (el('leadTimeValue')) el('leadTimeValue').textContent = `${state.leadTime}d`;
+    }
 
     // Initialize summary
     updateCollapsedSummary();
@@ -865,14 +869,17 @@
     for (let i = 0; i < 4; i++) el(`kpi${i}`).innerHTML = '<div class="loading-spinner"></div>';
   }
 
+  let _forecastRetryCount = 0;
+
   // ═══ MAIN FORECAST LOAD ═══
   async function loadForecast() {
     showKpiLoading();
     showLoading('heroChart');
-    el('lastUpdated').textContent = 'Loading forecast...';
+    if (el('lastUpdated')) el('lastUpdated').textContent = 'Loading forecast...';
 
     try {
       state.forecastData = await API.get(`/api/forecast?${_qs()}`);
+      _forecastRetryCount = 0;
       renderKpiBar();
       renderHeroChart();
       renderSkuInfo();
@@ -895,8 +902,40 @@
       if (state.activeTab === 'tab4') { renderSimSliders(); renderSimMetrics(); renderSimChart(false); }
       if (state.activeTab === 'tab5') renderTab5();
     } catch (e) {
-      toast('Forecast error: ' + e.message, true);
-      el('lastUpdated').textContent = 'Error loading data';
+      console.warn('Forecast fetch attempt failed:', e);
+      if (_forecastRetryCount < 2) {
+        _forecastRetryCount++;
+        if (el('lastUpdated')) el('lastUpdated').textContent = `Server waking up... retrying (${_forecastRetryCount}/2)`;
+        setTimeout(loadForecast, 4000);
+        return;
+      }
+
+      toast('Free instance waking up: ' + e.message, true);
+      if (el('lastUpdated')) {
+        el('lastUpdated').innerHTML = `<span style="color:var(--amber)">Server cold start. <a href="javascript:void(0)" onclick="window.DemandSenseApp?.retryLoad()" style="color:var(--teal);text-decoration:underline">Click to Retry</a></span>`;
+      }
+      for (let i = 0; i < 4; i++) {
+        const card = el(`kpi${i}`);
+        if (card) {
+          card.innerHTML = `
+            <div style="padding:14px 6px;text-align:center;color:var(--text3);font-size:0.75rem">
+              <span style="font-size:1.1rem;display:block;margin-bottom:3px">⏳</span>
+              Waking up
+            </div>
+          `;
+        }
+      }
+      const hero = el('heroChart');
+      if (hero) {
+        hero.innerHTML = `
+          <div style="display:flex;flex-direction:column;align-items:center;justify-content:center;height:280px;color:var(--text2);gap:10px;text-align:center;padding:1rem">
+            <div style="font-size:1.6rem">⚡</div>
+            <div style="font-size:0.95rem;font-weight:600">Instance Warming Up (~20s)</div>
+            <div style="font-size:0.78rem;color:var(--text3);max-width:320px">The free container was sleeping. Please click below to refresh data.</div>
+            <button class="export-btn primary" onclick="window.DemandSenseApp?.retryLoad()" style="font-size:0.8rem;padding:6px 18px;margin-top:4px">Retry Connection</button>
+          </div>
+        `;
+      }
     }
   }
 
