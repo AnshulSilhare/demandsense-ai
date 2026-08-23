@@ -291,10 +291,30 @@ if(localStorage.getItem('ds-theme')==='dark'||(!localStorage.getItem('ds-theme')
   <!-- ═══ KPI Command Bar (Inline 4-Col -> Vertical Right HUD Dock on Scroll) ═══ -->
   <div class="kpi-bar-wrapper" id="kpiBarWrapper">
     <div class="kpi-bar" id="kpiBar">
-      <div class="kpi-card" id="kpi0"><div class="loading-spinner"></div></div>
-      <div class="kpi-card" id="kpi1"><div class="loading-spinner"></div></div>
-      <div class="kpi-card" id="kpi2"><div class="loading-spinner"></div></div>
-      <div class="kpi-card" id="kpi3"><div class="loading-spinner"></div></div>
+      <div class="kpi-card" id="kpi0">
+        <div class="kpi-skeleton">
+          <div class="kpi-sk-top"><div class="kpi-sk-chip"></div><div class="kpi-sk-badge"></div></div>
+          <div class="kpi-sk-label"></div><div class="kpi-sk-val"></div><div class="kpi-sk-spark"></div>
+        </div>
+      </div>
+      <div class="kpi-card" id="kpi1">
+        <div class="kpi-skeleton">
+          <div class="kpi-sk-top"><div class="kpi-sk-chip"></div><div class="kpi-sk-badge"></div></div>
+          <div class="kpi-sk-label"></div><div class="kpi-sk-val"></div><div class="kpi-sk-spark"></div>
+        </div>
+      </div>
+      <div class="kpi-card" id="kpi2">
+        <div class="kpi-skeleton">
+          <div class="kpi-sk-top"><div class="kpi-sk-chip"></div><div class="kpi-sk-badge"></div></div>
+          <div class="kpi-sk-label"></div><div class="kpi-sk-val"></div><div class="kpi-sk-spark"></div>
+        </div>
+      </div>
+      <div class="kpi-card" id="kpi3">
+        <div class="kpi-skeleton">
+          <div class="kpi-sk-top"><div class="kpi-sk-chip"></div><div class="kpi-sk-badge"></div></div>
+          <div class="kpi-sk-label"></div><div class="kpi-sk-val"></div><div class="kpi-sk-spark"></div>
+        </div>
+      </div>
     </div>
   </div>
 

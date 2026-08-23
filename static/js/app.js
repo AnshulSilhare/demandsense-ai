@@ -233,6 +233,8 @@
     activeScrollAnim = requestAnimationFrame(step);
   }
 
+  let activeForecastPromise = null;
+
   function switchTab(target) {
     if (!target || target === state.activeTab) return;
 
@@ -255,6 +257,12 @@
     state.activeTab = target;
 
     function refreshTabCharts() {
+      if (activeForecastPromise && !state.forecastData) {
+        activeForecastPromise.then(() => {
+          if (state.activeTab === target) refreshTabCharts();
+        });
+      }
+
       if (target === 'tab1') {
         if (state.forecastData) renderHeroChart();
         if (!state.decompData) loadDecomp(); else {
@@ -1050,7 +1058,22 @@
   }
 
   function showKpiLoading() {
-    for (let i = 0; i < 4; i++) el(`kpi${i}`).innerHTML = '<div class="loading-spinner"></div>';
+    for (let i = 0; i < 4; i++) {
+      const card = el(`kpi${i}`);
+      if (card) {
+        card.innerHTML = `
+          <div class="kpi-skeleton">
+            <div class="kpi-sk-top">
+              <div class="kpi-sk-chip"></div>
+              <div class="kpi-sk-badge"></div>
+            </div>
+            <div class="kpi-sk-label"></div>
+            <div class="kpi-sk-val"></div>
+            <div class="kpi-sk-spark"></div>
+          </div>
+        `;
+      }
+    }
   }
 
   let _forecastRetryCount = 0;
@@ -1059,10 +1082,17 @@
   async function loadForecast() {
     showKpiLoading();
     showLoading('heroChart');
-    if (el('lastUpdated')) el('lastUpdated').textContent = 'Loading forecast...';
+    if (el('lastUpdated')) el('lastUpdated').textContent = 'Connecting to AI Inference Engine...';
+
+    const promise = API.get(`/api/forecast?${_qs()}`);
+    activeForecastPromise = promise;
 
     try {
-      state.forecastData = await API.get(`/api/forecast?${_qs()}`);
+      const data = await promise;
+      // Guard against stale race condition if a newer request was dispatched
+      if (activeForecastPromise !== promise && activeForecastPromise !== null) return;
+
+      state.forecastData = data;
       _forecastRetryCount = 0;
       renderKpiBar();
       renderHeroChart();
@@ -1086,15 +1116,16 @@
       if (state.activeTab === 'tab4') { renderSimSliders(); renderSimMetrics(); renderSimChart(false); }
       if (state.activeTab === 'tab5') renderTab5();
     } catch (e) {
+      if (activeForecastPromise !== promise && activeForecastPromise !== null) return;
       console.warn('Forecast fetch attempt failed:', e);
       if (_forecastRetryCount < 2) {
         _forecastRetryCount++;
-        if (el('lastUpdated')) el('lastUpdated').textContent = `Server waking up... retrying (${_forecastRetryCount}/2)`;
-        setTimeout(loadForecast, 4000);
+        if (el('lastUpdated')) el('lastUpdated').textContent = `Server waking up... retrying connection (${_forecastRetryCount}/2)`;
+        setTimeout(loadForecast, 3500);
         return;
       }
 
-      toast('Free instance waking up: ' + e.message, true);
+      toast('Instance waking up: ' + e.message, true);
       if (el('lastUpdated')) {
         el('lastUpdated').innerHTML = `<span style="color:var(--amber)">Server cold start. <a href="javascript:void(0)" onclick="window.DemandSenseApp?.retryLoad()" style="color:var(--teal);text-decoration:underline">Click to Retry</a></span>`;
       }
@@ -1114,11 +1145,15 @@
         hero.innerHTML = `
           <div style="display:flex;flex-direction:column;align-items:center;justify-content:center;height:280px;color:var(--text2);gap:10px;text-align:center;padding:1rem">
             <div style="font-size:1.6rem">⚡</div>
-            <div style="font-size:0.95rem;font-weight:600">Instance Warming Up (~20s)</div>
-            <div style="font-size:0.78rem;color:var(--text3);max-width:320px">The free container was sleeping. Please click below to refresh data.</div>
+            <div style="font-size:0.95rem;font-weight:600">Instance Warming Up (~15s)</div>
+            <div style="font-size:0.78rem;color:var(--text3);max-width:320px">The free cloud container was sleeping. Please click below to refresh data.</div>
             <button class="export-btn primary" onclick="window.DemandSenseApp?.retryLoad()" style="font-size:0.8rem;padding:6px 18px;margin-top:4px">Retry Connection</button>
           </div>
         `;
+      }
+    } finally {
+      if (activeForecastPromise === promise) {
+        activeForecastPromise = null;
       }
     }
   }

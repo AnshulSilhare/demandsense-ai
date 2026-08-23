@@ -29,6 +29,8 @@ from fastapi.responses import FileResponse, StreamingResponse, JSONResponse
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 
+import asyncio
+
 # ── Ensure project root is on sys.path so `config` / `src` imports work ──
 PROJECT_ROOT = Path(__file__).parent.resolve()
 if str(PROJECT_ROOT) not in sys.path:
@@ -368,36 +370,71 @@ async def startup():
     else:
         logger.info("GEMINI_API_KEY not set — using offline rule-based AI engine")
 
-    # Warm up cache for default SKU001
+    # 1. Warm up default SKU001 synchronously so the very first visitor gets instantaneous response
     try:
-        filtered = _filter_data(DEFAULT_DF, "SKU001", "ALL")
-        forecast_res, impact_data, llm_report = _run_forecast_pipeline(
-            filtered, "SKU001", DEFAULT_LEAD_TIME_DAYS, "A", 25000
-        )
-        sku_info = _get_product_info("SKU001")
-        kpi_bar = _compute_kpi_bar(filtered, forecast_res["winning_forecast"], impact_data, sku_info)
-        chart_history = filtered[["date", "units_sold"]].copy()
-        chart_history["date"] = chart_history["date"].dt.strftime("%Y-%m-%d")
-        chart_history["rolling_7d"] = filtered["units_sold"].rolling(7, min_periods=1).mean().round(1)
-        res = {
-            "forecast_res": _serialize_forecast_res(forecast_res),
-            "impact_data": _serialize_impact(impact_data),
-            "llm_report": llm_report,
-            "kpi_bar": kpi_bar,
-            "chart_history": chart_history.to_dict(orient="records"),
-            "sku_info": sku_info,
-            "data_summary": {
-                "data_start": filtered["date"].min().strftime("%b %d, %Y"),
-                "data_end": filtered["date"].max().strftime("%b %d, %Y"),
-                "total_days": int((filtered["date"].max() - filtered["date"].min()).days),
-                "total_skus": int(DEFAULT_DF["sku_id"].nunique()),
-            }
-        }
-        ck = _cache_key(None, "SKU001", "ALL", DEFAULT_LEAD_TIME_DAYS, "A", 25000)
-        _set_cached_forecast(ck, res)
+        _precompute_forecast("SKU001", "ALL", DEFAULT_LEAD_TIME_DAYS, "A", 25000)
         logger.info("Default SKU001 cache warmed up successfully")
     except Exception as e:
-        logger.warning(f"Cache warmup skipped: {e}")
+        logger.warning(f"Default SKU001 warmup error: {e}")
+
+    # 2. Launch non-blocking background task to warm up all remaining 19 SKUs
+    asyncio.create_task(_warmup_background())
+
+
+def _precompute_forecast(sku_id: str, region: str = "ALL", lead_time: int = DEFAULT_LEAD_TIME_DAYS, service_level: str = "A", stock: int = 25000):
+    """Precompute and store forecast in FORECAST_CACHE."""
+    abc_class = _parse_service_level(service_level)
+    ck = _cache_key(None, sku_id, region, lead_time, abc_class, stock)
+    cached = _get_cached_forecast(ck)
+    if cached:
+        return cached
+
+    if DEFAULT_DF.empty:
+        return None
+
+    filtered = _filter_data(DEFAULT_DF, sku_id, region)
+    if filtered.empty or len(filtered) < 30:
+        return None
+
+    forecast_res, impact_data, llm_report = _run_forecast_pipeline(
+        filtered, sku_id, lead_time, abc_class, stock
+    )
+    sku_info = _get_product_info(sku_id)
+    kpi_bar = _compute_kpi_bar(filtered, forecast_res["winning_forecast"], impact_data, sku_info)
+    chart_history = filtered[["date", "units_sold"]].copy()
+    chart_history["date"] = chart_history["date"].dt.strftime("%Y-%m-%d")
+    chart_history["rolling_7d"] = filtered["units_sold"].rolling(7, min_periods=1).mean().round(1)
+
+    result = {
+        "forecast_res": _serialize_forecast_res(forecast_res),
+        "impact_data": _serialize_impact(impact_data),
+        "llm_report": llm_report,
+        "kpi_bar": kpi_bar,
+        "chart_history": chart_history.to_dict(orient="records"),
+        "sku_info": sku_info,
+        "data_summary": {
+            "data_start": filtered["date"].min().strftime("%b %d, %Y"),
+            "data_end": filtered["date"].max().strftime("%b %d, %Y"),
+            "total_days": int((filtered["date"].max() - filtered["date"].min()).days),
+            "total_skus": int(DEFAULT_DF["sku_id"].nunique()) if not DEFAULT_DF.empty else 20,
+        }
+    }
+    _set_cached_forecast(ck, result)
+    return result
+
+
+async def _warmup_background():
+    """Warm up all default SKUs in background so filter changes are instantaneous."""
+    await asyncio.sleep(1.0)
+    sku_list = [p["sku_id"] for p in PRODUCTS if p.get("sku_id") != "SKU001"]
+    logger.info(f"Starting background cache warmup for {len(sku_list)} SKUs...")
+    for sku_id in sku_list:
+        try:
+            _precompute_forecast(sku_id)
+            await asyncio.sleep(0.05)  # Yield to event loop to keep API responsive
+        except Exception as e:
+            logger.warning(f"Background warmup for {sku_id} failed: {e}")
+    logger.info("Background cache warmup completed for all SKUs.")
 
 
 # ── Serve the SPA ──

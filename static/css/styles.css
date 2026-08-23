@@ -1673,6 +1673,61 @@ body.dark .kpi-card {
   box-shadow: var(--glass-shadow-hover);
 }
 
+/* ─── KPI CARD SKELETON SHIMMER ─────────────────────────────── */
+.kpi-skeleton {
+  display: flex;
+  flex-direction: column;
+  gap: 0.45rem;
+  width: 100%;
+  padding: 0.15rem 0;
+}
+.kpi-sk-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 0.2rem;
+}
+.kpi-sk-chip {
+  width: 28px;
+  height: 28px;
+  border-radius: 8px;
+  background: linear-gradient(90deg, var(--bg3) 25%, var(--border2) 50%, var(--bg3) 75%);
+  background-size: 200% 100%;
+  animation: shimmer 1.5s infinite;
+}
+.kpi-sk-badge {
+  width: 48px;
+  height: 18px;
+  border-radius: 999px;
+  background: linear-gradient(90deg, var(--bg3) 25%, var(--border2) 50%, var(--bg3) 75%);
+  background-size: 200% 100%;
+  animation: shimmer 1.5s infinite;
+}
+.kpi-sk-label {
+  width: 70%;
+  height: 10px;
+  border-radius: 4px;
+  background: linear-gradient(90deg, var(--bg3) 25%, var(--border2) 50%, var(--bg3) 75%);
+  background-size: 200% 100%;
+  animation: shimmer 1.5s infinite;
+}
+.kpi-sk-val {
+  width: 55%;
+  height: 22px;
+  border-radius: 6px;
+  background: linear-gradient(90deg, var(--bg3) 25%, var(--border2) 50%, var(--bg3) 75%);
+  background-size: 200% 100%;
+  animation: shimmer 1.5s infinite;
+}
+.kpi-sk-spark {
+  width: 100%;
+  height: 16px;
+  border-radius: 4px;
+  background: linear-gradient(90deg, var(--bg3) 25%, var(--border2) 50%, var(--bg3) 75%);
+  background-size: 200% 100%;
+  animation: shimmer 1.5s infinite;
+}
+
 #kpiBarWrapper {
   min-height: 82px;
   width: 100%;
