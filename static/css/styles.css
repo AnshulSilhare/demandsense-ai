@@ -3250,9 +3250,65 @@ body.dark .guide-protip-box {
     gap: 0.85rem !important;
   }
 
+  /* ─── OPTIMIZED MOBILE CHART HEIGHTS & ASPECT RATIOS ─── */
   .chart-container {
-    min-height: 270px !important;
+    min-height: unset !important;
     width: 100% !important;
+  }
+
+  #heroChart {
+    height: 250px !important;
+    min-height: 250px !important;
+  }
+
+  #inventoryChart {
+    height: 240px !important;
+    min-height: 240px !important;
+  }
+
+  #simChart {
+    height: 240px !important;
+    min-height: 240px !important;
+  }
+
+  #radarChart {
+    height: 240px !important;
+    min-height: 240px !important;
+  }
+
+  #fiChart {
+    height: 230px !important;
+    min-height: 230px !important;
+  }
+
+  #scatterChart {
+    height: 230px !important;
+    min-height: 230px !important;
+  }
+
+  #festivalChart {
+    height: 230px !important;
+    min-height: 230px !important;
+  }
+
+  #mapChart {
+    height: 240px !important;
+    min-height: 240px !important;
+  }
+
+  #abcTreemap {
+    height: 230px !important;
+    min-height: 230px !important;
+  }
+
+  .decomp-panel {
+    height: 95px !important;
+    min-height: 95px !important;
+  }
+
+  #modalChart {
+    height: 340px !important;
+    min-height: 340px !important;
   }
 
   .data-table-container {
@@ -3350,6 +3406,32 @@ body.dark .guide-protip-box {
   .bottom-tab-bar .btab svg {
     width: 16px !important;
     height: 16px !important;
+  }
+
+  #heroChart {
+    height: 230px !important;
+    min-height: 230px !important;
+  }
+
+  #inventoryChart,
+  #simChart,
+  #radarChart,
+  #mapChart {
+    height: 220px !important;
+    min-height: 220px !important;
+  }
+
+  #fiChart,
+  #scatterChart,
+  #festivalChart,
+  #abcTreemap {
+    height: 210px !important;
+    min-height: 210px !important;
+  }
+
+  .decomp-panel {
+    height: 85px !important;
+    min-height: 85px !important;
   }
 }
 

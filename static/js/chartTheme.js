@@ -99,10 +99,10 @@
                     iconStyle: { borderColor: colors.text3 }
                 },
                 grid: {
-                    left: 48,
-                    right: 24,
-                    top: 48,
-                    bottom: 56,
+                    left: typeof window !== 'undefined' && window.innerWidth < 768 ? 12 : 44,
+                    right: typeof window !== 'undefined' && window.innerWidth < 768 ? 14 : 24,
+                    top: typeof window !== 'undefined' && window.innerWidth < 768 ? 32 : 44,
+                    bottom: typeof window !== 'undefined' && window.innerWidth < 768 ? 38 : 52,
                     containLabel: true
                 },
                 line: {
