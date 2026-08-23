@@ -101,6 +101,8 @@
     setupFilters();
     setupModal();
     setupScrollEffects();
+    setupMomentumScroll();
+    setupScrollReveal();
 
     try {
       state.config = await API.get('/api/config');
@@ -192,39 +194,108 @@
     indicator.style.width = `${width}px`;
   }
 
-  // ═══ CUSTOM CINEMATIC EASED SMOOTH SCROLL CONTROLLER (Graceful & Frictionless) ═══
-  let activeScrollAnim = null;
+  // ═══ INTERSECTION OBSERVER SCROLL REVEAL CHOREOGRAPHER ═══
+  let revealObserver = null;
 
-  function gracefulScrollTo(targetY, duration = 800) {
-    if (activeScrollAnim) {
-      cancelAnimationFrame(activeScrollAnim);
-      activeScrollAnim = null;
+  function setupScrollReveal() {
+    if (revealObserver) {
+      revealObserver.disconnect();
     }
 
-    const startY = window.scrollY;
-    const diff = targetY - startY;
-    if (Math.abs(diff) < 4) {
-      window.scrollTo(0, targetY);
-      return;
-    }
-    const startTime = performance.now();
+    revealObserver = new IntersectionObserver((entries, observer) => {
+      entries.forEach(entry => {
+        if (entry.isIntersecting) {
+          entry.target.classList.add('is-revealed');
+          observer.unobserve(entry.target);
+        }
+      });
+    }, {
+      threshold: 0.08,
+      rootMargin: '0px 0px -20px 0px'
+    });
 
-    function step(currentTime) {
-      const elapsed = currentTime - startTime;
-      const progress = Math.min(1, elapsed / duration);
-      // Luxurious C2 Quintic Smootherstep for liquid smooth acceleration & deceleration
-      const ease = progress * progress * progress * (progress * (progress * 6 - 15) + 10);
-
-      const currentPos = startY + diff * ease;
-      window.scrollTo(0, currentPos);
-
-      if (progress < 1) {
-        activeScrollAnim = requestAnimationFrame(step);
-      } else {
-        activeScrollAnim = null;
+    $$('.card, .section-header-row, .alert-banner, .po-preview').forEach((elem) => {
+      if (!elem.classList.contains('reveal-on-scroll')) {
+        elem.classList.add('reveal-on-scroll');
+        const parentGrid = elem.closest('.grid-2, .grid-3, .grid-4, .ai-cards-grid');
+        if (parentGrid) {
+          const siblings = Array.from(parentGrid.children);
+          const idx = siblings.indexOf(elem);
+          if (idx >= 0) {
+            elem.classList.add(`reveal-stagger-${(idx % 4) + 1}`);
+          }
+        }
       }
+
+      // Check if element is already within viewport on initial check
+      const rect = elem.getBoundingClientRect();
+      if (rect.top < window.innerHeight && rect.bottom > 0) {
+        elem.classList.add('is-revealed');
+      } else {
+        revealObserver.observe(elem);
+      }
+    });
+  }
+
+  // ═══ ULTRA-FLUID INERTIAL MOMENTUM SMOOTH SCROLL ENGINE (Lenis-Grade Physics) ═══
+  const scrollPhysics = {
+    targetY: window.scrollY,
+    currentY: window.scrollY,
+    isRunning: false,
+    damping: 0.092 // Calibrated luxury spring damping (zero mechanical stepping)
+  };
+
+  function updateScrollPhysics() {
+    const diff = scrollPhysics.targetY - scrollPhysics.currentY;
+    if (Math.abs(diff) > 0.3) {
+      scrollPhysics.currentY += diff * scrollPhysics.damping;
+      window.scrollTo(0, scrollPhysics.currentY);
+      requestAnimationFrame(updateScrollPhysics);
+    } else {
+      scrollPhysics.currentY = scrollPhysics.targetY;
+      window.scrollTo(0, scrollPhysics.currentY);
+      scrollPhysics.isRunning = false;
     }
-    activeScrollAnim = requestAnimationFrame(step);
+  }
+
+  function setupMomentumScroll() {
+    scrollPhysics.targetY = window.scrollY;
+    scrollPhysics.currentY = window.scrollY;
+
+    window.addEventListener('wheel', (e) => {
+      // Allow natural scroll inside scrollable drawers or pre blocks
+      if (e.target.closest('.detail-drawer, .modal-content, pre, select, textarea')) return;
+
+      // Prevent mechanical rigid wheel step
+      e.preventDefault();
+
+      const delta = e.deltaY * (e.deltaMode === 1 ? 22 : 1);
+      const maxScroll = Math.max(0, document.documentElement.scrollHeight - window.innerHeight);
+      scrollPhysics.targetY = Math.max(0, Math.min(maxScroll, scrollPhysics.targetY + delta));
+
+      if (!scrollPhysics.isRunning) {
+        scrollPhysics.isRunning = true;
+        requestAnimationFrame(updateScrollPhysics);
+      }
+    }, { passive: false });
+
+    // Stay in sync if user drags native scrollbar or touches screen
+    window.addEventListener('scroll', () => {
+      if (!scrollPhysics.isRunning) {
+        scrollPhysics.targetY = window.scrollY;
+        scrollPhysics.currentY = window.scrollY;
+      }
+    }, { passive: true });
+  }
+
+  function gracefulScrollTo(targetY) {
+    const maxScroll = Math.max(0, document.documentElement.scrollHeight - window.innerHeight);
+    scrollPhysics.targetY = Math.max(0, Math.min(maxScroll, targetY));
+
+    if (!scrollPhysics.isRunning) {
+      scrollPhysics.isRunning = true;
+      requestAnimationFrame(updateScrollPhysics);
+    }
   }
 
   function switchTab(target) {
@@ -254,7 +325,7 @@
       const elementPosition = activePanel.getBoundingClientRect().top;
       const offsetPosition = elementPosition + window.pageYOffset - headerOffset;
 
-      gracefulScrollTo(Math.max(0, offsetPosition), 800);
+      gracefulScrollTo(Math.max(0, offsetPosition));
     }
 
     // Render / refresh charts in the newly activated tab
@@ -303,6 +374,9 @@
       if (target === 'tab5') {
         renderTab5();
       }
+
+      // Re-trigger scroll reveal observer for newly visible cards
+      setupScrollReveal();
 
       // Trigger resize on all active chart instances
       if (window.ChartTheme?._instances) {
@@ -1116,6 +1190,7 @@
     const kpis = state.forecastData?.kpi_bar?.kpis || [];
     kpis.forEach((kpi, i) => {
       const card = el(`kpi${i}`);
+      if (!card) return;
       const deltaClass = kpi.favorable ? 'up' : (kpi.delta_pct === 0 ? 'neutral' : 'down');
       const arrow = kpi.delta_pct > 0 ? '▲' : (kpi.delta_pct < 0 ? '▼' : '—');
 
@@ -1131,6 +1206,10 @@
         <div class="kpi-value">${kpi.value_fmt}</div>
         <div class="kpi-sparkline">${spark}</div>
       `;
+
+      card.classList.remove('cascade-in');
+      void card.offsetWidth;
+      card.classList.add('cascade-in');
     });
   }
 
