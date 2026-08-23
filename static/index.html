@@ -96,12 +96,18 @@ if(localStorage.getItem('ds-theme')==='dark'||(!localStorage.getItem('ds-theme')
 <!-- ═══ Smart Floating Sticky Context Pill (Docks on scroll) ═══ -->
 <div class="sticky-context-pill" id="stickyContextPill" role="region" aria-label="Active Parameter Summary" title="Click to view or edit parameters">
   <div class="context-pill-content">
-    <div class="pill-badge">
-      <span class="pill-dot"></span>
-      <span class="pill-sku-title" id="pillSku">SKU001 — Premium Detergent</span>
+    <div class="pill-top-row">
+      <div class="pill-badge">
+        <span class="pill-dot"></span>
+        <span class="pill-sku-title" id="pillSku">SKU001 — Premium Detergent</span>
+      </div>
+      <button type="button" class="pill-edit-btn" id="pillEditBtn" aria-label="Edit Executive Parameters" title="Edit Parameters">
+        <span>Edit</span>
+        <svg viewBox="0 0 24 24" width="11" height="11" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>
+      </button>
     </div>
     <div class="pill-divider"></div>
-    <div class="pill-metrics">
+    <div class="pill-metrics" id="pillMetrics">
       <span class="pill-metric-item" title="Territory Scope"><span class="pill-icon">📍</span><span id="pillRegion">National</span></span>
       <span class="pill-sep">·</span>
       <span class="pill-metric-item" title="Supplier Lead Time"><span class="pill-icon">⏱️</span><span id="pillLeadTime">7d Std</span></span>
@@ -111,10 +117,6 @@ if(localStorage.getItem('ds-theme')==='dark'||(!localStorage.getItem('ds-theme')
       <span class="pill-metric-item" title="Operating Warehouse Stock"><span class="pill-icon">🏬</span><span id="pillStock">25,000 units</span></span>
     </div>
   </div>
-  <button type="button" class="pill-edit-btn" id="pillEditBtn" aria-label="Edit Executive Parameters" title="Edit Parameters">
-    <span>Edit</span>
-    <svg viewBox="0 0 24 24" width="11" height="11" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>
-  </button>
 </div>
 
 <!-- ═══ Main App Container ═══ -->

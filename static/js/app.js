@@ -112,7 +112,10 @@
     el('themeToggle').textContent = document.body.classList.contains('dark') ? '☀️' : '🌙';
   }
 
-  // ═══ NAV TABS & MOBILE BOTTOM TAB BAR ═══
+  // ═══ NAV TABS & MOBILE/TABLET BOTTOM TAB BAR ═══
+  let _lastTabIndex = 0;
+  const _tabSequence = ['tab1', 'tab2', 'tab3', 'tab4', 'tab5'];
+
   function updateBottomTabIndicator(target) {
     const indicator = el('btabIndicator');
     const tabBar = el('bottomTabBar');
@@ -120,13 +123,29 @@
     const activeBtab = tabBar.querySelector(`.btab[data-tab="${target || state.activeTab}"]`);
     if (!activeBtab) return;
 
+    const targetIdx = _tabSequence.indexOf(target || state.activeTab);
+    const movingRight = targetIdx >= _lastTabIndex;
+    _lastTabIndex = targetIdx >= 0 ? targetIdx : 0;
+
     const barRect = tabBar.getBoundingClientRect();
     const tabRect = activeBtab.getBoundingClientRect();
     if (tabRect.width === 0) return;
 
     const left = tabRect.left - barRect.left;
+    const width = tabRect.width;
+
+    // Fluid Liquid Droplet Metamorphosis
+    indicator.classList.remove('liquid-stretch-right', 'liquid-stretch-left', 'liquid-settle');
+    void indicator.offsetWidth; // force DOM reflow for crisp animation replay
+
+    indicator.classList.add(movingRight ? 'liquid-stretch-right' : 'liquid-stretch-left');
     indicator.style.transform = `translateX(${left}px)`;
-    indicator.style.width = `${tabRect.width}px`;
+    indicator.style.width = `${width}px`;
+
+    setTimeout(() => {
+      indicator.classList.remove('liquid-stretch-right', 'liquid-stretch-left');
+      indicator.classList.add('liquid-settle');
+    }, 280);
   }
 
   function switchTab(target) {
