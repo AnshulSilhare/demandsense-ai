@@ -35,21 +35,58 @@
     return (...args) => { clearTimeout(t); t = setTimeout(() => fn(...args), ms); };
   }
 
-  // ═══ API LAYER ═══
+  // ═══ API LAYER WITH AUTOMATIC COLD-START RETRY ═══
   const API = {
-    async get(path) {
-      const res = await fetch(path);
-      if (!res.ok) throw new Error(`API ${path}: ${res.status}`);
-      return res.json();
+    async get(path, retries = 3, initialDelay = 2500) {
+      let delay = initialDelay;
+      for (let attempt = 0; attempt <= retries; attempt++) {
+        try {
+          const res = await fetch(path);
+          if (res.ok) return await res.json();
+          // If server is 502, 503, 504 (cold start or deployment in progress), auto-retry
+          if ([502, 503, 504].includes(res.status) && attempt < retries) {
+            toast(`⚡ Container waking up, retrying in ${Math.round(delay / 1000)}s...`);
+            await new Promise(r => setTimeout(r, delay));
+            delay *= 1.5;
+            continue;
+          }
+          throw new Error(`API ${path}: ${res.status}`);
+        } catch (err) {
+          if (attempt < retries && (err.name === 'TypeError' || String(err.message).includes('502') || String(err.message).includes('503'))) {
+            toast(`⚡ Container waking up, retrying in ${Math.round(delay / 1000)}s...`);
+            await new Promise(r => setTimeout(r, delay));
+            delay *= 1.5;
+            continue;
+          }
+          throw err;
+        }
+      }
     },
-    async post(path, body) {
-      const res = await fetch(path, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(body),
-      });
-      if (!res.ok) throw new Error(`API ${path}: ${res.status}`);
-      return res.json();
+    async post(path, body, retries = 2, initialDelay = 2500) {
+      let delay = initialDelay;
+      for (let attempt = 0; attempt <= retries; attempt++) {
+        try {
+          const res = await fetch(path, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(body),
+          });
+          if (res.ok) return await res.json();
+          if ([502, 503, 504].includes(res.status) && attempt < retries) {
+            await new Promise(r => setTimeout(r, delay));
+            delay *= 1.5;
+            continue;
+          }
+          throw new Error(`API ${path}: ${res.status}`);
+        } catch (err) {
+          if (attempt < retries) {
+            await new Promise(r => setTimeout(r, delay));
+            delay *= 1.5;
+            continue;
+          }
+          throw err;
+        }
+      }
     },
   };
 
