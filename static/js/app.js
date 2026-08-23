@@ -63,6 +63,7 @@
     setupNav();
     setupFilters();
     setupModal();
+    setupScrollEffects();
 
     try {
       state.config = await API.get('/api/config');
@@ -196,7 +197,8 @@
     });
   }
 
-    // ═══ PURE CONTINUOUS SCROLL CONVEYOR (Zero Detach/Attach Jumps) ═══
+  // ═══ PURE CONTINUOUS SCROLL CONVEYOR (Zero Detach/Attach Jumps) ═══
+  function setupScrollEffects() {
     const nav = el('topNav');
     const kpiBar = el('kpiBar');
     const kpiWrapper = el('kpiBarWrapper');
