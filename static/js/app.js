@@ -209,8 +209,21 @@
 
     // Switch tab contents
     $$('.tab-content').forEach(tc => tc.classList.remove('active'));
-    el(target)?.classList.add('active');
+    const activePanel = el(target);
+    activePanel?.classList.add('active');
     state.activeTab = target;
+
+    // Smoothly scroll up or down to the start of that tab heading
+    if (activePanel) {
+      const headerOffset = window.innerWidth < 768 ? 64 : 80;
+      const elementPosition = activePanel.getBoundingClientRect().top;
+      const offsetPosition = elementPosition + window.pageYOffset - headerOffset;
+
+      window.scrollTo({
+        top: Math.max(0, offsetPosition),
+        behavior: 'smooth'
+      });
+    }
 
     // Render / refresh charts in the newly activated tab
     setTimeout(() => {
