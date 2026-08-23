@@ -1,4 +1,4 @@
-# 🔮 DemandSense AI — Intelligent Demand Forecasting Engine for Indian FMCG
+# 🔮 DemandSense AI - Intelligent Demand Forecasting Engine for Indian FMCG
 
 > An AI Agent-powered demand forecasting & inventory optimization system built for the Indian FMCG sector. Combines multi-model ML forecasting, prescriptive supply chain analytics, and LLM reasoning into a single interactive decision-support platform.
 
@@ -159,7 +159,7 @@ The project uses **realistic synthetic Indian FMCG data** because real company d
 ## Author
 
 **Anshul Silhare**
-- PGDM Operations Management — Welingkar Institute of Management (WeSchool)
+- PGDM Operations Management - Welingkar Institute of Management (WeSchool)
 - Rutgers Supply Chain Analytics (Coursera Certification)
 - [LinkedIn](https://linkedin.com/in/anshul-silhare) | [GitHub](https://github.com/anshul-silhare)
 
