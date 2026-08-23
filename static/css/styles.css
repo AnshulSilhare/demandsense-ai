@@ -2231,7 +2231,6 @@ body.dark .modal-title {
 .tab-content {
   display: none;
   will-change: transform;
-  transition: transform 0.28s cubic-bezier(0.16, 1, 0.3, 1);
 }
 .tab-content.active {
   display: block;

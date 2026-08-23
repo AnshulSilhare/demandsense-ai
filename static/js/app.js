@@ -192,6 +192,41 @@
     indicator.style.width = `${width}px`;
   }
 
+  // ═══ CUSTOM CINEMATIC EASED SMOOTH SCROLL CONTROLLER (Graceful & Frictionless) ═══
+  let activeScrollAnim = null;
+
+  function gracefulScrollTo(targetY, duration = 800) {
+    if (activeScrollAnim) {
+      cancelAnimationFrame(activeScrollAnim);
+      activeScrollAnim = null;
+    }
+
+    const startY = window.scrollY;
+    const diff = targetY - startY;
+    if (Math.abs(diff) < 4) {
+      window.scrollTo(0, targetY);
+      return;
+    }
+    const startTime = performance.now();
+
+    function step(currentTime) {
+      const elapsed = currentTime - startTime;
+      const progress = Math.min(1, elapsed / duration);
+      // Luxurious C2 Quintic Smootherstep for liquid smooth acceleration & deceleration
+      const ease = progress * progress * progress * (progress * (progress * 6 - 15) + 10);
+
+      const currentPos = startY + diff * ease;
+      window.scrollTo(0, currentPos);
+
+      if (progress < 1) {
+        activeScrollAnim = requestAnimationFrame(step);
+      } else {
+        activeScrollAnim = null;
+      }
+    }
+    activeScrollAnim = requestAnimationFrame(step);
+  }
+
   function switchTab(target) {
     if (!target || target === state.activeTab) return;
 
@@ -213,16 +248,13 @@
     activePanel?.classList.add('active');
     state.activeTab = target;
 
-    // Smoothly scroll down/up to the tab heading at 120 FPS native hardware speed
+    // Gracefully scroll down/up to the tab heading at a controlled speed so the KPI train animation plays visibly
     if (activePanel) {
       const headerOffset = window.innerWidth < 768 ? 64 : 80;
       const elementPosition = activePanel.getBoundingClientRect().top;
       const offsetPosition = elementPosition + window.pageYOffset - headerOffset;
 
-      window.scrollTo({
-        top: Math.max(0, offsetPosition),
-        behavior: 'smooth'
-      });
+      gracefulScrollTo(Math.max(0, offsetPosition), 800);
     }
 
     // Render / refresh charts in the newly activated tab
