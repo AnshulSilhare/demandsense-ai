@@ -192,32 +192,6 @@
     indicator.style.width = `${width}px`;
   }
 
-  // ═══ CUSTOM CINEMATIC EASED SMOOTH SCROLL CONTROLLER ═══
-  function gracefulScrollTo(targetY, duration = 950) {
-    const startY = window.scrollY;
-    const diff = targetY - startY;
-    if (Math.abs(diff) < 5) {
-      window.scrollTo(0, targetY);
-      return;
-    }
-    const startTime = performance.now();
-
-    function step(currentTime) {
-      const elapsed = currentTime - startTime;
-      const progress = Math.min(1, elapsed / duration);
-      // Cosine ease-in-out curve for luxurious fluid acceleration & deceleration
-      const ease = 0.5 * (1 - Math.cos(Math.PI * progress));
-
-      const currentPos = startY + diff * ease;
-      window.scrollTo(0, currentPos);
-
-      if (progress < 1) {
-        requestAnimationFrame(step);
-      }
-    }
-    requestAnimationFrame(step);
-  }
-
   function switchTab(target) {
     if (!target || target === state.activeTab) return;
 
@@ -239,13 +213,16 @@
     activePanel?.classList.add('active');
     state.activeTab = target;
 
-    // Gracefully scroll down/up to the tab heading at a controlled speed so the KPI train animation plays visibly
+    // Smoothly scroll down/up to the tab heading at 120 FPS native hardware speed
     if (activePanel) {
       const headerOffset = window.innerWidth < 768 ? 64 : 80;
       const elementPosition = activePanel.getBoundingClientRect().top;
       const offsetPosition = elementPosition + window.pageYOffset - headerOffset;
 
-      gracefulScrollTo(Math.max(0, offsetPosition), 950);
+      window.scrollTo({
+        top: Math.max(0, offsetPosition),
+        behavior: 'smooth'
+      });
     }
 
     // Render / refresh charts in the newly activated tab
@@ -384,8 +361,12 @@
 
     updateDockSideUI();
 
+    const canvas = el('kpiSnakeCanvas');
+    const ctx = canvas?.getContext('2d');
+    const cards = [el('kpi0'), el('kpi1'), el('kpi2'), el('kpi3')];
+    const tabContents = $$('.tab-content');
+
     function initCanvas() {
-      const canvas = el('kpiSnakeCanvas');
       if (!canvas) return;
       const dpr = Math.min(2, window.devicePixelRatio || 1);
       const w = window.innerWidth;
@@ -406,8 +387,6 @@
         nav?.classList.remove('scrolled');
       }
 
-      const canvas = el('kpiSnakeCanvas');
-      const ctx = canvas?.getContext('2d');
       const dpr = Math.min(2, window.devicePixelRatio || 1);
 
       if (canvas && ctx) {
@@ -416,22 +395,21 @@
 
       // Check widescreen desktop viewport (Docking only on wide displays >= 1360px)
       if (!kpiBar || !kpiWrapper || window.innerWidth < 1360) {
-        const cards = [el('kpi0'), el('kpi1'), el('kpi2'), el('kpi3')].filter(Boolean);
         cards.forEach((c, i) => {
+          if (!c) return;
           c.style.transform = '';
           c.style.opacity = '';
           c.classList.remove('is-beam-morph', 'is-docked-rail');
           const snake = el(`snake${i}`);
           if (snake) snake.style.opacity = '0';
         });
-        $$('.tab-content').forEach(tc => {
+        tabContents.forEach(tc => {
           tc.style.transform = '';
         });
         return;
       }
 
-      const cards = [el('kpi0'), el('kpi1'), el('kpi2'), el('kpi3')].filter(Boolean);
-      if (cards.length < 4) return;
+      if (cards.length < 4 || !cards[0]) return;
 
       if (!cachedMetrics) measureMetrics();
       if (!cachedMetrics) return;
@@ -440,12 +418,13 @@
 
       if (currentY <= scrollStart || window.innerWidth < 1360) {
         cards.forEach(c => {
+          if (!c) return;
           c.style.transform = '';
           c.style.opacity = '';
           c.style.transformOrigin = 'center top';
           c.classList.remove('is-beam-morph', 'is-docked-rail');
         });
-        $$('.tab-content').forEach(tc => {
+        tabContents.forEach(tc => {
           tc.style.transform = '';
         });
         return;
@@ -465,7 +444,7 @@
       const maxOffset = clearanceNeeded; // Exact precision offset with zero excessive void
       const slideX = isRight ? (-maxOffset * pSlide) : (maxOffset * pSlide);
 
-      $$('.tab-content').forEach(tc => {
+      tabContents.forEach(tc => {
         if (pSlide > 0.001) {
           tc.style.transform = `translate3d(${slideX.toFixed(2)}px, 0, 0)`;
         } else {
@@ -521,10 +500,10 @@
         }
       }
 
-      // Draw Bold 6px Unified Single Snake Ribbon on Canvas
+      // Draw Bold 6px Unified Single Snake Ribbon on Canvas (120 FPS GPU Streamlined)
       function drawUnifiedSnakeRibbon(sHead, sTail, alphaGlow) {
         if (!ctx || sHead <= sTail) return;
-        const numPts = 32; // Smooth 32-point arc spline
+        const numPts = 24; // Streamlined 24-point spline for ultra-fast GPU throughput
         const pts = [];
         for (let k = 0; k <= numPts; k++) {
           const dist = sTail + (sHead - sTail) * (k / numPts);
@@ -537,7 +516,6 @@
 
         const isDark = document.body.classList.contains('dark');
         const tealColor = isDark ? '#2dd4bf' : '#0d9488';
-        const shadowColor = isDark ? 'rgba(45, 212, 191, 0.45)' : 'rgba(13, 148, 136, 0.35)';
 
         ctx.beginPath();
         ctx.moveTo(pts[0].x, pts[0].y);
@@ -546,8 +524,6 @@
         ctx.lineWidth = 6.0;
         ctx.lineCap = 'round';
         ctx.lineJoin = 'round';
-        ctx.shadowColor = shadowColor;
-        ctx.shadowBlur = 8;
         ctx.stroke();
 
         ctx.restore();
