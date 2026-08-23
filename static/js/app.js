@@ -299,7 +299,7 @@
     let cachedMetrics = null;
 
     function measureMetrics() {
-      if (!kpiWrapper || window.innerWidth < 1024) return;
+      if (!kpiWrapper || window.innerWidth < 1360) return;
       const cards = [el('kpi0'), el('kpi1'), el('kpi2'), el('kpi3')].filter(Boolean);
       if (cards.length < 4) return;
 
@@ -359,15 +359,21 @@
         nav?.classList.remove('scrolled');
       }
 
-      // Check desktop viewport
-      if (!kpiBar || !kpiWrapper || window.innerWidth < 1024) {
+      // Check widescreen desktop viewport (Docking only on wide displays >= 1360px)
+      if (!kpiBar || !kpiWrapper || window.innerWidth < 1360) {
         const cards = [el('kpi0'), el('kpi1'), el('kpi2'), el('kpi3')].filter(Boolean);
         cards.forEach((c, i) => {
           c.style.transform = '';
           c.style.opacity = '';
-          c.classList.remove('is-beam-morph');
+          c.classList.remove('is-beam-morph', 'is-docked-rail');
           const snake = el(`snake${i}`);
           if (snake) snake.style.opacity = '0';
+        });
+        $$('.tab-content').forEach(tc => {
+          tc.style.marginLeft = '';
+          tc.style.marginRight = '';
+          tc.style.maxWidth = '';
+          tc.style.transform = '';
         });
         return;
       }
@@ -393,7 +399,7 @@
         ctx.clearRect(0, 0, canvas.width, canvas.height);
       }
 
-      if (currentY <= scrollStart || window.innerWidth <= 1024) {
+      if (currentY <= scrollStart || window.innerWidth < 1360) {
         cards.forEach(c => {
           c.style.transform = '';
           c.style.opacity = '';

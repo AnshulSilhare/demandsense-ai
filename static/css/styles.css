@@ -3015,8 +3015,8 @@ body.dark .guide-protip-box {
    RESPONSIVE BREAKPOINTS
    ════════════════════════════════════════════════════════════ */
 
-/* ── 1. TABLET ONLY (768px to 1023px) ── */
-@media (min-width: 768px) and (max-width: 1023px) {
+/* ── 1. TABLETS, IFRAMES & POPUP WINDOWS (768px to 1140px) ── */
+@media (min-width: 768px) and (max-width: 1140px) {
   body {
     overflow-x: hidden !important;
     padding-bottom: calc(70px + env(safe-area-inset-bottom)) !important;
@@ -3249,6 +3249,54 @@ body.dark .guide-protip-box {
     max-width: 100% !important;
     width: 100% !important;
     box-sizing: border-box !important;
+}
+
+/* ── 1.5. LAPTOPS & POPUP WINDOWS (1141px to 1359px) ── */
+@media (min-width: 1141px) and (max-width: 1359px) {
+  header.top-nav,
+  nav.top-nav {
+    padding: 0 1rem !important;
+  }
+
+  .nav-inner {
+    gap: 0.65rem !important;
+  }
+
+  .nav-brand-capsule {
+    height: 40px !important;
+    padding: 0 0.85rem !important;
+    gap: 0.35rem !important;
+  }
+
+  .nav-brand-capsule .brand-title {
+    font-size: 0.88rem !important;
+  }
+
+  .nav-tabs-capsule {
+    height: 40px !important;
+    padding: 2px 3px !important;
+    gap: 0.15rem !important;
+  }
+
+  .nav-tab {
+    padding: 0.22rem 0.6rem !important;
+    font-size: 0.74rem !important;
+  }
+
+  .satellite-pill-btn {
+    height: 40px !important;
+    padding: 0 0.75rem !important;
+    font-size: 0.72rem !important;
+  }
+
+  .satellite-pill-btn.rail-btn,
+  #railSideToggle {
+    display: none !important;
+  }
+
+  .satellite-pill-btn.theme-btn {
+    width: 40px !important;
+    height: 40px !important;
   }
 }
 
