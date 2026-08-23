@@ -1,0 +1,24 @@
+# ═══════════════════════════════════════════════
+# DemandSense AI — .dockerignore
+# ═══════════════════════════════════════════════
+# Keep the Docker image lean — exclude files
+# that don't belong in the production container.
+
+.env
+.git
+.gitignore
+__pycache__
+*.pyc
+.venv
+venv
+.vscode
+.idea
+.streamlit
+
+# Dev-only files
+*_backup*.py
+output*.txt
+search_out.txt
+CONTEXT.md
+HF_README.md
+README.md

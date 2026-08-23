@@ -1,0 +1,1443 @@
+/**
+ * DemandSense AI — App Controller
+ * =================================
+ * State management, API fetch layer, DOM rendering, debouncing.
+ * Re-fetches from relevant endpoints on filter change, re-renders only affected DOM sections.
+ */
+
+(() => {
+  'use strict';
+
+  // ═══ STATE ═══
+  const state = {
+    sku: 'SKU001',
+    region: 'ALL',
+    leadTime: 7,
+    serviceLevel: 'A',
+    stock: 25000,
+    activeTab: 'tab1',
+    festivalFilter: null,
+    // Cached API responses
+    config: null,
+    forecastData: null,
+    decompData: null,
+    festivalData: null,
+    abcData: null,
+    regionalData: null,
+    fiData: null,
+    simData: null,
+    historyRange: 0, // 0 = all
+  };
+
+  // ═══ DEBOUNCE UTILITY ═══
+  function debounce(fn, ms = 400) {
+    let t;
+    return (...args) => { clearTimeout(t); t = setTimeout(() => fn(...args), ms); };
+  }
+
+  // ═══ API LAYER ═══
+  const API = {
+    async get(path) {
+      const res = await fetch(path);
+      if (!res.ok) throw new Error(`API ${path}: ${res.status}`);
+      return res.json();
+    },
+    async post(path, body) {
+      const res = await fetch(path, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(body),
+      });
+      if (!res.ok) throw new Error(`API ${path}: ${res.status}`);
+      return res.json();
+    },
+  };
+
+  function _qs() {
+    return `sku=${state.sku}&region=${state.region}&lead_time=${state.leadTime}&service_level=${state.serviceLevel}&stock=${state.stock}`;
+  }
+
+  // ═══ INIT ═══
+  async function init() {
+    setupTheme();
+    setupNav();
+    setupFilters();
+    setupModal();
+    setupHamburger();
+
+    try {
+      state.config = await API.get('/api/config');
+      populateFilters(state.config);
+      el('appVersion').textContent = `v${state.config.version}`;
+    } catch (e) {
+      toast('Failed to load config: ' + e.message, true);
+    }
+
+    loadForecast();
+  }
+
+  // ═══ DOM HELPERS ═══
+  function el(id) { return document.getElementById(id); }
+  function $(sel) { return document.querySelector(sel); }
+  function $$(sel) { return document.querySelectorAll(sel); }
+
+  function toast(msg, isError = false) {
+    const t = el('toastMsg');
+    t.textContent = msg;
+    t.style.display = 'block';
+    t.style.borderColor = isError ? 'var(--red)' : 'var(--green)';
+    t.style.color = isError ? 'var(--red)' : 'var(--text)';
+    setTimeout(() => { t.style.display = 'none'; }, 4000);
+  }
+
+  // ═══ THEME ═══
+  function setupTheme() {
+    const saved = localStorage.getItem('ds-theme');
+    if (saved === 'dark' || (!saved && matchMedia('(prefers-color-scheme:dark)').matches)) {
+      document.body.classList.add('dark');
+    }
+    updateThemeIcon();
+
+    el('themeToggle').addEventListener('click', () => {
+      document.body.classList.toggle('dark');
+      const isDark = document.body.classList.contains('dark');
+      localStorage.setItem('ds-theme', isDark ? 'dark' : 'light');
+      updateThemeIcon();
+      reRenderAllCharts();
+      renderKpiConveyor(smoothScroll);
+    });
+  }
+
+  function updateThemeIcon() {
+    el('themeToggle').textContent = document.body.classList.contains('dark') ? '☀️' : '🌙';
+  }
+
+  // ═══ NAV TABS ═══
+  function setupNav() {
+    $$('.nav-tab').forEach(tab => {
+      tab.addEventListener('click', () => {
+        const target = tab.dataset.tab;
+        if (target === state.activeTab) return;
+
+        $$('.nav-tab').forEach(t => t.classList.remove('active'));
+        tab.classList.add('active');
+        $$('.tab-content').forEach(tc => tc.classList.remove('active'));
+        el(target).classList.add('active');
+        state.activeTab = target;
+
+        // Render / refresh charts in the newly activated tab
+        setTimeout(() => {
+          if (target === 'tab1') {
+            if (state.forecastData) renderHeroChart();
+            if (!state.decompData) loadDecomp(); else {
+              const { dates, trend, seasonal, residual } = state.decompData;
+              Charts.decompChart('decompTrend', 'decompSeasonal', 'decompResidual', dates, trend, seasonal, residual);
+            }
+            if (!state.festivalData) loadFestival(); else {
+              Charts.festivalChart('festivalChart', state.festivalData.festivals, (festName) => {
+                state.festivalFilter = state.festivalFilter === festName ? null : festName;
+                renderHeroChart();
+              });
+            }
+          }
+          if (target === 'tab2') {
+            if (state.forecastData) renderTab2();
+            if (!state.fiData) loadFeatureImportance(); else {
+              Charts.featureImportanceChart('fiChart', state.fiData.features);
+            }
+          }
+          if (target === 'tab3') {
+            renderInventory();
+            if (!state.abcData) loadAbc(); else {
+              Charts.abcTreemap('abcTreemap', state.abcData.table);
+            }
+            if (!state.regionalData) loadRegional(); else {
+              Charts.mapChart('mapChart', state.regionalData.regions);
+            }
+          }
+          if (target === 'tab4') {
+            renderSimSliders();
+            if (!state.simData && state.forecastData?.impact_data) {
+              state.simData = {
+                base_trajectory: state.forecastData.impact_data.inventory_trajectory,
+                sim_impact: state.forecastData.impact_data,
+                eff_lt: state.leadTime,
+                eff_dem_scale: 1.0,
+              };
+              renderSimMetrics();
+            }
+            renderSimChart(false);
+          }
+          if (target === 'tab5') {
+            renderTab5();
+          }
+
+          // Trigger resize on all active chart instances
+          if (window.ChartTheme?._instances) {
+            for (const inst of ChartTheme._instances.values()) {
+              if (inst && !inst.isDisposed()) inst.resize();
+            }
+          }
+        }, 50);
+      });
+    });
+
+    // ═══ PURE CONTINUOUS SCROLL CONVEYOR (Zero Detach/Attach Jumps) ═══
+    const nav = el('topNav');
+    const kpiBar = el('kpiBar');
+    const kpiWrapper = el('kpiBarWrapper');
+    let targetScroll = window.scrollY;
+    let smoothScroll = window.scrollY;
+    let isRenderLoopRunning = false;
+    let cachedMetrics = null;
+
+    function measureMetrics() {
+      if (!kpiWrapper || window.innerWidth < 1024) return;
+      const cards = [el('kpi0'), el('kpi1'), el('kpi2'), el('kpi3')].filter(Boolean);
+      if (cards.length < 4) return;
+
+      const wrapperRect = kpiWrapper.getBoundingClientRect();
+      const colWidth = (wrapperRect.width - 3 * 19.2) / 4;
+
+      cachedMetrics = {
+        wrapperLeft: wrapperRect.left,
+        wrapperTop: wrapperRect.top + window.scrollY, // document-relative top
+        colWidth: colWidth,
+        scrollStart: 10,
+        scrollEnd: 460 // Generous 450px travel range gives each phase full visibility and silky flow
+      };
+    }
+
+    // C2 Quintic Smootherstep (Ken Perlin curve: zero velocity & zero acceleration at endpoints)
+    function smootherstep(x) {
+      const c = Math.max(0, Math.min(1, x));
+      return c * c * c * (c * (c * 6 - 15) + 10);
+    }
+
+    // ═══ DOCK SIDE TOGGLE (Left vs Right) ═══
+    let dockSide = localStorage.getItem('ds-kpi-dock-side') || 'left';
+
+    function updateDockSideUI() {
+      const sideIcon = el('railSideIcon');
+      const sideText = el('railSideText');
+
+      if (dockSide === 'right') {
+        document.body.classList.add('kpi-dock-right');
+        document.body.classList.remove('kpi-dock-left');
+        if (sideIcon) sideIcon.textContent = '◨';
+        if (sideText) sideText.textContent = 'Right';
+      } else {
+        document.body.classList.add('kpi-dock-left');
+        document.body.classList.remove('kpi-dock-right');
+        if (sideIcon) sideIcon.textContent = '◧';
+        if (sideText) sideText.textContent = 'Left';
+      }
+    }
+
+    el('railSideToggle')?.addEventListener('click', () => {
+      dockSide = dockSide === 'left' ? 'right' : 'left';
+      localStorage.setItem('ds-kpi-dock-side', dockSide);
+      updateDockSideUI();
+      cachedMetrics = null;
+      handleScroll();
+    });
+
+    updateDockSideUI();
+
+    function renderKpiConveyor(currentY) {
+      // 1. Navbar shrink
+      if (currentY > 30) {
+        nav?.classList.add('scrolled');
+      } else {
+        nav?.classList.remove('scrolled');
+      }
+
+      // Check desktop viewport
+      if (!kpiBar || !kpiWrapper || window.innerWidth < 1024) {
+        const cards = [el('kpi0'), el('kpi1'), el('kpi2'), el('kpi3')].filter(Boolean);
+        cards.forEach((c, i) => {
+          c.style.transform = '';
+          c.style.opacity = '';
+          c.classList.remove('is-beam-morph');
+          const snake = el(`snake${i}`);
+          if (snake) snake.style.opacity = '0';
+        });
+        return;
+      }
+
+      const cards = [el('kpi0'), el('kpi1'), el('kpi2'), el('kpi3')].filter(Boolean);
+      if (cards.length < 4) return;
+
+      if (!cachedMetrics) measureMetrics();
+      if (!cachedMetrics) return;
+
+      const { scrollStart, scrollEnd, wrapperLeft, wrapperTop, colWidth } = cachedMetrics;
+
+      // When at the very top (currentY <= scrollStart), cleanly reset transform to 0
+      const canvas = el('kpiSnakeCanvas');
+      const ctx = canvas?.getContext('2d');
+      const dpr = window.devicePixelRatio || 1;
+
+      if (canvas && ctx) {
+        if (canvas.width !== window.innerWidth * dpr || canvas.height !== window.innerHeight * dpr) {
+          canvas.width = window.innerWidth * dpr;
+          canvas.height = window.innerHeight * dpr;
+        }
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+      }
+
+      if (currentY <= scrollStart) {
+        cards.forEach(c => {
+          c.style.transform = '';
+          c.style.opacity = '';
+          c.style.transformOrigin = 'center top';
+          c.classList.remove('is-beam-morph', 'is-docked-rail');
+        });
+        $$('.tab-content').forEach(tc => {
+          tc.style.marginLeft = '';
+          tc.style.marginRight = '';
+          tc.style.maxWidth = '';
+          tc.style.transform = '';
+        });
+        return;
+      }
+
+      // Calculate continuous scroll alpha (0.0 at scrollStart to 1.0 at scrollEnd)
+      const alpha = Math.min(1.0, (currentY - scrollStart) / (scrollEnd - scrollStart));
+      const isRight = (dockSide === 'right');
+
+      // ─── DYNAMIC TAB SLIDE (GPU-Accelerated 60/120fps smooth glide) ───
+      const tSlide = Math.max(0, Math.min(1, (alpha - 0.08) / 0.44));
+      const pSlide = smootherstep(tSlide);
+      const maxOffset = 68; // Clean 16-20px gap from the docked side rail
+      const slideX = isRight ? (-maxOffset * pSlide) : (maxOffset * pSlide);
+
+      $$('.tab-content').forEach(tc => {
+        if (pSlide > 0.001) {
+          tc.style.transform = `translate3d(${slideX.toFixed(2)}px, 0, 0)`;
+        } else {
+          tc.style.transform = '';
+        }
+        tc.style.marginLeft = '';
+        tc.style.marginRight = '';
+        tc.style.maxWidth = '';
+      });
+
+      const cardH = 136; // Calibrated actual card height (including sparkline)
+      const cardW = colWidth;
+      const gap = 19.2;
+      const startY = 96; // Top rail baseline below nav & emblem
+      const slotSpacing = 164; // Generous 28px visual gap between cards (164 - 136 = 28px)
+
+      // Bounding span of all 4 cards in the resting horizontal row
+      const spanLeft = wrapperLeft;
+      const spanRight = wrapperLeft + 3 * (cardW + gap) + cardW;
+      const initLen = spanRight - spanLeft;
+
+      // Final span of all 4 cards along the vertical edge rail
+      const railMargin = 14;
+      const dockedCardW = 210;
+      const railX = isRight ? (window.innerWidth - railMargin) : railMargin;
+      const finalRailSpan = 3 * slotSpacing + cardH;
+
+      const topY = (wrapperTop - currentY) + 3; // Center Y of 6px top border
+      const R = 28; // Smooth corner bend radius
+
+      // Total track distance for the single unified snake line
+      const startX = isRight ? spanRight : spanLeft;
+      const cornerX = isRight ? (railX - R) : (railX + R);
+      const L1 = Math.max(1, Math.abs(startX - cornerX));
+      const L2 = (Math.PI / 2) * R; // 90° corner fillet arc
+      const bottomSlotY = startY + 3 * slotSpacing + cardH;
+      const L3 = Math.max(1, bottomSlotY - (topY + R));
+      const totalPathDist = L1 + L2 + L3;
+
+      function getTrackPoint(d) {
+        if (d <= L1) {
+          // 1. Horizontal track along top grid
+          const x = isRight ? (startX + d) : (startX - d);
+          return { x, y: topY };
+        } else if (d <= L1 + L2) {
+          // 2. Smooth 90° Corner Fillet (Flexes naturally like a rope/snake!)
+          const arcDist = d - L1;
+          const angle = (arcDist / L2) * (Math.PI / 2);
+          const cx = isRight ? (railX - R) : (railX + R);
+          const cy = topY + R;
+          const x = isRight ? (cx + R * Math.sin(angle)) : (cx - R * Math.sin(angle));
+          const y = cy - R * Math.cos(angle);
+          return { x, y };
+        } else {
+          // 3. Vertical rail track down the edge
+          const vertDist = d - (L1 + L2);
+          return { x: railX, y: (topY + R) + vertDist };
+        }
+      }
+
+      // Draw Bold 6px Unified Single Snake Ribbon on Canvas
+      function drawUnifiedSnakeRibbon(sHead, sTail, alphaGlow) {
+        if (!ctx) return;
+        const numPts = 48; // Dense sampling for silky curvature across long body
+        const pts = [];
+        for (let k = 0; k <= numPts; k++) {
+          const dist = sTail + (sHead - sTail) * (k / numPts);
+          pts.push(getTrackPoint(dist));
+        }
+
+        ctx.save();
+        ctx.scale(dpr, dpr);
+        ctx.globalAlpha = Math.max(0, Math.min(1, alphaGlow));
+
+        const isDark = document.body.classList.contains('dark');
+        const tealColor = isDark ? '#2dd4bf' : '#0d9488';
+        const shadowColor = isDark ? 'rgba(45, 212, 191, 0.45)' : 'rgba(13, 148, 136, 0.35)';
+
+        ctx.beginPath();
+        ctx.moveTo(pts[0].x, pts[0].y);
+        for (let k = 1; k < pts.length; k++) ctx.lineTo(pts[k].x, pts[k].y);
+        ctx.strokeStyle = tealColor;
+        ctx.lineWidth = 6.0;
+        ctx.lineCap = 'round';
+        ctx.lineJoin = 'round';
+        ctx.shadowColor = shadowColor;
+        ctx.shadowBlur = 8;
+        ctx.stroke();
+
+        ctx.restore();
+      }
+
+      // ═══ 5-PHASE TWO-AXIS SEQUENTIAL WATER-DROPLET RELEASE & SHORTENING SNAKE ENGINE ═══
+      if (alpha <= 0.28) {
+        // PHASE 1 (Horizontal Axis): Sequential Droplet Fold (Down: 0->1->2->3 Fold / Up: 3->2->1->0 Release from Right to Left)
+        const foldProgress = [0, 0, 0, 0];
+
+        cards.forEach((card, i) => {
+          // Card i (0 = leftmost, 3 = rightmost)
+          // On scroll down: 0 folds first, then 1, then 2, then 3
+          // On scroll up: 3 releases first (rightmost), then 2, then 1, then 0 (leftmost)
+          const foldOrder = isRight ? (cards.length - 1 - i) : i;
+          const foldStart = foldOrder * 0.055;
+          const foldEnd = foldStart + 0.09;
+          const tFold = Math.max(0, Math.min(1, (alpha - foldStart) / (foldEnd - foldStart)));
+          const pFold = smootherstep(tFold);
+          foldProgress[i] = pFold;
+
+          const scaleY = 1.0 - (1.0 - 0.05) * pFold;
+          card.style.transformOrigin = 'center top';
+          card.style.transform = `translate3d(0, 0, 0) scaleY(${scaleY})`;
+          card.style.opacity = '1';
+          card.classList.remove('is-docked-rail');
+
+          if (pFold > 0.35) {
+            card.classList.add('is-beam-morph');
+          } else {
+            card.classList.remove('is-beam-morph');
+          }
+        });
+
+        // Dynamic Horizontal Line Growth / Shortening as cards fold/unfold one by one
+        const totalFolded = foldProgress[0] + foldProgress[1] + foldProgress[2] + foldProgress[3];
+        if (totalFolded > 0.15) {
+          const uGlide = smootherstep(Math.max(0, (alpha - 0.15) / 0.13));
+          const sHead = (L1 * 0.4) * uGlide;
+          const curLen = Math.min(initLen, (colWidth + gap) * totalFolded);
+          const sTail = sHead - curLen;
+          drawUnifiedSnakeRibbon(sHead, sTail, Math.min(1.0, totalFolded / 1.5));
+        }
+
+      } else {
+        // PHASES 2-5 (Vertical Rail Axis): Snake Plunges to Bottom Slot, Drops Card 0 First, Then Stacks Upward!
+        const uPlunge = smootherstep(Math.min(1.0, (alpha - 0.28) / 0.22));
+        const sPlungeHead = totalPathDist * uPlunge;
+
+        // Droplet release progress for each card (0 = leftmost, 3 = rightmost)
+        const dropProgress = [0, 0, 0, 0];
+
+        cards.forEach((card, i) => {
+          // Card i (0 = leftmost) is released in order: orderIndex = i
+          // Card i is placed at: slotIndex = (3 - i) (so Card 0 at Bottom Slot 3, Card 3 at Top Slot 0)
+          const orderIndex = isRight ? (cards.length - 1 - i) : i;
+          const slotIndex = isRight ? i : (cards.length - 1 - i);
+
+          const dropStart = 0.44 + orderIndex * 0.125;
+          const dropEnd = dropStart + 0.125;
+          const tDrop = Math.max(0, Math.min(1, (alpha - dropStart) / (dropEnd - dropStart)));
+          const pDrop = smootherstep(tDrop);
+          dropProgress[orderIndex] = pDrop;
+
+          const naturalX = i * (colWidth + gap);
+          const dockedScreenX = isRight ? (window.innerWidth - dockedCardW - railMargin) : railMargin;
+          const dockedScreenY = startY + slotIndex * slotSpacing;
+
+          const totalDeltaX = dockedScreenX - (wrapperLeft + naturalX);
+          const totalDeltaY = dockedScreenY - (wrapperTop - currentY);
+
+          if (alpha < dropStart) {
+            // Card is in-flight within the snake line (hidden)
+            card.style.opacity = '0';
+            card.classList.remove('is-beam-morph', 'is-docked-rail');
+          } else {
+            // Card drops/unfolds outward horizontally from the line at its slot
+            const scaleX = 0.04 + (1.0 - 0.04) * pDrop;
+            card.classList.add('is-docked-rail');
+            card.style.transformOrigin = isRight ? 'right center' : 'left center';
+            card.style.transform = `translate3d(${totalDeltaX}px, ${totalDeltaY}px, 0) scaleX(${scaleX})`;
+            card.style.opacity = pDrop.toFixed(3);
+            card.classList.remove('is-beam-morph');
+          }
+        });
+
+        // Dynamic Snake Line Shortening on the vertical rail:
+        const totalReleased = dropProgress[0] + dropProgress[1] + dropProgress[2] + dropProgress[3];
+        const unreleasedCount = Math.max(0, 4.0 - totalReleased);
+
+        let sHead = 0;
+        let curLen = 0;
+
+        if (alpha < 0.44) {
+          // Plunging down the rail to the bottom slot
+          sHead = sPlungeHead;
+          const uTurn = smootherstep((alpha - 0.28) / 0.16);
+          curLen = initLen - (initLen - (4 * (cardH + slotSpacing * 0.25))) * uTurn;
+        } else {
+          // Stacking upward: head is at the currently releasing slot, shortening as each card drops
+          sHead = totalPathDist - (totalReleased * slotSpacing * 0.95);
+          curLen = (cardH + slotSpacing * 0.25) * unreleasedCount;
+        }
+
+        const sTail = sHead - curLen;
+
+        if (curLen > 3 && alpha < 0.98) {
+          drawUnifiedSnakeRibbon(sHead, sTail, Math.min(1.0, unreleasedCount));
+        }
+      }
+
+      if (alpha >= 1.0) {
+        cards.forEach((card, i) => {
+          const slotIndex = isRight ? i : (cards.length - 1 - i);
+          const naturalX = i * (colWidth + gap);
+          const dockedScreenX = isRight ? (window.innerWidth - dockedCardW - railMargin) : railMargin;
+          const dockedScreenY = startY + slotIndex * slotSpacing;
+
+          const totalDeltaX = dockedScreenX - (wrapperLeft + naturalX);
+          const totalDeltaY = dockedScreenY - (wrapperTop - currentY);
+
+          card.classList.add('is-docked-rail');
+          card.style.transformOrigin = isRight ? 'right center' : 'left center';
+          card.style.transform = `translate3d(${totalDeltaX}px, ${totalDeltaY}px, 0) scale(1, 1)`;
+          card.style.opacity = '1';
+          card.classList.remove('is-beam-morph');
+        });
+      }
+    }
+
+    function physicsLoop() {
+      // Smooth LERP momentum damping: moves 16% closer to targetScroll each frame (silky inertia)
+      smoothScroll += (targetScroll - smoothScroll) * 0.16;
+
+      renderKpiConveyor(smoothScroll);
+
+      if (Math.abs(targetScroll - smoothScroll) > 0.15) {
+        requestAnimationFrame(physicsLoop);
+      } else {
+        smoothScroll = targetScroll;
+        renderKpiConveyor(smoothScroll);
+        isRenderLoopRunning = false;
+      }
+    }
+
+    function handleScroll() {
+      targetScroll = window.scrollY;
+      if (!isRenderLoopRunning) {
+        isRenderLoopRunning = true;
+        requestAnimationFrame(physicsLoop);
+      }
+    }
+
+    window.addEventListener('scroll', handleScroll, { passive: true });
+    window.addEventListener('resize', () => { cachedMetrics = null; handleScroll(); }, { passive: true });
+    measureMetrics();
+  }
+
+  // ═══ HAMBURGER MENU (mobile) ═══
+  function setupHamburger() {
+    const btn = el('hamburger');
+    const tabs = el('navTabs');
+    btn?.addEventListener('click', () => {
+      tabs.classList.toggle('open');
+    });
+  }
+
+  // ═══ FILTERS & COLLAPSIBLE EXECUTIVE PARAMETER SUITE ═══
+  function updateCollapsedSummary() {
+    const skuObj = state.config?.products?.find(p => p.sku_id === state.sku);
+    const skuLabel = skuObj ? `${skuObj.sku_id} (${skuObj.name})` : state.sku;
+    const regionObj = state.config?.regions?.find(r => r.id === state.region);
+    const regionLabel = state.region === 'ALL' ? 'National Scope' : (regionObj ? regionObj.name : state.region);
+
+    // Preset mapping
+    const presetNames = { 3: '3d Air', 7: '7d Std', 14: '14d Rail', 21: '21d Sea' };
+    const ltLabel = presetNames[state.leadTime] || `${state.leadTime}d Lead Time`;
+
+    const slPcts = { 'C': '90%', 'B': '95%', 'A': '98%' };
+    const slLabel = `Grade ${state.serviceLevel} (${slPcts[state.serviceLevel] || '98%'})`;
+
+    const stockLabel = `${(state.stock || 0).toLocaleString()} units`;
+
+    if (el('sumSku')) el('sumSku').textContent = skuLabel;
+    if (el('sumRegion')) el('sumRegion').textContent = regionLabel;
+    if (el('sumLeadTime')) el('sumLeadTime').textContent = ltLabel;
+    if (el('sumServiceLevel')) el('sumServiceLevel').textContent = slLabel;
+    if (el('sumStock')) el('sumStock').textContent = stockLabel;
+  }
+
+  function setupCollapsibleFilterPanel() {
+    const panel = el('filterPanel');
+    const collapseBtn = el('filterCollapseBtn');
+    const collapseLabel = el('collapseLabel');
+    const summaryBar = el('filterSummaryBar');
+
+    // Restore saved state from localStorage
+    const savedCollapsed = localStorage.getItem('ds-filter-collapsed') === '1';
+    if (savedCollapsed && panel) {
+      panel.classList.add('is-collapsed');
+      if (collapseLabel) collapseLabel.textContent = 'Expand';
+    }
+
+    function toggleCollapse() {
+      if (!panel) return;
+      const isNowCollapsed = panel.classList.toggle('is-collapsed');
+      localStorage.setItem('ds-filter-collapsed', isNowCollapsed ? '1' : '0');
+      if (collapseLabel) collapseLabel.textContent = isNowCollapsed ? 'Expand' : 'Collapse';
+      updateCollapsedSummary();
+    }
+
+    collapseBtn?.addEventListener('click', (e) => {
+      e.stopPropagation();
+      toggleCollapse();
+    });
+
+    summaryBar?.addEventListener('click', () => {
+      if (panel && panel.classList.contains('is-collapsed')) {
+        toggleCollapse();
+      }
+    });
+  }
+
+  function populateFilters(config) {
+    // SKU
+    const skuSel = el('skuSelect');
+    if (skuSel) {
+      skuSel.innerHTML = '';
+      config.products.forEach(p => {
+        const opt = document.createElement('option');
+        opt.value = p.sku_id;
+        opt.textContent = `${p.sku_id} — ${p.name}`;
+        skuSel.appendChild(opt);
+      });
+      skuSel.value = state.sku;
+    }
+
+    // Region
+    const regSel = el('regionSelect');
+    if (regSel) {
+      regSel.innerHTML = '';
+      const allOpt = document.createElement('option');
+      allOpt.value = 'ALL';
+      allOpt.textContent = 'ALL — National Aggregation';
+      regSel.appendChild(allOpt);
+      config.regions.forEach(r => {
+        const opt = document.createElement('option');
+        opt.value = r.id;
+        opt.textContent = `${r.id} — ${r.name}`;
+        regSel.appendChild(opt);
+      });
+      regSel.value = state.region;
+    }
+
+    // Lead time
+    if (el('leadTimeSlider')) el('leadTimeSlider').value = config.default_lead_time;
+    state.leadTime = config.default_lead_time;
+    if (el('leadTimeValue')) el('leadTimeValue').textContent = `${state.leadTime}d`;
+
+    // Initialize summary
+    updateCollapsedSummary();
+  }
+
+  const debouncedLoad = debounce(() => {
+    clearCachedData();
+    loadForecast();
+  }, 500);
+
+  function setupFilters() {
+    // 1. SKU Selector
+    el('skuSelect')?.addEventListener('change', e => {
+      state.sku = e.target.value;
+      updateCollapsedSummary();
+      debouncedLoad();
+    });
+
+    // 2. Region Selector
+    el('regionSelect')?.addEventListener('change', e => {
+      state.region = e.target.value;
+      updateCollapsedSummary();
+      debouncedLoad();
+    });
+
+    // 3. Lead Time Slider & Preset Buttons (Two-Way Sync + Tick Highlights)
+    const slider = el('leadTimeSlider');
+    const valPill = el('leadTimeValue');
+    const presetBtns = $$('#leadTimePresets .segmented-btn');
+
+    function updateLeadTimeUI(days) {
+      state.leadTime = days;
+      if (slider) slider.value = days;
+      if (valPill) valPill.textContent = `${days}d`;
+      presetBtns.forEach(btn => {
+        const isMatch = parseInt(btn.dataset.val) === days;
+        btn.classList.toggle('is-selected', isMatch);
+        btn.classList.toggle('active', isMatch);
+      });
+      updateCollapsedSummary();
+    }
+
+    slider?.addEventListener('input', e => {
+      updateLeadTimeUI(parseInt(e.target.value));
+    });
+    slider?.addEventListener('change', debouncedLoad);
+
+    presetBtns.forEach(btn => {
+      btn.addEventListener('click', () => {
+        const days = parseInt(btn.dataset.val);
+        updateLeadTimeUI(days);
+        debouncedLoad();
+      });
+    });
+
+    // 4. Service Level Unified Segmented Control
+    const segBtns = $$('#serviceLevelSegmented .segmented-btn');
+    const levelSelect = el('serviceLevelSelect');
+
+    function updateServiceLevelUI(lvl) {
+      state.serviceLevel = lvl;
+      if (levelSelect) levelSelect.value = lvl;
+      segBtns.forEach(btn => {
+        const isMatch = btn.dataset.val === lvl;
+        btn.classList.toggle('is-selected', isMatch);
+        btn.classList.toggle('active', isMatch);
+      });
+      updateCollapsedSummary();
+    }
+
+    segBtns.forEach(btn => {
+      btn.addEventListener('click', () => {
+        updateServiceLevelUI(btn.dataset.val);
+        debouncedLoad();
+      });
+    });
+
+    levelSelect?.addEventListener('change', e => {
+      updateServiceLevelUI(e.target.value);
+      debouncedLoad();
+    });
+
+    // 5. Stock Input Stepper (- / + buttons)
+    const stockInput = el('stockInput');
+    const stockDec = el('stockDecBtn');
+    const stockInc = el('stockIncBtn');
+
+    function updateStock(val) {
+      const clamped = Math.max(0, val);
+      state.stock = clamped;
+      if (stockInput) stockInput.value = clamped;
+      updateCollapsedSummary();
+      debouncedLoad();
+    }
+
+    stockInput?.addEventListener('change', e => {
+      updateStock(parseInt(e.target.value) || 0);
+    });
+
+    stockDec?.addEventListener('click', () => {
+      const current = parseInt(stockInput?.value) || 0;
+      updateStock(current - 1000);
+    });
+
+    stockInc?.addEventListener('click', () => {
+      const current = parseInt(stockInput?.value) || 0;
+      updateStock(current + 1000);
+    });
+
+    // 6. Reset Defaults Button
+    el('resetParamsBtn')?.addEventListener('click', () => {
+      if (state.config) {
+        state.sku = state.config.products?.[0]?.sku_id || 'SKU-001';
+        state.region = 'ALL';
+        state.leadTime = state.config.default_lead_time || 7;
+        state.serviceLevel = 'A';
+        state.stock = 25000;
+
+        if (el('skuSelect')) el('skuSelect').value = state.sku;
+        if (el('regionSelect')) el('regionSelect').value = state.region;
+        updateLeadTimeUI(state.leadTime);
+        updateServiceLevelUI(state.serviceLevel);
+        if (stockInput) stockInput.value = state.stock;
+
+        updateCollapsedSummary();
+        toast('Parameters reset to default', false);
+        debouncedLoad();
+      }
+    });
+
+    // 7. CSV Upload with File Name Feedback
+    el('csvUpload')?.addEventListener('change', async e => {
+      const file = e.target.files[0];
+      if (!file) return;
+      if (el('uploadText')) el('uploadText').textContent = file.name;
+      const form = new FormData();
+      form.append('file', file);
+      try {
+        const res = await fetch('/api/upload-csv', { method: 'POST', body: form });
+        if (!res.ok) {
+          const err = await res.json();
+          toast(err.detail || 'Upload failed', true);
+          return;
+        }
+        const data = await res.json();
+        toast(`Uploaded: ${data.rows} rows, ${data.skus} SKUs (${data.date_range})`);
+        if (el('datasetNameText')) {
+          el('datasetNameText').textContent = `${file.name} · ${data.skus} SKUs`;
+        }
+        if (el('sumDataset')) {
+          el('sumDataset').textContent = `${file.name} (${data.skus} SKUs)`;
+        }
+        clearCachedData();
+        loadForecast();
+      } catch (err) {
+        toast('Upload error: ' + err.message, true);
+      }
+    });
+
+    // 8. Collapsible Panel
+    setupCollapsibleFilterPanel();
+
+    // Range toggle (Tab 1)
+    $$('.range-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        $$('.range-btn').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        state.historyRange = parseInt(btn.dataset.range);
+        if (state.forecastData) renderHeroChart();
+      });
+    });
+  }
+
+  function clearCachedData() {
+    state.forecastData = null;
+    state.decompData = null;
+    state.festivalData = null;
+    state.abcData = null;
+    state.regionalData = null;
+    state.fiData = null;
+    state.simData = null;
+  }
+
+  // ═══ LOADING STATES ═══
+  function showLoading(containerId) {
+    const c = el(containerId);
+    if (c) {
+      c.innerHTML = `
+        <div class="chart-shimmer">
+          <div class="shimmer-line w-60"></div>
+          <div class="shimmer-block"></div>
+          <div class="shimmer-line w-40"></div>
+        </div>
+      `;
+    }
+  }
+
+  function showKpiLoading() {
+    for (let i = 0; i < 4; i++) el(`kpi${i}`).innerHTML = '<div class="loading-spinner"></div>';
+  }
+
+  // ═══ MAIN FORECAST LOAD ═══
+  async function loadForecast() {
+    showKpiLoading();
+    showLoading('heroChart');
+    el('lastUpdated').textContent = 'Loading forecast...';
+
+    try {
+      state.forecastData = await API.get(`/api/forecast?${_qs()}`);
+      renderKpiBar();
+      renderHeroChart();
+      renderSkuInfo();
+      renderLastUpdated();
+
+      // Initialize Tab 4 baseline simulation data so it displays immediately
+      if (state.forecastData?.impact_data) {
+        state.simData = {
+          base_trajectory: state.forecastData.impact_data.inventory_trajectory,
+          sim_impact: state.forecastData.impact_data,
+          eff_lt: state.leadTime,
+          eff_dem_scale: 1.0,
+        };
+      }
+
+      // Also load tab-specific data for visible tab
+      if (state.activeTab === 'tab1') { loadDecomp(); loadFestival(); }
+      if (state.activeTab === 'tab2') loadFeatureImportance();
+      if (state.activeTab === 'tab3') { loadAbc(); loadRegional(); }
+      if (state.activeTab === 'tab4') { renderSimSliders(); renderSimMetrics(); renderSimChart(false); }
+      if (state.activeTab === 'tab5') renderTab5();
+    } catch (e) {
+      toast('Forecast error: ' + e.message, true);
+      el('lastUpdated').textContent = 'Error loading data';
+    }
+  }
+
+  // ═══ KPI BAR RENDERING ═══
+  function renderKpiBar() {
+    const kpis = state.forecastData?.kpi_bar?.kpis || [];
+    kpis.forEach((kpi, i) => {
+      const card = el(`kpi${i}`);
+      const deltaClass = kpi.favorable ? 'up' : (kpi.delta_pct === 0 ? 'neutral' : 'down');
+      const arrow = kpi.delta_pct > 0 ? '▲' : (kpi.delta_pct < 0 ? '▼' : '—');
+
+      // SVG sparkline
+      const spark = kpi.sparkline?.length > 2 ? generateSparkline(kpi.sparkline) : '';
+
+      card.innerHTML = `
+        <div class="kpi-icon-chip ${kpi.chip_color}">${kpi.chip}</div>
+        <div class="kpi-label">${kpi.label}</div>
+        <div class="kpi-value">${kpi.value_fmt}</div>
+        <span class="kpi-delta ${deltaClass}">${arrow} ${Math.abs(kpi.delta_pct).toFixed(1)}%</span>
+        <div class="kpi-sparkline">${spark}</div>
+      `;
+    });
+  }
+
+  function generateSparkline(values) {
+    if (!values || values.length < 2) return '';
+    const w = 100, h = 28, pad = 2;
+    const min = Math.min(...values), max = Math.max(...values);
+    const range = max - min || 1;
+    const points = values.map((v, i) =>
+      `${pad + (i / (values.length - 1)) * (w - 2 * pad)},${pad + (1 - (v - min) / range) * (h - 2 * pad)}`
+    ).join(' ');
+
+    return `<svg width="${w}" height="${h}" viewBox="0 0 ${w} ${h}" xmlns="http://www.w3.org/2000/svg">
+      <polyline fill="none" stroke="var(--accent)" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" points="${points}"/>
+    </svg>`;
+  }
+
+  // ═══ SKU INFO & DATA FRESHNESS ═══
+  function renderSkuInfo() {
+    const ds = state.forecastData?.data_summary;
+    if (ds) {
+      if (el('dataFreshness')) {
+        el('dataFreshness').innerHTML = `📅 Active Range: <strong>${ds.data_start}</strong> → <strong>${ds.data_end}</strong> · ${ds.total_days} total series points · ${ds.total_skus} SKUs in enterprise database`;
+      }
+      if (el('datasetNameText')) {
+        el('datasetNameText').textContent = `Enterprise FMCG · ${ds.total_skus} SKUs · ${ds.total_days}d`;
+      }
+      if (el('sumDataset')) {
+        el('sumDataset').textContent = `Enterprise FMCG (${ds.total_skus} SKUs)`;
+      }
+    }
+    updateCollapsedSummary();
+  }
+
+  function renderLastUpdated() {
+    const d = state.forecastData;
+    if (!d) return;
+    const name = d.forecast_res?.winning_model_name || 'Auto-ML';
+    const now = new Date().toLocaleTimeString();
+    el('lastUpdated').textContent = `Last updated ${now} · Winner: ${name} · ${d.data_summary?.total_days || '—'} days of data`;
+  }
+
+  // ═══ TAB 1 CHARTS ═══
+  function renderHeroChart() {
+    const d = state.forecastData;
+    if (!d) return;
+
+    let history = d.chart_history || [];
+    if (state.historyRange > 0) {
+      history = history.slice(-state.historyRange);
+    }
+
+    Charts.heroChart('heroChart', history, d.forecast_res.winning_forecast, d.impact_data, state.festivalData?.festivals, state.festivalFilter);
+
+    // Dynamic subtitle
+    const subtitle = el('tab1Subtitle');
+    if (d.forecast_res?.winning_model_name) {
+      subtitle.textContent = `${d.forecast_res.winning_model_name} forecast · MAPE ${d.forecast_res.winning_metrics.mape.toFixed(2)}% · ${d.forecast_res.winning_forecast.length}-day horizon`;
+    }
+  }
+
+  async function loadDecomp() {
+    showLoading('decompTrend');
+    showLoading('decompSeasonal');
+    showLoading('decompResidual');
+    try {
+      state.decompData = await API.get(`/api/decomposition?sku=${state.sku}&region=${state.region}`);
+      const { dates, trend, seasonal, residual } = state.decompData;
+      Charts.decompChart('decompTrend', 'decompSeasonal', 'decompResidual', dates, trend, seasonal, residual);
+    } catch (e) {
+      el('decompTrend').innerHTML = `<div style="color:var(--text3);padding:20px">Decomposition unavailable</div>`;
+    }
+  }
+
+  async function loadFestival() {
+    showLoading('festivalChart');
+    try {
+      state.festivalData = await API.get(`/api/festival-impact?sku=${state.sku}`);
+      Charts.festivalChart('festivalChart', state.festivalData.festivals, (festName) => {
+        state.festivalFilter = state.festivalFilter === festName ? null : festName;
+        renderHeroChart();
+      });
+    } catch (e) {
+      el('festivalChart').innerHTML = `<div style="color:var(--text3);padding:20px">Festival data unavailable</div>`;
+    }
+  }
+
+  // ═══ TAB 2: AUTO-ML ═══
+  function renderTab2() {
+    const d = state.forecastData;
+    if (!d) return;
+    renderLeaderboard(d.forecast_res.leaderboard, d.forecast_res.winning_model_name);
+    renderRadar(d.forecast_res.radar || [], d.forecast_res.leaderboard, d.forecast_res.winning_model_name);
+    renderScatter(d.forecast_res.leaderboard, d.chart_history, d.forecast_res.winning_forecast);
+  }
+
+  function renderLeaderboard(leaderboard, winner) {
+    const rows = leaderboard.map(m => {
+      const isW = m.model_name === winner;
+      return `<tr class="${isW ? 'winner' : ''}" style="cursor:pointer" onclick="DetailDrawer.open('Model: ${m.model_name}', DetailDrawer.buildMetricTable([{label:'MAPE',value:'${(m.mape ?? 0).toFixed(4)}%'},{label:'RMSE',value:'${(m.rmse ?? 0).toFixed(2)}'},{label:'MAE',value:'${(m.mae ?? 0).toFixed(2)}'},{label:'WAPE',value:'${(m.wape ?? 0).toFixed(4)}%'},{label:'Fit Time',value:'${(m.fit_time_sec ?? 0).toFixed(2)}s'}]))">
+        <td>${isW ? '🏆 ' : ''}${m.model_name}</td>
+        <td>${(m.mape ?? 0).toFixed(2)}%</td>
+        <td>${(m.rmse ?? 0).toFixed(1)}</td>
+        <td>${(m.mae ?? 0).toFixed(1)}</td>
+        <td>${(m.wape ?? 0).toFixed(2)}%</td>
+      </tr>`;
+    }).join('');
+
+    el('leaderboardTable').innerHTML = `<table class="data-table">
+      <thead><tr><th>Model</th><th>MAPE ↓</th><th>RMSE ↓</th><th>MAE ↓</th><th>WAPE ↓</th></tr></thead>
+      <tbody>${rows}</tbody>
+    </table>`;
+
+    const wm = leaderboard.find(m => m.model_name === winner);
+    el('winnerBanner').className = 'badge healthy';
+    el('winnerBanner').innerHTML = `🏆 ${winner} wins — MAPE ${(wm?.mape ?? 0).toFixed(2)}%`;
+  }
+
+  function renderRadar(radarData, leaderboard, winner) {
+    Charts.radarChart('radarChart', radarData, leaderboard, winner);
+  }
+
+  async function loadFeatureImportance() {
+    showLoading('fiChart');
+    try {
+      state.fiData = await API.get(`/api/feature-importance?sku=${state.sku}&region=${state.region}`);
+      Charts.featureImportanceChart('fiChart', state.fiData.features);
+    } catch (e) {
+      el('fiChart').innerHTML = `<div style="color:var(--text3);padding:20px">Feature importance unavailable</div>`;
+    }
+
+    // Also render Tab 2 leaderboard/radar/scatter if data available
+    if (state.forecastData) renderTab2();
+  }
+
+  function renderScatter(leaderboard, history, forecast) {
+    Charts.scatterChart('scatterChart', leaderboard, history, forecast);
+  }
+
+  // ═══ TAB 3: INVENTORY ═══
+  function renderInventory() {
+    const d = state.forecastData;
+    if (!d?.impact_data) return;
+    const traj = d.impact_data.inventory_trajectory || [];
+    const ss = d.impact_data.safety_stock_units || 0;
+    const rop = d.impact_data.reorder_point_units || 0;
+
+    Charts.inventoryChart('inventoryChart', traj, ss, rop);
+
+    // Stockout annotation text
+    const soDay = traj.findIndex(d => d.projected_stock <= 0);
+    if (soDay >= 0) {
+      el('stockoutAnnotation').innerHTML = `⚠ <span style="color:var(--red)">STOCKOUT IN ${soDay + 1} DAYS (${traj[soDay].date})</span>`;
+    } else {
+      el('stockoutAnnotation').innerHTML = `✓ <span style="color:var(--green)">Stock covers full 30-day horizon</span>`;
+    }
+  }
+
+  async function loadAbc() {
+    showLoading('abcTreemap');
+    try {
+      state.abcData = await API.get('/api/abc-classification');
+      Charts.abcTreemap('abcTreemap', state.abcData.table);
+      renderAbcTable();
+    } catch (e) {
+      el('abcTreemap').innerHTML = '<div style="color:var(--text3);padding:20px">ABC data unavailable</div>';
+    }
+  }
+
+  function renderAbcTable() {
+    if (!state.abcData?.table) return;
+    const rows = state.abcData.table.map(r => {
+      const cls = (r.abc_class || '').toUpperCase();
+      const isSel = r.sku_id === state.sku;
+      let trClass = '';
+      if (isSel) trClass = 'selected-sku';
+      else if (cls === 'A') trClass = 'abc-a';
+      else if (cls === 'B') trClass = 'abc-b';
+      else if (cls === 'C') trClass = 'abc-c';
+
+      return `<tr class="${trClass}">
+        <td>${r.sku_id || ''}</td>
+        <td>${r.sku_name || ''}</td>
+        <td>₹${(r.revenue_inr || 0).toLocaleString()}</td>
+        <td>${(r.cum_pct || 0).toFixed(1)}%</td>
+        <td><span class="badge ${cls === 'A' ? 'critical' : cls === 'B' ? 'warning' : 'healthy'}">${cls}</span></td>
+      </tr>`;
+    }).join('');
+
+    el('abcTable').innerHTML = `<table class="data-table">
+      <thead><tr><th>SKU ID</th><th>Name</th><th>Revenue</th><th>Cum %</th><th>Class</th></tr></thead>
+      <tbody>${rows}</tbody>
+    </table>`;
+  }
+
+  async function loadRegional() {
+    showLoading('mapChart');
+    try {
+      state.regionalData = await API.get(`/api/regional-summary?sku=${state.sku}`);
+      Charts.mapChart('mapChart', state.regionalData.regions);
+    } catch (e) {
+      el('mapChart').innerHTML = '<div style="color:var(--text3);padding:20px">Regional data unavailable</div>';
+    }
+    // Also render inventory chart
+    renderInventory();
+  }
+
+  // ═══ TAB 4: WHAT-IF SIMULATOR ═══
+  const PRESETS = {
+    monsoon: { simLt: 10, simDem: -20, simPrc: 0, simElast: -12, simPromo: 0 },
+    diwali:  { simLt: 3,  simDem: 80,  simPrc: 10, simElast: -8,  simPromo: 40 },
+    pricewar:{ simLt: 0,  simDem: 0,   simPrc: -25,simElast: -20, simPromo: 0 },
+    reset:   { simLt: 0,  simDem: 0,   simPrc: 0,  simElast: -12, simPromo: 0 },
+  };
+
+  function renderSimSliders() {
+    // Attach slider event listeners
+    ['simLt', 'simDem', 'simPrc', 'simElast', 'simPromo'].forEach(id => {
+      const slider = el(id);
+      slider.addEventListener('input', () => updateSimLabels());
+      slider.addEventListener('change', debounce(runSimulation, 500));
+    });
+
+    // Preset buttons
+    $$('.preset-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const p = PRESETS[btn.dataset.preset];
+        if (!p) return;
+        $$('.preset-btn').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        el('simLt').value = p.simLt;
+        el('simDem').value = p.simDem;
+        el('simPrc').value = p.simPrc;
+        el('simElast').value = p.simElast;
+        el('simPromo').value = p.simPromo;
+        updateSimLabels();
+        runSimulation();
+      });
+    });
+
+    updateSimLabels();
+  }
+
+  function updateSimLabels() {
+    el('simLtVal').textContent = `${el('simLt').value > 0 ? '+' : ''}${el('simLt').value} days`;
+    el('simDemVal').textContent = `${el('simDem').value > 0 ? '+' : ''}${el('simDem').value}%`;
+    el('simPrcVal').textContent = `${el('simPrc').value > 0 ? '+' : ''}${el('simPrc').value}%`;
+    el('simElastVal').textContent = (parseInt(el('simElast').value) / 10).toFixed(1);
+    el('simPromoVal').textContent = `${el('simPromo').value}%`;
+  }
+
+  async function runSimulation() {
+    try {
+      const body = {
+        sku: state.sku, region: state.region,
+        lead_time: state.leadTime, service_level: state.serviceLevel, stock: state.stock,
+        sim_lt_add: parseInt(el('simLt').value),
+        sim_demand_mult: parseInt(el('simDem').value),
+        sim_price_mult: parseInt(el('simPrc').value),
+        sim_elasticity: parseInt(el('simElast').value) / 10,
+        sim_promo: parseInt(el('simPromo').value),
+      };
+
+      state.simData = await API.post('/api/simulate', body);
+      renderSimChart(true);
+      renderSimMetrics();
+    } catch (e) {
+      toast('Simulation error: ' + e.message, true);
+    }
+  }
+
+  function renderSimChart(merge = false) {
+    const d = state.simData;
+    if (!d) return;
+    const baseTraj = d.base_trajectory || [];
+    const simTraj = d.sim_impact?.inventory_trajectory || [];
+    const baseSS = state.forecastData?.impact_data?.safety_stock_units || 0;
+    const simSS = d.sim_impact?.safety_stock_units || 0;
+    const simRop = d.sim_impact?.reorder_point_units || 0;
+
+    Charts.simChart('simChart', baseTraj, simTraj, baseSS, simSS, simRop, merge);
+  }
+
+  function renderSimMetrics() {
+    const d = state.simData;
+    const base = state.forecastData?.impact_data;
+    if (!d?.sim_impact || !base) return;
+
+    const s = d.sim_impact;
+    el('simMetricLt').textContent = `${d.eff_lt}d`;
+    el('simMetricSs').textContent = `${(s.safety_stock_units || 0).toLocaleString()} u`;
+    el('simMetricRop').textContent = `${(s.reorder_point_units || 0).toLocaleString()} u`;
+    el('simMetricRar').textContent = `₹${((s.revenue_at_risk_inr || 0) / 100000).toFixed(1)}L`;
+    el('simMetricPo').textContent = `${(s.recommended_po_qty_units || 0).toLocaleString()} u`;
+    el('simMetricScale').textContent = `${d.eff_dem_scale?.toFixed(2)}×`;
+  }
+
+  // ═══ TAB 5: AI PRESCRIPTIVE CONTROL ROOM ═══
+  function renderTab5() {
+    const d = state.forecastData;
+    if (!d) return;
+
+    const impact = d.impact_data || {};
+    const llm = d.llm_report || {};
+    const statusStr = impact.po_trigger_status || 'STABLE';
+    const priority = llm.priority_level || 'INFO';
+
+    // Alert banner
+    let cls, icon, title, sub;
+    const skuName = d.sku_info?.name || state.sku;
+    if (statusStr.includes('CRITICAL') || priority === 'CRITICAL') {
+      cls = 'critical'; icon = '🚨'; title = 'CRITICAL STOCKOUT RISK DETECTED';
+      sub = `Immediate procurement action required for ${skuName} — stock below safety threshold.`;
+    } else if (statusStr.includes('WARNING') || priority === 'WARNING') {
+      cls = 'warning'; icon = '⚠️'; title = 'REORDER POINT BREACH IMMINENT';
+      sub = `Stock approaching reorder point for ${skuName} — review procurement pipeline.`;
+    } else {
+      cls = 'healthy'; icon = '✅'; title = 'HEALTHY — INVENTORY BALANCED';
+      sub = `Stock levels healthy for ${skuName} — no immediate action needed.`;
+    }
+
+    el('alertBanner').className = `alert-banner ${cls}`;
+    el('alertBanner').innerHTML = `
+      <span class="alert-icon">${icon}</span>
+      <div>
+        <div class="alert-title" style="color:var(--${cls === 'critical' ? 'red' : cls === 'warning' ? 'amber' : 'green'})">${title}</div>
+        <div class="alert-sub">${sub}</div>
+      </div>
+    `;
+
+    // Update Model Provenance Badge
+    const wm = d.forecast_res?.winning_model_name || 'Auto-ML Winner';
+    const wmape = d.forecast_res?.winning_metrics?.mape != null ? d.forecast_res.winning_metrics.mape.toFixed(2) : '—';
+    if (el('modelProvenanceBadge')) {
+      el('modelProvenanceBadge').innerHTML = `🏆 Model Provenance: <strong>${wm}</strong> (Backtest MAPE: ${wmape}%)`;
+    }
+
+    // AI Action Cards
+    const cards = [
+      { chip: 'AI', chipColor: 'indigo', label: 'Executive Summary', text: llm.executive_summary, icon: '📊' },
+      { chip: 'PO', chipColor: 'gold', label: 'Procurement Directive', text: llm.recommended_action || llm.procurement_directive, icon: '📦' },
+      { chip: '₹', chipColor: 'red', label: 'Financial Risk & Rupee Impact', text: llm.financial_risk_narrative || llm.financial_risk, icon: '💰' },
+      { chip: 'ML', chipColor: 'teal', label: 'AI Model Selection Rationale', text: llm.model_rationale, icon: '🧠' },
+    ];
+
+    cards.forEach((card, i) => {
+      const bullets = textToBullets(card.text || 'No data available.', card.icon);
+      el(`aiCard${i}`).innerHTML = `
+        <div class="kpi-icon-chip ${card.chipColor}">${card.chip}</div>
+        <div class="kpi-label" style="text-transform:none;letter-spacing:0">${card.label}</div>
+        <ul class="ai-bullets">${bullets}</ul>
+      `;
+    });
+
+    // PO Preview
+    const rec = impact.recommended_po_qty_units || 0;
+    const poVal = impact.recommended_po_value_inr || rec * (d.sku_info?.base_price || 100) * 0.7;
+    const poPriority = statusStr.includes('CRITICAL') ? 'URGENT' : (statusStr.includes('WARNING') ? 'HIGH' : 'NORMAL');
+    const prioColor = poPriority === 'URGENT' ? 'var(--red)' : poPriority === 'HIGH' ? 'var(--amber)' : 'var(--green)';
+
+    el('poPreview').innerHTML = `
+      <div style="font-weight:700;font-size:0.85rem;color:var(--accent);margin-bottom:10px">📋 PURCHASE ORDER PREVIEW</div>
+      <div class="po-row"><span class="po-label">PO ID</span><span class="po-val">PO-2026-${state.sku}-01</span></div>
+      <div class="po-row"><span class="po-label">SKU</span><span class="po-val">${skuName} (${state.sku})</span></div>
+      <div class="po-row"><span class="po-label">Order Qty</span><span class="po-val">${rec.toLocaleString()} units</span></div>
+      <div class="po-row"><span class="po-label">Unit Cost</span><span class="po-val">₹${((d.sku_info?.base_price || 100) * 0.7).toLocaleString()}</span></div>
+      <div class="po-row"><span class="po-label">Total Value</span><span class="po-val">₹${poVal.toLocaleString()}</span></div>
+      <div class="po-row"><span class="po-label">Lead Time</span><span class="po-val">${state.leadTime} days</span></div>
+      <div class="po-row"><span class="po-label">Priority</span><span class="po-val" style="color:${prioColor};font-weight:700">${poPriority}</span></div>
+    `;
+
+    // Export links
+    el('exportCsv').href = `/api/export/po-csv?${_qs()}`;
+    el('exportPdf').href = `/api/export/brief-pdf?${_qs()}`;
+
+    // Raw brief
+    el('rawBrief').textContent = `DEMANDSENSE AI — EXECUTIVE PROCUREMENT BRIEF
+Generated for SKU: ${skuName} (${state.sku})
+Region: ${state.region === 'ALL' ? 'National Aggregation' : state.region}
+
+EXECUTIVE SUMMARY:
+${llm.executive_summary || 'N/A'}
+
+RECOMMENDED PROCUREMENT DIRECTIVE:
+${llm.recommended_action || llm.procurement_directive || 'N/A'}
+
+FINANCIAL RISK & RUPEE IMPACT:
+${llm.financial_risk_narrative || llm.financial_risk || 'N/A'}
+
+AI MODEL SELECTION RATIONALE:
+${llm.model_rationale || 'N/A'}`;
+  }
+
+  function textToBullets(text, defaultIcon) {
+    if (!text || text === 'N/A') return `<li><span style="color:var(--text3);font-style:italic">No data available.</span></li>`;
+    const sentences = text.replace(/\. /g, '.\n').split('\n').filter(s => s.trim()).slice(0, 5);
+    return sentences.map(s => {
+      let icon = defaultIcon;
+      const lower = s.toLowerCase();
+      if (/recommend|order|procure|action|should|must/.test(lower)) icon = '✅';
+      else if (/risk|warn|critical|stockout|loss|danger/.test(lower)) icon = '⚠️';
+      else if (/₹|revenue|cost|margin|profit|lakh|crore/.test(lower)) icon = '💰';
+      return `<li><span style="flex-shrink:0">${icon}</span><span>${s.trim()}</span></li>`;
+    }).join('');
+  }
+
+  // ═══ FOCUS MODAL ═══
+  function setupModal() {
+    const overlay = el('focusModal');
+    el('modalClose').addEventListener('click', () => overlay.classList.remove('active'));
+    overlay.addEventListener('click', e => { if (e.target === overlay) overlay.classList.remove('active'); });
+
+    // Escape key
+    document.addEventListener('keydown', e => { if (e.key === 'Escape') overlay.classList.remove('active'); });
+
+    // Expand buttons
+    $$('.expand-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const chartId = btn.dataset.chart;
+        openFocusModal(chartId);
+      });
+    });
+  }
+
+  function openFocusModal(chartId) {
+    const overlay = el('focusModal');
+    const titles = {
+      hero: 'Historical vs. 30-Day AI Forecast',
+      decomp: 'Time-Series Decomposition',
+      festival: 'Festival Demand Impact',
+      radar: 'Performance Radar',
+      fi: 'Feature Importance (XGBoost)',
+      scatter: 'Actual vs. Predicted',
+      inventory: 'Projected Stock Trajectory',
+      map: 'Regional Demand Hubs',
+      sim: 'Baseline vs. Simulated Trajectory',
+      abcTreemap: 'ABC Revenue Classification Matrix',
+    };
+
+    el('modalTitle').textContent = titles[chartId] || chartId;
+    overlay.classList.add('active');
+
+    // Render chart in modal at larger size
+    setTimeout(() => {
+      const d = state.forecastData;
+      if (!d) return;
+
+      switch (chartId) {
+        case 'hero': {
+          let hist = d.chart_history || [];
+          if (state.historyRange > 0) hist = hist.slice(-state.historyRange);
+          Charts.heroChart('modalChart', hist, d.forecast_res.winning_forecast, d.impact_data, state.festivalData?.festivals, state.festivalFilter);
+          break;
+        }
+        case 'festival':
+          if (state.festivalData) Charts.festivalChart('modalChart', state.festivalData.festivals);
+          break;
+        case 'radar':
+          Charts.radarChart('modalChart', d.forecast_res.radar || [], d.forecast_res.leaderboard, d.forecast_res.winning_model_name);
+          break;
+        case 'fi':
+          if (state.fiData) Charts.featureImportanceChart('modalChart', state.fiData.features);
+          break;
+        case 'scatter':
+          Charts.scatterChart('modalChart', d.forecast_res.leaderboard, d.chart_history, d.forecast_res.winning_forecast);
+          break;
+        case 'inventory':
+          Charts.inventoryChart('modalChart', d.impact_data.inventory_trajectory, d.impact_data.safety_stock_units, d.impact_data.reorder_point_units);
+          break;
+        case 'map':
+          if (state.regionalData) Charts.mapChart('modalChart', state.regionalData.regions);
+          break;
+        case 'abcTreemap':
+          if (state.abcData) Charts.abcTreemap('modalChart', state.abcData.table);
+          break;
+        case 'sim':
+          if (state.simData) {
+            const baseTraj = state.simData.base_trajectory || [];
+            const simTraj = state.simData.sim_impact?.inventory_trajectory || [];
+            Charts.simChart('modalChart', baseTraj, simTraj,
+              d.impact_data.safety_stock_units, state.simData.sim_impact?.safety_stock_units, state.simData.sim_impact?.reorder_point_units);
+          }
+          break;
+      }
+    }, 100);
+  }
+
+  // ═══ RE-RENDER ACTIVE CHARTS ON THEME CHANGE ═══
+  function reRenderAllCharts() {
+    if (!window.ChartTheme) return;
+
+    ChartTheme.applyTheme(() => {
+      // Re-render ONLY the active tab's charts
+      if (state.activeTab === 'tab1') {
+        if (state.forecastData) renderHeroChart();
+        if (state.decompData) {
+          const { dates, trend, seasonal, residual } = state.decompData;
+          Charts.decompChart('decompTrend', 'decompSeasonal', 'decompResidual', dates, trend, seasonal, residual);
+        }
+        if (state.festivalData) {
+          Charts.festivalChart('festivalChart', state.festivalData.festivals, (festName) => {
+            state.festivalFilter = state.festivalFilter === festName ? null : festName;
+            renderHeroChart();
+          });
+        }
+      } else if (state.activeTab === 'tab2') {
+        if (state.forecastData) renderTab2();
+        if (state.fiData) Charts.featureImportanceChart('fiChart', state.fiData.features);
+      } else if (state.activeTab === 'tab3') {
+        renderInventory();
+        if (state.abcData) Charts.abcTreemap('abcTreemap', state.abcData.table);
+        if (state.regionalData) Charts.mapChart('mapChart', state.regionalData.regions);
+      } else if (state.activeTab === 'tab4') {
+        if (state.simData) renderSimChart(false);
+      } else if (state.activeTab === 'tab5') {
+        renderTab5();
+      }
+    });
+
+    renderKpiBar();
+  }
+
+  // ═══ BOOT ═══
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', init);
+  } else {
+    init();
+  }
+})();

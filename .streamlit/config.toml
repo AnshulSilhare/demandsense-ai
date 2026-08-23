@@ -1,0 +1,11 @@
+# DemandSense AI — Streamlit Native Theme Sync
+# Keeps Streamlit's built-in theme engine aligned with CSS design tokens
+# so the Settings → Theme menu doesn't conflict with the injected CSS.
+
+[theme]
+base = "dark"
+primaryColor = "#6E56CF"
+backgroundColor = "#0A0D14"
+secondaryBackgroundColor = "#131826"
+textColor = "#EDEFF3"
+font = "sans serif"

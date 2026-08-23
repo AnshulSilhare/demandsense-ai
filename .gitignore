@@ -1,0 +1,31 @@
+# ═══════════════════════════════════════════════
+# DemandSense AI — .gitignore
+# ═══════════════════════════════════════════════
+
+# Secrets — NEVER commit
+.env
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.venv/
+venv/
+*.egg-info/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS
+Thumbs.db
+.DS_Store
+desktop.ini
+
+# Dev-only backups & scratch output
+*_backup*.py
+output*.txt
+search_out.txt
