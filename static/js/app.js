@@ -116,6 +116,24 @@
   let _lastTabIndex = 0;
   const _tabSequence = ['tab1', 'tab2', 'tab3', 'tab4', 'tab5'];
 
+  function updateTopTabIndicator(target) {
+    const indicator = el('navTabIndicator');
+    const navTabs = el('navTabs');
+    if (!indicator || !navTabs) return;
+    const activeTab = navTabs.querySelector(`.nav-tab[data-tab="${target || state.activeTab}"]`);
+    if (!activeTab) return;
+
+    const navRect = navTabs.getBoundingClientRect();
+    const tabRect = activeTab.getBoundingClientRect();
+    if (tabRect.width === 0) return;
+
+    const left = tabRect.left - navRect.left;
+    const width = tabRect.width;
+
+    indicator.style.transform = `translateX(${left}px)`;
+    indicator.style.width = `${width}px`;
+  }
+
   function updateBottomTabIndicator(target) {
     const indicator = el('btabIndicator');
     const tabBar = el('bottomTabBar');
@@ -141,6 +159,7 @@
     $$('.nav-tab').forEach(t => {
       t.classList.toggle('active', t.dataset.tab === target);
     });
+    updateTopTabIndicator(target);
 
     // Sync mobile bottom tab bar & slide indicator chip
     $$('.bottom-tab-bar .btab').forEach(t => {
@@ -218,9 +237,15 @@
       btab.addEventListener('click', () => switchTab(btab.dataset.tab));
     });
 
-    // Initial positioning & resize sync for sliding indicator
-    setTimeout(() => updateBottomTabIndicator(state.activeTab), 150);
-    window.addEventListener('resize', debounce(() => updateBottomTabIndicator(state.activeTab), 150), { passive: true });
+    // Initial positioning & resize sync for sliding indicators
+    setTimeout(() => {
+      updateTopTabIndicator(state.activeTab);
+      updateBottomTabIndicator(state.activeTab);
+    }, 150);
+    window.addEventListener('resize', debounce(() => {
+      updateTopTabIndicator(state.activeTab);
+      updateBottomTabIndicator(state.activeTab);
+    }, 150), { passive: true });
   }
 
   // ═══ PURE CONTINUOUS SCROLL CONVEYOR (Zero Detach/Attach Jumps) ═══
