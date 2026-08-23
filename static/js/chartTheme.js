@@ -36,8 +36,8 @@
                 bg: getVar('--bg') || (isDark ? '#0b0f19' : '#f8fafc'),
                 bg2: getVar('--bg2') || (isDark ? '#111827' : '#f1f5f9'),
                 bg3: getVar('--bg3') || (isDark ? '#161f30' : '#e2e8f0'),
-                tooltipBg: isDark ? 'rgba(15, 23, 42, 0.90)' : 'rgba(255, 255, 255, 0.92)',
-                tooltipBorder: isDark ? 'rgba(255, 255, 255, 0.14)' : 'rgba(15, 23, 42, 0.12)',
+                tooltipBg: isDark ? 'rgba(15, 23, 42, 0.45)' : 'rgba(255, 255, 255, 0.45)',
+                tooltipBorder: isDark ? 'rgba(255, 255, 255, 0.18)' : 'rgba(15, 23, 42, 0.12)',
                 displayFont: getVar('--display') || "'Syne', sans-serif",
                 bodyFont: getVar('--body') || "'DM Sans', sans-serif",
                 monoFont: getVar('--mono') || "'JetBrains Mono', monospace"
@@ -74,8 +74,18 @@
                     backgroundColor: colors.tooltipBg,
                     borderColor: colors.tooltipBorder,
                     borderWidth: 1,
+                    padding: [8, 12],
                     textStyle: { color: colors.text, fontFamily: colors.bodyFont, fontSize: 12 },
-                    extraCssText: 'backdrop-filter: blur(14px); -webkit-backdrop-filter: blur(14px); border-radius: 10px; box-shadow: 0 12px 36px rgba(0,0,0,.22); padding: 10px 14px;'
+                    extraCssText: 'backdrop-filter: blur(24px) saturate(200%); -webkit-backdrop-filter: blur(24px) saturate(200%); border-radius: 12px; box-shadow: 0 16px 40px rgba(0,0,0,.16), inset 0 1px 1.5px rgba(255,255,255,0.7); pointer-events: none;',
+                    position: function (pos, params, dom, rect, size) {
+                        // On mobile / touch screens (< 768px), position cleanly docked at the top
+                        // so it NEVER covers the finger, data points, or plot curves!
+                        if (window.innerWidth < 768) {
+                            const x = Math.max(8, Math.min((size.viewSize[0] - size.contentSize[0]) / 2, size.viewSize[0] - size.contentSize[0] - 8));
+                            return [x, 6];
+                        }
+                        return null;
+                    }
                 },
                 color: [colors.accent, colors.teal, colors.amber, colors.green, colors.red, colors.accentTitle, '#8b5cf6'],
                 categoryAxis: {

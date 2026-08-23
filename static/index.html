@@ -59,7 +59,7 @@ if(localStorage.getItem('ds-theme')==='dark'||(!localStorage.getItem('ds-theme')
   </svg>
 </a>
 
-<!-- ═══ Floating Pill Navigation (Matching ins_index.html) ═══ -->
+<!-- ═══ Floating Pill Navigation (Brand + Core Tabs) ═══ -->
 <nav class="top-nav" id="topNav">
   <div class="nav-inner">
     <div class="nav-brand">
@@ -79,20 +79,21 @@ if(localStorage.getItem('ds-theme')==='dark'||(!localStorage.getItem('ds-theme')
       <button class="nav-tab" data-tab="tab4">What-If Simulator</button>
       <button class="nav-tab" data-tab="tab5">AI Control Room</button>
     </div>
-    <div class="nav-right">
-      <button class="guide-toggle-nav" id="tabGuideBtn" title="How to use this tab (Interactive Walkthrough Guide)" aria-label="Tab Guide">
-        <span class="guide-nav-icon">💡</span>
-        <span class="guide-nav-label">Guide</span>
-      </button>
-      <button class="rail-toggle-nav" id="railSideToggle" title="Toggle KPI Dock Side (Left / Right)" aria-label="Toggle KPI Dock Side">
-        <span id="railSideIcon">◧</span>
-        <span id="railSideText">Left</span>
-      </button>
-      <span class="live-badge" style="display:none" id="navLiveBadge">Control Tower Active</span>
-      <button class="theme-toggle-nav" id="themeToggle" title="Toggle Theme" aria-label="Toggle theme">🌙</button>
-    </div>
   </div>
 </nav>
+
+<!-- ═══ Top-Right Satellite Quick Actions Bar (Separated Liquid Glass Capsules) ═══ -->
+<div class="top-actions-cluster" id="topActionsCluster">
+  <button class="satellite-pill-btn guide-btn" id="tabGuideBtn" title="How to use this tab (Interactive Walkthrough Guide)" aria-label="Tab Guide">
+    <span class="guide-nav-icon">💡</span>
+    <span class="guide-nav-label">Guide</span>
+  </button>
+  <button class="satellite-pill-btn rail-btn" id="railSideToggle" title="Toggle KPI Dock Side (Left / Right)" aria-label="Toggle KPI Dock Side">
+    <span id="railSideIcon">◧</span>
+    <span id="railSideText">Left</span>
+  </button>
+  <button class="satellite-pill-btn theme-btn" id="themeToggle" title="Toggle Theme (Light / Dark)" aria-label="Toggle theme">🌙</button>
+</div>
 
 <!-- ═══ Smart Floating Sticky Context Pill (Docks on scroll) ═══ -->
 <div class="sticky-context-pill" id="stickyContextPill" role="region" aria-label="Active Parameter Summary" title="Click to view or edit parameters">
