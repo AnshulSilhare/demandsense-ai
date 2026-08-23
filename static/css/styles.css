@@ -1551,8 +1551,8 @@ body.dark .upload-caution-caption {
 
 /* When card is docked along the vertical edge rail (Left Dock) */
 .kpi-card.is-docked-rail {
-  width: 210px !important;
-  max-width: 210px !important;
+  width: 205px !important;
+  max-width: 205px !important;
   z-index: 60 !important;
   border-top: 1px solid var(--glass-border) !important;
   border-left: 6px solid var(--teal) !important;
@@ -1562,32 +1562,32 @@ body.dark .upload-caution-caption {
   display: flex;
   flex-direction: column;
   align-items: flex-start;
-  padding: .72rem .95rem !important;
+  padding: .65rem .85rem !important;
 }
 
 .kpi-card.is-docked-rail .kpi-icon-chip {
   margin-left: 0;
   margin-right: auto;
-  margin-bottom: .2rem;
+  margin-bottom: .15rem;
 }
 
 .kpi-card.is-docked-rail .kpi-label {
   text-align: left;
   width: 100%;
-  margin-bottom: .15rem;
+  margin-bottom: .1rem;
 }
 
 .kpi-card.is-docked-rail .kpi-value {
   text-align: left;
   width: 100%;
-  font-size: 1.25rem;
+  font-size: 1.15rem;
   line-height: 1.1;
 }
 
 .kpi-card.is-docked-rail .kpi-delta {
   margin-left: 0;
   margin-right: auto;
-  margin-top: .2rem;
+  margin-top: .15rem;
 }
 
 .kpi-card.is-docked-rail .kpi-sparkline {
@@ -1598,8 +1598,8 @@ body.dark .upload-caution-caption {
 
 /* When card is docked along the right edge rail (Right Dock) */
 body.kpi-dock-right .kpi-card.is-docked-rail {
-  width: 210px !important;
-  max-width: 210px !important;
+  width: 205px !important;
+  max-width: 205px !important;
   z-index: 60 !important;
   border-top: 1px solid var(--glass-border) !important;
   border-left: 1px solid var(--glass-border) !important;
@@ -1609,13 +1609,13 @@ body.kpi-dock-right .kpi-card.is-docked-rail {
   display: flex;
   flex-direction: column;
   align-items: flex-start;
-  padding: .72rem .95rem !important;
+  padding: .65rem .85rem !important;
 }
 
 body.kpi-dock-right .kpi-card.is-docked-rail .kpi-icon-chip {
   margin-left: 0;
   margin-right: auto;
-  margin-bottom: .2rem;
+  margin-bottom: .15rem;
 }
 
 body.kpi-dock-right .kpi-card.is-docked-rail .kpi-label {

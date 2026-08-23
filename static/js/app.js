@@ -458,11 +458,11 @@
       // ─── DYNAMIC TAB SLIDE (GPU-Accelerated 60/120fps smooth glide to make room for vertical KPI rail) ───
       const tSlide = Math.max(0, Math.min(1, (alpha - 0.05) / 0.45));
       const pSlide = smootherstep(tSlide);
-      const railMargin = 14;
-      const dockedCardW = 210;
-      const dockedEdge = railMargin + dockedCardW + 36; // 14 + 210 + 36 = 260px
-      const clearanceNeeded = Math.max(120, dockedEdge - wrapperLeft);
-      const maxOffset = Math.min(clearanceNeeded, 220); // Guaranteed clearance so no cards ever overlap
+      const railMargin = 16;
+      const dockedCardW = 205;
+      const dockedEdge = railMargin + dockedCardW + 18; // 16 + 205 + 18 = 239px (Tight, tailored 18px gap)
+      const clearanceNeeded = Math.max(0, dockedEdge - wrapperLeft);
+      const maxOffset = clearanceNeeded; // Exact precision offset with zero excessive void
       const slideX = isRight ? (-maxOffset * pSlide) : (maxOffset * pSlide);
 
       $$('.tab-content').forEach(tc => {
@@ -473,11 +473,11 @@
         }
       });
 
-      const cardH = 136; // Calibrated actual card height (including sparkline)
+      const cardH = 112; // Compact calibrated actual card height
       const cardW = colWidth;
       const gap = 19.2;
-      const startY = 96; // Top rail baseline below nav & emblem
-      const slotSpacing = 164; // Generous 28px visual gap between cards (164 - 136 = 28px)
+      const startY = 88; // Top rail baseline below nav
+      const slotSpacing = 126; // Tight, crisp 14px visual gap between cards (126 - 112 = 14px)
 
       // Bounding span of all 4 cards in the resting horizontal row
       const spanLeft = wrapperLeft;
