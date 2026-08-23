@@ -424,6 +424,9 @@
           const snake = el(`snake${i}`);
           if (snake) snake.style.opacity = '0';
         });
+        $$('.tab-content').forEach(tc => {
+          tc.style.transform = '';
+        });
         return;
       }
 
@@ -442,12 +445,33 @@
           c.style.transformOrigin = 'center top';
           c.classList.remove('is-beam-morph', 'is-docked-rail');
         });
+        $$('.tab-content').forEach(tc => {
+          tc.style.transform = '';
+        });
         return;
       }
 
       // Calculate continuous scroll alpha (0.0 at scrollStart to 1.0 at scrollEnd)
       const alpha = Math.min(1.0, (currentY - scrollStart) / (scrollEnd - scrollStart));
       const isRight = (dockSide === 'right');
+
+      // ─── DYNAMIC TAB SLIDE (GPU-Accelerated 60/120fps smooth glide to make room for vertical KPI rail) ───
+      const tSlide = Math.max(0, Math.min(1, (alpha - 0.05) / 0.45));
+      const pSlide = smootherstep(tSlide);
+      const railMargin = 14;
+      const dockedCardW = 210;
+      const dockedEdge = railMargin + dockedCardW + 36; // 14 + 210 + 36 = 260px
+      const clearanceNeeded = Math.max(120, dockedEdge - wrapperLeft);
+      const maxOffset = Math.min(clearanceNeeded, 220); // Guaranteed clearance so no cards ever overlap
+      const slideX = isRight ? (-maxOffset * pSlide) : (maxOffset * pSlide);
+
+      $$('.tab-content').forEach(tc => {
+        if (pSlide > 0.001) {
+          tc.style.transform = `translate3d(${slideX.toFixed(2)}px, 0, 0)`;
+        } else {
+          tc.style.transform = '';
+        }
+      });
 
       const cardH = 136; // Calibrated actual card height (including sparkline)
       const cardW = colWidth;
@@ -461,8 +485,6 @@
       const initLen = spanRight - spanLeft;
 
       // Final span of all 4 cards along the vertical edge rail
-      const railMargin = 14;
-      const dockedCardW = 210;
       const railX = isRight ? (window.innerWidth - railMargin) : railMargin;
       const finalRailSpan = 3 * slotSpacing + cardH;
 
