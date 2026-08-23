@@ -1,0 +1,15 @@
+name: Keep Alive Render App
+
+on:
+  schedule:
+    # Runs every 10 minutes to prevent Render free instance spin-down
+    - cron: '*/10 * * * *'
+  workflow_dispatch:
+
+jobs:
+  ping:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Ping DemandSense AI Health Endpoint
+        run: |
+          curl -s -f https://demandsense-ai.onrender.com/health || echo "Ping failed, but workflow completed."
