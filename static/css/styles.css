@@ -459,12 +459,12 @@ body.kpi-dock-right .top-left-brand-icon {
   transition: transform .3s ease, border-color .3s ease;
 }
 
-/* ─── SMART FLOATING STICKY CONTEXT PILL (Liquid Water Droplet Emergence) ──── */
+/* ─── SMART FLOATING STICKY CONTEXT PILL (Apple Siri AI Liquid Release) ──── */
 .sticky-context-pill {
   position: fixed;
   top: 68px;
   left: 50%;
-  transform: translateX(-50%) translateY(-34px) scale(0.6, 0.2);
+  transform: translate3d(-50%, -18px, 0) scale(0.94);
   z-index: 95;
   height: 38px;
   max-width: 920px;
@@ -482,10 +482,12 @@ body.kpi-dock-right .top-left-brand-icon {
   opacity: 0;
   visibility: hidden;
   pointer-events: none;
-  transform-origin: center top;
-  transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.3s ease, visibility 0.3s ease, border-color 0.2s ease, filter 0.3s ease;
   cursor: pointer;
   overflow: hidden;
+  will-change: transform, opacity, box-shadow;
+  backface-visibility: hidden;
+  -webkit-backface-visibility: hidden;
+  transition: transform 0.38s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.28s ease, visibility 0.28s ease, border-color 0.25s ease, box-shadow 0.35s ease;
 }
 
 /* Specular fluid light rim along the top edge */
@@ -496,58 +498,62 @@ body.kpi-dock-right .top-left-brand-icon {
   left: 10%;
   right: 10%;
   height: 1.5px;
-  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.85), transparent);
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.9), transparent);
   pointer-events: none;
-  opacity: 0.8;
+  opacity: 0.85;
+}
+
+/* Apple Siri AI Iridescent Chromatic Ribbon Aura */
+.sticky-context-pill::after {
+  content: '';
+  position: absolute;
+  inset: -1px;
+  border-radius: 99px;
+  background: linear-gradient(90deg, #38bdf8, #818cf8, #c084fc, #34d399, #38bdf8);
+  background-size: 300% 100%;
+  -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+  -webkit-mask-composite: xor;
+  mask-composite: exclude;
+  padding: 1px;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.4s ease;
+  animation: siriAuraFlow 6s linear infinite;
+}
+
+@keyframes siriAuraFlow {
+  0% { background-position: 0% 50%; }
+  100% { background-position: 300% 50%; }
 }
 
 body.dark .sticky-context-pill::before {
-  background: linear-gradient(90deg, transparent, rgba(56, 189, 248, 0.85), transparent);
+  background: linear-gradient(90deg, transparent, rgba(56, 189, 248, 0.9), transparent);
 }
 
 body.dark .sticky-context-pill {
   background: rgba(15, 23, 42, 0.82);
   border-color: rgba(255, 255, 255, 0.14);
-  box-shadow: 0 12px 36px rgba(0, 0, 0, 0.5), inset 0 1px 1.5px rgba(255, 255, 255, 0.2), 0 0 24px rgba(56, 189, 248, 0.1);
+  box-shadow: 0 12px 36px rgba(0, 0, 0, 0.5), inset 0 1px 1.5px rgba(255, 255, 255, 0.2), 0 0 24px rgba(56, 189, 248, 0.12);
 }
 
 .sticky-context-pill.is-visible {
   opacity: 1;
   visibility: visible;
   pointer-events: auto;
-  animation: liquidDropletEmerge 0.52s cubic-bezier(0.2, 0.9, 0.3, 1.25) forwards;
+  transform: translate3d(-50%, 0, 0) scale(1);
+}
+
+.sticky-context-pill.is-visible::after {
+  opacity: 0.45;
+}
+
+body.dark .sticky-context-pill.is-visible::after {
+  opacity: 0.65;
 }
 
 .sticky-context-pill:hover {
   border-color: var(--teal);
-  box-shadow: 0 14px 40px rgba(13, 148, 136, 0.24);
-}
-
-@keyframes liquidDropletEmerge {
-  0% {
-    transform: translateX(-50%) translateY(-34px) scale(0.6, 0.2);
-    opacity: 0;
-    filter: blur(8px);
-  }
-  35% {
-    transform: translateX(-50%) translateY(4px) scale(0.86, 1.32);
-    opacity: 0.95;
-    filter: blur(0.5px);
-    box-shadow: 0 10px 30px rgba(56, 189, 248, 0.35), inset 0 2px 3px rgba(255, 255, 255, 0.8);
-  }
-  65% {
-    transform: translateX(-50%) translateY(-2px) scale(1.06, 0.92);
-    opacity: 1;
-    filter: blur(0px);
-  }
-  85% {
-    transform: translateX(-50%) translateY(1px) scale(0.98, 1.02);
-  }
-  100% {
-    transform: translateX(-50%) translateY(0) scale(1, 1);
-    opacity: 1;
-    filter: blur(0px);
-  }
+  box-shadow: 0 14px 40px rgba(13, 148, 136, 0.28), 0 0 20px rgba(56, 189, 248, 0.2);
 }
 
 .context-pill-content {
@@ -3029,11 +3035,14 @@ body.dark .guide-protip-box {
     flex-direction: column !important;
     justify-content: center !important;
     gap: 4px !important;
-    transform-origin: center top !important;
+    transform: translate3d(-50%, -14px, 0) scale(0.95) !important;
   }
 
   .sticky-context-pill.is-visible {
-    animation: liquidDropletEmergeMobile 0.52s cubic-bezier(0.2, 0.9, 0.3, 1.25) forwards !important;
+    opacity: 1 !important;
+    visibility: visible !important;
+    pointer-events: auto !important;
+    transform: translate3d(-50%, 0, 0) scale(1) !important;
   }
 
   .sticky-context-pill .context-pill-content {
@@ -3246,6 +3255,14 @@ body.dark .guide-protip-box {
     justify-content: center !important;
     box-shadow: 0 10px 32px rgba(15, 23, 42, 0.22), var(--glow-md) !important;
     gap: 4px !important;
+    transform: translate3d(-50%, -14px, 0) scale(0.95) !important;
+  }
+
+  .sticky-context-pill.is-visible {
+    opacity: 1 !important;
+    visibility: visible !important;
+    pointer-events: auto !important;
+    transform: translate3d(-50%, 0, 0) scale(1) !important;
   }
 
   .sticky-context-pill .context-pill-content {
