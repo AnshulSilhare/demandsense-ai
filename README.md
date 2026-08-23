@@ -160,7 +160,6 @@ The project uses **realistic synthetic Indian FMCG data** because real company d
 
 **Anshul Silhare**
 - PGDM Operations Management - Welingkar Institute of Management (WeSchool)
-- Rutgers Supply Chain Analytics (Coursera Certification)
 - [LinkedIn](https://linkedin.com/in/anshul-silhare) | [GitHub](https://github.com/anshul-silhare)
 
 ---
