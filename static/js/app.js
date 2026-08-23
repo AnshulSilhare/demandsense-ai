@@ -101,8 +101,6 @@
     setupFilters();
     setupModal();
     setupScrollEffects();
-    setupMomentumScroll();
-    setupScrollReveal();
 
     try {
       state.config = await API.get('/api/config');
@@ -194,108 +192,45 @@
     indicator.style.width = `${width}px`;
   }
 
-  // ═══ INTERSECTION OBSERVER SCROLL REVEAL CHOREOGRAPHER ═══
-  let revealObserver = null;
+  // ═══ CUSTOM CINEMATIC EASED SMOOTH SCROLL CONTROLLER (Graceful & Frictionless) ═══
+  let activeScrollAnim = null;
 
-  function setupScrollReveal() {
-    if (revealObserver) {
-      revealObserver.disconnect();
+  function gracefulScrollTo(targetY, duration = 750, onComplete = null) {
+    if (activeScrollAnim) {
+      cancelAnimationFrame(activeScrollAnim);
+      activeScrollAnim = null;
     }
 
-    revealObserver = new IntersectionObserver((entries, observer) => {
-      entries.forEach(entry => {
-        if (entry.isIntersecting) {
-          entry.target.classList.add('is-revealed');
-          observer.unobserve(entry.target);
-        }
-      });
-    }, {
-      threshold: 0.08,
-      rootMargin: '0px 0px -20px 0px'
-    });
+    const startY = window.scrollY;
+    const diff = targetY - startY;
+    if (Math.abs(diff) < 4) {
+      window.scrollTo(0, targetY);
+      if (window.renderKpiConveyorGlobal) window.renderKpiConveyorGlobal(targetY);
+      if (window.updateStickyPillGlobal) window.updateStickyPillGlobal(targetY);
+      if (onComplete) onComplete();
+      return;
+    }
+    const startTime = performance.now();
 
-    $$('.card, .section-header-row, .alert-banner, .po-preview').forEach((elem) => {
-      if (!elem.classList.contains('reveal-on-scroll')) {
-        elem.classList.add('reveal-on-scroll');
-        const parentGrid = elem.closest('.grid-2, .grid-3, .grid-4, .ai-cards-grid');
-        if (parentGrid) {
-          const siblings = Array.from(parentGrid.children);
-          const idx = siblings.indexOf(elem);
-          if (idx >= 0) {
-            elem.classList.add(`reveal-stagger-${(idx % 4) + 1}`);
-          }
-        }
-      }
+    function step(currentTime) {
+      const elapsed = currentTime - startTime;
+      const progress = Math.min(1, elapsed / duration);
+      // Luxurious C2 Quintic Smootherstep for liquid smooth acceleration & deceleration
+      const ease = progress * progress * progress * (progress * (progress * 6 - 15) + 10);
 
-      // Check if element is already within viewport on initial check
-      const rect = elem.getBoundingClientRect();
-      if (rect.top < window.innerHeight && rect.bottom > 0) {
-        elem.classList.add('is-revealed');
+      const currentPos = startY + diff * ease;
+      window.scrollTo(0, currentPos);
+      if (window.renderKpiConveyorGlobal) window.renderKpiConveyorGlobal(currentPos);
+      if (window.updateStickyPillGlobal) window.updateStickyPillGlobal(currentPos);
+
+      if (progress < 1) {
+        activeScrollAnim = requestAnimationFrame(step);
       } else {
-        revealObserver.observe(elem);
+        activeScrollAnim = null;
+        if (onComplete) onComplete();
       }
-    });
-  }
-
-  // ═══ ULTRA-FLUID INERTIAL MOMENTUM SMOOTH SCROLL ENGINE (Lenis-Grade Physics) ═══
-  const scrollPhysics = {
-    targetY: window.scrollY,
-    currentY: window.scrollY,
-    isRunning: false,
-    damping: 0.092 // Calibrated luxury spring damping (zero mechanical stepping)
-  };
-
-  function updateScrollPhysics() {
-    const diff = scrollPhysics.targetY - scrollPhysics.currentY;
-    if (Math.abs(diff) > 0.3) {
-      scrollPhysics.currentY += diff * scrollPhysics.damping;
-      window.scrollTo(0, scrollPhysics.currentY);
-      requestAnimationFrame(updateScrollPhysics);
-    } else {
-      scrollPhysics.currentY = scrollPhysics.targetY;
-      window.scrollTo(0, scrollPhysics.currentY);
-      scrollPhysics.isRunning = false;
     }
-  }
-
-  function setupMomentumScroll() {
-    scrollPhysics.targetY = window.scrollY;
-    scrollPhysics.currentY = window.scrollY;
-
-    window.addEventListener('wheel', (e) => {
-      // Allow natural scroll inside scrollable drawers or pre blocks
-      if (e.target.closest('.detail-drawer, .modal-content, pre, select, textarea')) return;
-
-      // Prevent mechanical rigid wheel step
-      e.preventDefault();
-
-      const delta = e.deltaY * (e.deltaMode === 1 ? 22 : 1);
-      const maxScroll = Math.max(0, document.documentElement.scrollHeight - window.innerHeight);
-      scrollPhysics.targetY = Math.max(0, Math.min(maxScroll, scrollPhysics.targetY + delta));
-
-      if (!scrollPhysics.isRunning) {
-        scrollPhysics.isRunning = true;
-        requestAnimationFrame(updateScrollPhysics);
-      }
-    }, { passive: false });
-
-    // Stay in sync if user drags native scrollbar or touches screen
-    window.addEventListener('scroll', () => {
-      if (!scrollPhysics.isRunning) {
-        scrollPhysics.targetY = window.scrollY;
-        scrollPhysics.currentY = window.scrollY;
-      }
-    }, { passive: true });
-  }
-
-  function gracefulScrollTo(targetY) {
-    const maxScroll = Math.max(0, document.documentElement.scrollHeight - window.innerHeight);
-    scrollPhysics.targetY = Math.max(0, Math.min(maxScroll, targetY));
-
-    if (!scrollPhysics.isRunning) {
-      scrollPhysics.isRunning = true;
-      requestAnimationFrame(updateScrollPhysics);
-    }
+    activeScrollAnim = requestAnimationFrame(step);
   }
 
   function switchTab(target) {
@@ -319,17 +254,7 @@
     activePanel?.classList.add('active');
     state.activeTab = target;
 
-    // Gracefully scroll down/up to the tab heading at a controlled speed so the KPI train animation plays visibly
-    if (activePanel) {
-      const headerOffset = window.innerWidth < 768 ? 64 : 80;
-      const elementPosition = activePanel.getBoundingClientRect().top;
-      const offsetPosition = elementPosition + window.pageYOffset - headerOffset;
-
-      gracefulScrollTo(Math.max(0, offsetPosition));
-    }
-
-    // Render / refresh charts in the newly activated tab
-    setTimeout(() => {
+    function refreshTabCharts() {
       if (target === 'tab1') {
         if (state.forecastData) renderHeroChart();
         if (!state.decompData) loadDecomp(); else {
@@ -375,16 +300,24 @@
         renderTab5();
       }
 
-      // Re-trigger scroll reveal observer for newly visible cards
-      setupScrollReveal();
-
       // Trigger resize on all active chart instances
       if (window.ChartTheme?._instances) {
         for (const inst of ChartTheme._instances.values()) {
           if (inst && !inst.isDisposed()) inst.resize();
         }
       }
-    }, 50);
+    }
+
+    // Gracefully scroll down/up to the tab heading; only compile charts AFTER scroll completes for 120 FPS fluidity
+    if (activePanel) {
+      const headerOffset = window.innerWidth < 768 ? 64 : 80;
+      const elementPosition = activePanel.getBoundingClientRect().top;
+      const offsetPosition = elementPosition + window.pageYOffset - headerOffset;
+
+      gracefulScrollTo(Math.max(0, offsetPosition), 750, refreshTabCharts);
+    } else {
+      refreshTabCharts();
+    }
   }
 
   function setupNav() {
@@ -763,17 +696,22 @@
       }
     }
 
+    window.renderKpiConveyorGlobal = renderKpiConveyor;
+    window.updateStickyPillGlobal = updateStickyPill;
+
     let isRafScheduled = false;
 
     function onScrollFrame() {
-      const y = window.scrollY;
-      renderKpiConveyor(y);
-      updateStickyPill(y);
+      if (!activeScrollAnim) {
+        const y = window.scrollY;
+        renderKpiConveyor(y);
+        updateStickyPill(y);
+      }
       isRafScheduled = false;
     }
 
     function handleScroll() {
-      if (!isRafScheduled) {
+      if (!isRafScheduled && !activeScrollAnim) {
         isRafScheduled = true;
         requestAnimationFrame(onScrollFrame);
       }
@@ -1190,7 +1128,6 @@
     const kpis = state.forecastData?.kpi_bar?.kpis || [];
     kpis.forEach((kpi, i) => {
       const card = el(`kpi${i}`);
-      if (!card) return;
       const deltaClass = kpi.favorable ? 'up' : (kpi.delta_pct === 0 ? 'neutral' : 'down');
       const arrow = kpi.delta_pct > 0 ? '▲' : (kpi.delta_pct < 0 ? '▼' : '—');
 
@@ -1206,10 +1143,6 @@
         <div class="kpi-value">${kpi.value_fmt}</div>
         <div class="kpi-sparkline">${spark}</div>
       `;
-
-      card.classList.remove('cascade-in');
-      void card.offsetWidth;
-      card.classList.add('cascade-in');
     });
   }
 

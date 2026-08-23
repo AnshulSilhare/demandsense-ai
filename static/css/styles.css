@@ -1522,30 +1522,7 @@ body.dark .upload-caution-caption {
   grid-template-columns: repeat(4, 1fr);
   gap: 1.2rem;
   width: 100%;
-  transform: translate3d(0, 0, 0);
-  -webkit-backface-visibility: hidden;
-  backface-visibility: hidden;
 }
-
-/* ─── KPI STAGGERED CASCADE ENTRANCE ANIMATION ─── */
-@keyframes kpiCascade {
-  from {
-    opacity: 0;
-    transform: translateY(-16px) scale(0.96);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0) scale(1);
-  }
-}
-
-.kpi-card.cascade-in {
-  animation: kpiCascade 0.65s cubic-bezier(0.16, 1, 0.3, 1) both;
-}
-.kpi-card.cascade-in:nth-child(1) { animation-delay: 0.04s; }
-.kpi-card.cascade-in:nth-child(2) { animation-delay: 0.12s; }
-.kpi-card.cascade-in:nth-child(3) { animation-delay: 0.20s; }
-.kpi-card.cascade-in:nth-child(4) { animation-delay: 0.28s; }
 
 /* ─── FLEXIBLE QUANTUM SNAKE CANVAS (Curving Ribbon Physics) ─── */
 .kpi-snake-canvas {
@@ -1555,7 +1532,6 @@ body.dark .upload-caution-caption {
   height: 100vh;
   pointer-events: none;
   z-index: 0; /* Positioned below cards for elegant layered depth */
-  transform: translate3d(0, 0, 0);
 }
 
 .kpi-card {
@@ -1571,9 +1547,6 @@ body.dark .upload-caution-caption {
   overflow: hidden;
   transform-origin: center top;
   will-change: transform, opacity, box-shadow;
-  transform: translate3d(0, 0, 0);
-  -webkit-backface-visibility: hidden;
-  backface-visibility: hidden;
 }
 
 /* When card is docked along the vertical edge rail (Left Dock) */
@@ -1676,13 +1649,11 @@ body.kpi-dock-right .kpi-card.is-docked-rail:hover {
   box-shadow: var(--glass-shadow-hover);
 }
 
-.kpi-card > * {
-  transition: opacity .16s cubic-bezier(.4, 0, .2, 1), transform .16s ease;
-}
-
 /* Card Morph State */
 .kpi-card.is-beam-morph {
   pointer-events: none;
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
 }
 
 .kpi-card.is-beam-morph > * {
@@ -2267,26 +2238,6 @@ body.dark .modal-title {
   from { opacity: 0; transform: translateY(12px); }
   to   { opacity: 1; transform: translateY(0); }
 }
-
-/* ─── SCROLL ENTRANCE CHOREOGRAPHY (Intersection Observer) ─── */
-.reveal-on-scroll {
-  opacity: 0;
-  transform: translateY(24px) scale(0.985);
-  transition: opacity 0.75s cubic-bezier(0.16, 1, 0.3, 1),
-              transform 0.75s cubic-bezier(0.16, 1, 0.3, 1);
-  will-change: opacity, transform;
-}
-
-.reveal-on-scroll.is-revealed {
-  opacity: 1;
-  transform: translateY(0) scale(1);
-}
-
-/* Staggered delay helpers for nested grids and charts */
-.reveal-stagger-1 { transition-delay: 0.08s; }
-.reveal-stagger-2 { transition-delay: 0.16s; }
-.reveal-stagger-3 { transition-delay: 0.24s; }
-.reveal-stagger-4 { transition-delay: 0.32s; }
 
 .loading-spinner {
   width: 32px;
