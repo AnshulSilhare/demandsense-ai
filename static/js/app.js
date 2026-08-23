@@ -546,23 +546,39 @@
       }
     }
 
+    const stickyPill = el('stickyContextPill');
+    const filterPanel = el('filterPanel');
+
+    function updateStickyPill(y) {
+      if (!stickyPill || !filterPanel) return;
+      const triggerY = filterPanel.offsetTop + filterPanel.offsetHeight - 40;
+      if (y > triggerY) {
+        stickyPill.classList.add('is-visible');
+      } else {
+        stickyPill.classList.remove('is-visible');
+      }
+    }
+
     function physicsLoop() {
       // Smooth LERP momentum damping: moves 16% closer to targetScroll each frame (silky inertia)
       smoothScroll += (targetScroll - smoothScroll) * 0.16;
 
       renderKpiConveyor(smoothScroll);
+      updateStickyPill(smoothScroll);
 
       if (Math.abs(targetScroll - smoothScroll) > 0.15) {
         requestAnimationFrame(physicsLoop);
       } else {
         smoothScroll = targetScroll;
         renderKpiConveyor(smoothScroll);
+        updateStickyPill(smoothScroll);
         isRenderLoopRunning = false;
       }
     }
 
     function handleScroll() {
       targetScroll = window.scrollY;
+      updateStickyPill(targetScroll);
       if (!isRenderLoopRunning) {
         isRenderLoopRunning = true;
         requestAnimationFrame(physicsLoop);
@@ -572,14 +588,17 @@
     window.addEventListener('scroll', handleScroll, { passive: true });
     window.addEventListener('resize', () => { cachedMetrics = null; handleScroll(); }, { passive: true });
     measureMetrics();
+    updateStickyPill(window.scrollY);
   }
 
   // ═══ FILTERS & COLLAPSIBLE EXECUTIVE PARAMETER SUITE ═══
   function updateCollapsedSummary() {
     const skuObj = state.config?.products?.find(p => p.sku_id === state.sku);
-    const skuLabel = skuObj ? `${skuObj.sku_id} (${skuObj.name})` : state.sku;
+    const skuFullLabel = skuObj ? `${skuObj.sku_id} — ${skuObj.name}` : state.sku;
+    const skuShortLabel = skuObj ? `${skuObj.sku_id} (${skuObj.name})` : state.sku;
     const regionObj = state.config?.regions?.find(r => r.id === state.region);
     const regionLabel = state.region === 'ALL' ? 'National Scope' : (regionObj ? regionObj.name : state.region);
+    const regionShort = state.region === 'ALL' ? 'National' : (regionObj ? regionObj.name.split(' ')[0] : state.region);
 
     // Preset mapping
     const presetNames = { 3: '3d Air', 7: '7d Std', 14: '14d Rail', 21: '21d Sea' };
@@ -587,14 +606,23 @@
 
     const slPcts = { 'C': '90%', 'B': '95%', 'A': '98%' };
     const slLabel = `Grade ${state.serviceLevel} (${slPcts[state.serviceLevel] || '98%'})`;
+    const slShort = `${slPcts[state.serviceLevel] || '98%'} SLA`;
 
     const stockLabel = `${(state.stock || 0).toLocaleString()} units`;
 
-    if (el('sumSku')) el('sumSku').textContent = skuLabel;
+    // 1. In-place summary bar (when collapsed)
+    if (el('sumSku')) el('sumSku').textContent = skuShortLabel;
     if (el('sumRegion')) el('sumRegion').textContent = regionLabel;
     if (el('sumLeadTime')) el('sumLeadTime').textContent = ltLabel;
     if (el('sumServiceLevel')) el('sumServiceLevel').textContent = slLabel;
     if (el('sumStock')) el('sumStock').textContent = stockLabel;
+
+    // 2. Smart Floating Sticky Context Pill (on scroll)
+    if (el('pillSku')) el('pillSku').textContent = skuFullLabel;
+    if (el('pillRegion')) el('pillRegion').textContent = regionShort;
+    if (el('pillLeadTime')) el('pillLeadTime').textContent = ltLabel;
+    if (el('pillSla')) el('pillSla').textContent = slShort;
+    if (el('pillStock')) el('pillStock').textContent = stockLabel;
   }
 
   function setupCollapsibleFilterPanel() {
@@ -602,6 +630,7 @@
     const collapseBtn = el('filterCollapseBtn');
     const collapseLabel = el('collapseLabel');
     const summaryBar = el('filterSummaryBar');
+    const stickyPill = el('stickyContextPill');
 
     // Restore saved state from localStorage (or default collapsed on first mobile load)
     const savedCollapsed = localStorage.getItem('ds-filter-collapsed');
@@ -619,6 +648,14 @@
       updateCollapsedSummary();
     }
 
+    function jumpToParams() {
+      if (panel && panel.classList.contains('is-collapsed')) {
+        toggleCollapse();
+      }
+      panel?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      setTimeout(() => el('skuSelect')?.focus(), 400);
+    }
+
     collapseBtn?.addEventListener('click', (e) => {
       e.stopPropagation();
       toggleCollapse();
@@ -628,6 +665,12 @@
       if (panel && panel.classList.contains('is-collapsed')) {
         toggleCollapse();
       }
+    });
+
+    stickyPill?.addEventListener('click', jumpToParams);
+    el('pillEditBtn')?.addEventListener('click', (e) => {
+      e.stopPropagation();
+      jumpToParams();
     });
   }
 

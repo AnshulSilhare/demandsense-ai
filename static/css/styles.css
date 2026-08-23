@@ -439,6 +439,159 @@ body.kpi-dock-right .top-left-brand-icon {
   transition: transform .3s ease, border-color .3s ease;
 }
 
+/* ─── SMART FLOATING STICKY CONTEXT PILL (Docks on scroll) ──── */
+.sticky-context-pill {
+  position: fixed;
+  top: 68px;
+  left: 50%;
+  transform: translateX(-50%) translateY(-24px);
+  z-index: 95;
+  height: 38px;
+  max-width: 920px;
+  width: calc(100% - 2.5rem);
+  background: var(--nav-bg);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid var(--glass-border);
+  border-radius: 99px;
+  box-shadow: 0 8px 30px rgba(15, 23, 42, 0.14), var(--glow);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 0.4rem 0 0.85rem;
+  opacity: 0;
+  visibility: hidden;
+  pointer-events: none;
+  transition: transform 0.35s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.25s ease, visibility 0.25s ease, border-color 0.2s ease;
+  cursor: pointer;
+}
+
+body.dark .sticky-context-pill {
+  background: rgba(15, 23, 42, 0.85);
+  border-color: rgba(255, 255, 255, 0.12);
+  box-shadow: 0 10px 32px rgba(0, 0, 0, 0.45), 0 0 20px rgba(56, 189, 248, 0.08);
+}
+
+.sticky-context-pill.is-visible {
+  opacity: 1;
+  visibility: visible;
+  pointer-events: auto;
+  transform: translateX(-50%) translateY(0);
+}
+
+.sticky-context-pill:hover {
+  border-color: var(--teal);
+  box-shadow: 0 12px 36px rgba(13, 148, 136, 0.2);
+}
+
+.context-pill-content {
+  display: flex;
+  align-items: center;
+  gap: 0.65rem;
+  min-width: 0;
+  overflow: hidden;
+}
+
+.pill-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  flex-shrink: 0;
+}
+
+.pill-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--teal);
+  box-shadow: 0 0 8px var(--teal);
+  animation: pulseDot 2s infinite ease-in-out;
+}
+
+.pill-sku-title {
+  font-family: var(--display);
+  font-size: 0.78rem;
+  font-weight: 700;
+  color: var(--text);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+body.dark .pill-sku-title {
+  background: linear-gradient(135deg, #f8fafc 0%, var(--accent-title) 75%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.pill-divider {
+  width: 1px;
+  height: 16px;
+  background: var(--border2);
+  flex-shrink: 0;
+}
+
+.pill-metrics {
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+  font-family: var(--mono);
+  font-size: 0.72rem;
+  color: var(--text2);
+  white-space: nowrap;
+  overflow: hidden;
+}
+
+.pill-metric-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+}
+
+.pill-icon {
+  font-size: 0.75rem;
+}
+
+.pill-sep {
+  color: var(--text3);
+  opacity: 0.6;
+}
+
+.pill-edit-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  padding: 0.25rem 0.65rem;
+  border-radius: 99px;
+  background: rgba(13, 148, 136, 0.1);
+  border: 1px solid rgba(13, 148, 136, 0.25);
+  color: var(--teal);
+  font-family: var(--mono);
+  font-size: 0.68rem;
+  font-weight: 600;
+  cursor: pointer;
+  flex-shrink: 0;
+  transition: all 0.2s ease;
+}
+
+.pill-edit-btn:hover {
+  background: var(--teal);
+  color: #ffffff;
+  transform: scale(1.04);
+}
+
+body.dark .pill-edit-btn {
+  background: rgba(56, 189, 248, 0.14);
+  border-color: rgba(56, 189, 248, 0.3);
+  color: var(--accent-title);
+}
+
+body.dark .pill-edit-btn:hover {
+  background: var(--accent-title);
+  color: #0b0f19;
+}
+
 .theme-toggle-floating:hover {
   transform: scale(1.12);
   border-color: var(--accent);
@@ -2792,6 +2945,39 @@ body.dark .guide-protip-box {
     height: 44px !important;
     top: 0.5rem !important;
     width: calc(100% - 1rem) !important;
+  }
+
+  /* ─── SMART STICKY CONTEXT PILL ON MOBILE ─── */
+  .sticky-context-pill {
+    top: 52px !important;
+    width: calc(100% - 1rem) !important;
+    max-width: 480px !important;
+    height: 32px !important;
+    padding: 0 0.35rem 0 0.6rem !important;
+  }
+
+  .sticky-context-pill .pill-sku-title {
+    font-size: 0.68rem !important;
+    max-width: 105px !important;
+  }
+
+  .sticky-context-pill .pill-metrics {
+    font-size: 0.6rem !important;
+    gap: 0.25rem !important;
+  }
+
+  .sticky-context-pill .pill-sep {
+    display: none !important;
+  }
+
+  .sticky-context-pill .pill-metric-item[title*="Service"] {
+    display: none !important;
+  }
+
+  .sticky-context-pill .pill-edit-btn {
+    padding: 0.15rem 0.4rem !important;
+    font-size: 0.58rem !important;
+    gap: 0.2rem !important;
   }
 
   /* Hide desktop-only chrome on mobile */
