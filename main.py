@@ -441,15 +441,21 @@ async def _warmup_background():
 app.mount("/static", StaticFiles(directory=str(PROJECT_ROOT / "static")), name="static")
 
 
-@app.get("/health")
+# ── Health & Keep-Alive Routes (supports GET, HEAD, POST, OPTIONS for all uptime monitors) ──
+@app.api_route("/health", methods=["GET", "HEAD", "POST", "OPTIONS"])
+@app.api_route("/api/health", methods=["GET", "HEAD", "POST", "OPTIONS"])
+@app.api_route("/ping", methods=["GET", "HEAD", "POST", "OPTIONS"])
+@app.api_route("/status", methods=["GET", "HEAD", "POST", "OPTIONS"])
 def health():
     """Lightweight health check — no computation, no DB reads.
-    Used by Render's health check and optional keep-alive cron (cron-job.org)."""
-    return {"status": "ok", "version": VERSION}
+    Handles GET, HEAD, POST, OPTIONS from any uptime monitoring service (UptimeRobot, BetterStack, Cron-job, etc.)"""
+    return JSONResponse(content={"status": "ok", "version": VERSION, "timestamp": datetime.utcnow().isoformat()})
 
 
-@app.get("/")
-def root():
+@app.api_route("/", methods=["GET", "HEAD"])
+def root(request: Request):
+    if request.method == "HEAD":
+        return Response(status_code=200, media_type="text/html")
     return FileResponse(str(PROJECT_ROOT / "static" / "index.html"))
 
 
