@@ -107,7 +107,7 @@ body, nav.top-nav, .card, .filter-panel, .kpi-card, .modal-content, .detail-draw
 }
 
 html {
-  scroll-behavior: smooth;
+  scroll-behavior: auto;
 }
 
 body {
@@ -3184,8 +3184,8 @@ body.dark .guide-protip-box {
   }
 }
 
-/* ── 1.2 TABLETS & MEDIUM SCREENS (768px to 1024px) ── */
-@media (min-width: 768px) and (max-width: 1024px) {
+/* ── 1.2 TABLETS, MEDIUM SCREENS & LAPTOPS (768px to 1359px) ── */
+@media (min-width: 768px) and (max-width: 1359px) {
   .control-clusters {
     grid-template-columns: repeat(2, 1fr) !important;
     gap: 1rem !important;

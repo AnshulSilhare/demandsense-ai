@@ -195,7 +195,7 @@
   // ═══ CUSTOM CINEMATIC EASED SMOOTH SCROLL CONTROLLER (Graceful & Frictionless) ═══
   let activeScrollAnim = null;
 
-  function gracefulScrollTo(targetY, duration = 750, onComplete = null) {
+  function gracefulScrollTo(targetY, duration = 380, onComplete = null) {
     if (activeScrollAnim) {
       cancelAnimationFrame(activeScrollAnim);
       activeScrollAnim = null;
@@ -204,7 +204,7 @@
     const startY = window.scrollY;
     const diff = targetY - startY;
     if (Math.abs(diff) < 4) {
-      window.scrollTo(0, targetY);
+      window.scrollTo({ left: 0, top: targetY, behavior: 'instant' });
       if (window.renderKpiConveyorGlobal) window.renderKpiConveyorGlobal(targetY);
       if (window.updateStickyPillGlobal) window.updateStickyPillGlobal(targetY);
       if (onComplete) onComplete();
@@ -219,7 +219,7 @@
       const ease = progress * progress * progress * (progress * (progress * 6 - 15) + 10);
 
       const currentPos = startY + diff * ease;
-      window.scrollTo(0, currentPos);
+      window.scrollTo({ left: 0, top: currentPos, behavior: 'instant' });
       if (window.renderKpiConveyorGlobal) window.renderKpiConveyorGlobal(currentPos);
       if (window.updateStickyPillGlobal) window.updateStickyPillGlobal(currentPos);
 
@@ -250,7 +250,7 @@
     });
     updateBottomTabIndicator(target);
 
-    // Switch tab contents
+    // Switch tab contents immediately
     $$('.tab-content').forEach(tc => tc.classList.remove('active'));
     const activePanel = el(target);
     activePanel?.classList.add('active');
@@ -316,15 +316,22 @@
       }
     }
 
-    // Gracefully scroll down/up to the tab heading; only compile charts AFTER scroll completes for 120 FPS fluidity
+    // Render charts IMMEDIATELY upon tab click with zero perceptual delay
+    refreshTabCharts();
+
+    // Smoothly glide viewport to tab heading
     if (activePanel) {
       const headerOffset = window.innerWidth < 768 ? 64 : 80;
       const elementPosition = activePanel.getBoundingClientRect().top;
       const offsetPosition = elementPosition + window.pageYOffset - headerOffset;
 
-      gracefulScrollTo(Math.max(0, offsetPosition), 750, refreshTabCharts);
-    } else {
-      refreshTabCharts();
+      gracefulScrollTo(Math.max(0, offsetPosition), 380, () => {
+        if (window.ChartTheme?._instances) {
+          for (const inst of ChartTheme._instances.values()) {
+            if (inst && !inst.isDisposed()) inst.resize();
+          }
+        }
+      });
     }
   }
 
@@ -426,34 +433,42 @@
       }
     }
 
+    let isCompactClean = false;
+    let isNavScrolled = false;
+
     function renderKpiConveyor(currentY) {
       // 1. Navbar shrink
-      if (currentY > 30) {
-        nav?.classList.add('scrolled');
-      } else {
-        nav?.classList.remove('scrolled');
+      const shouldScrollNav = currentY > 30;
+      if (shouldScrollNav !== isNavScrolled) {
+        nav?.classList.toggle('scrolled', shouldScrollNav);
+        isNavScrolled = shouldScrollNav;
       }
+
+      // Check widescreen desktop viewport (Docking only on wide displays >= 1360px)
+      if (!kpiBar || !kpiWrapper || window.innerWidth < 1360) {
+        if (!isCompactClean) {
+          if (canvas && ctx) ctx.clearRect(0, 0, canvas.width, canvas.height);
+          cards.forEach((c, i) => {
+            if (!c) return;
+            c.style.transform = '';
+            c.style.opacity = '';
+            c.classList.remove('is-beam-morph', 'is-docked-rail');
+            const snake = el(`snake${i}`);
+            if (snake) snake.style.opacity = '0';
+          });
+          tabContents.forEach(tc => {
+            tc.style.transform = '';
+          });
+          isCompactClean = true;
+        }
+        return; // Zero overhead on tablet/mobile scroll!
+      }
+      isCompactClean = false;
 
       const dpr = Math.min(2, window.devicePixelRatio || 1);
 
       if (canvas && ctx) {
         ctx.clearRect(0, 0, canvas.width, canvas.height);
-      }
-
-      // Check widescreen desktop viewport (Docking only on wide displays >= 1360px)
-      if (!kpiBar || !kpiWrapper || window.innerWidth < 1360) {
-        cards.forEach((c, i) => {
-          if (!c) return;
-          c.style.transform = '';
-          c.style.opacity = '';
-          c.classList.remove('is-beam-morph', 'is-docked-rail');
-          const snake = el(`snake${i}`);
-          if (snake) snake.style.opacity = '0';
-        });
-        tabContents.forEach(tc => {
-          tc.style.transform = '';
-        });
-        return;
       }
 
       if (cards.length < 4 || !cards[0]) return;
@@ -693,14 +708,22 @@
 
     const stickyPill = el('stickyContextPill');
     const filterPanel = el('filterPanel');
+    let cachedTriggerY = 0;
+    let isPillVisible = false;
+
+    function measureStickyTrigger() {
+      if (filterPanel) {
+        cachedTriggerY = filterPanel.offsetTop + filterPanel.offsetHeight - 40;
+      }
+    }
 
     function updateStickyPill(y) {
       if (!stickyPill || !filterPanel) return;
-      const triggerY = filterPanel.offsetTop + filterPanel.offsetHeight - 40;
-      if (y > triggerY) {
-        stickyPill.classList.add('is-visible');
-      } else {
-        stickyPill.classList.remove('is-visible');
+      if (!cachedTriggerY) measureStickyTrigger();
+      const shouldShow = y > cachedTriggerY;
+      if (shouldShow !== isPillVisible) {
+        stickyPill.classList.toggle('is-visible', shouldShow);
+        isPillVisible = shouldShow;
       }
     }
 
@@ -729,6 +752,8 @@
     window.addEventListener('resize', () => {
       initCanvas();
       cachedMetrics = null;
+      cachedTriggerY = 0;
+      isCompactClean = false;
       handleScroll();
     }, { passive: true });
 
