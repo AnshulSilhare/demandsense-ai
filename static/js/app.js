@@ -890,24 +890,28 @@
     updateCollapsedSummary();
   }
 
-  const debouncedLoad = debounce(() => {
+  const debouncedParamLoad = debounce(() => {
+    loadForecast(false);
+  }, 120);
+
+  const debouncedSkuLoad = debounce(() => {
     clearCachedData();
-    loadForecast();
-  }, 500);
+    loadForecast(false);
+  }, 120);
 
   function setupFilters() {
     // 1. SKU Selector
     el('skuSelect')?.addEventListener('change', e => {
       state.sku = e.target.value;
       updateCollapsedSummary();
-      debouncedLoad();
+      debouncedSkuLoad();
     });
 
     // 2. Region Selector
     el('regionSelect')?.addEventListener('change', e => {
       state.region = e.target.value;
       updateCollapsedSummary();
-      debouncedLoad();
+      debouncedSkuLoad();
     });
 
     // 3. Lead Time Slider & Preset Buttons (Two-Way Sync + Tick Highlights)
@@ -929,14 +933,15 @@
 
     slider?.addEventListener('input', e => {
       updateLeadTimeUI(parseInt(e.target.value));
+      debouncedParamLoad();
     });
-    slider?.addEventListener('change', debouncedLoad);
+    slider?.addEventListener('change', debouncedParamLoad);
 
     presetBtns.forEach(btn => {
       btn.addEventListener('click', () => {
         const days = parseInt(btn.dataset.val);
         updateLeadTimeUI(days);
-        debouncedLoad();
+        debouncedParamLoad();
       });
     });
 
@@ -958,13 +963,13 @@
     segBtns.forEach(btn => {
       btn.addEventListener('click', () => {
         updateServiceLevelUI(btn.dataset.val);
-        debouncedLoad();
+        debouncedParamLoad();
       });
     });
 
     levelSelect?.addEventListener('change', e => {
       updateServiceLevelUI(e.target.value);
-      debouncedLoad();
+      debouncedParamLoad();
     });
 
     // 5. Stock Input Stepper (- / + buttons)
@@ -977,7 +982,7 @@
       state.stock = clamped;
       if (stockInput) stockInput.value = clamped;
       updateCollapsedSummary();
-      debouncedLoad();
+      debouncedParamLoad();
     }
 
     stockInput?.addEventListener('change', e => {
@@ -997,7 +1002,7 @@
     // 6. Reset Defaults Button
     el('resetParamsBtn')?.addEventListener('click', () => {
       if (state.config) {
-        state.sku = state.config.products?.[0]?.sku_id || 'SKU-001';
+        state.sku = state.config.products?.[0]?.sku_id || 'SKU001';
         state.region = 'ALL';
         state.leadTime = state.config.default_lead_time || 7;
         state.serviceLevel = 'A';
@@ -1011,7 +1016,7 @@
 
         updateCollapsedSummary();
         toast('Parameters reset to default', false);
-        debouncedLoad();
+        debouncedParamLoad();
       }
     });
 
@@ -1104,10 +1109,12 @@
   let _forecastRetryCount = 0;
 
   // ═══ MAIN FORECAST LOAD ═══
-  async function loadForecast() {
-    showKpiLoading();
-    showLoading('heroChart');
-    if (el('lastUpdated')) el('lastUpdated').textContent = 'Connecting to AI Inference Engine...';
+  async function loadForecast(isInitial = false) {
+    if (isInitial || !state.forecastData) {
+      showKpiLoading();
+      showLoading('heroChart');
+      if (el('lastUpdated')) el('lastUpdated').textContent = 'Connecting to AI Inference Engine...';
+    }
 
     const promise = API.get(`/api/forecast?${_qs()}`);
     activeForecastPromise = promise;
@@ -1135,9 +1142,15 @@
       }
 
       // Also load tab-specific data for visible tab
-      if (state.activeTab === 'tab1') { loadDecomp(); loadFestival(); }
-      if (state.activeTab === 'tab2') loadFeatureImportance();
-      if (state.activeTab === 'tab3') { loadAbc(); loadRegional(); }
+      if (state.activeTab === 'tab1') {
+        if (!state.decompData) loadDecomp();
+        if (!state.festivalData) loadFestival();
+      }
+      if (state.activeTab === 'tab2') renderTab2();
+      if (state.activeTab === 'tab3') {
+        if (!state.abcData) loadAbc();
+        if (!state.regionalData) loadRegional();
+      }
       if (state.activeTab === 'tab4') { renderSimSliders(); renderSimMetrics(); renderSimChart(false); }
       if (state.activeTab === 'tab5') renderTab5();
     } catch (e) {
@@ -1146,7 +1159,7 @@
       if (_forecastRetryCount < 2) {
         _forecastRetryCount++;
         if (el('lastUpdated')) el('lastUpdated').textContent = `Server waking up... retrying connection (${_forecastRetryCount}/2)`;
-        setTimeout(loadForecast, 3500);
+        setTimeout(() => loadForecast(isInitial), 3500);
         return;
       }
 

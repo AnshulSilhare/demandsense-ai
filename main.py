@@ -246,6 +246,7 @@ def _compute_kpi_bar(filtered_df, forecast_df, impact_data, sku_info):
 # ═══════════════════════════════════════════════════════════════
 FORECAST_CACHE: dict = {}  # hash → {"result": ..., "time": float}
 PRECOMPUTED_BUNDLE: dict = {}  # "default_SKU001" / hash → result dict
+SKU_FORECAST_CACHE: dict = {}  # (sid, sku, region) → base forecast dict
 DECOMP_CACHE: dict = {}
 FESTIVAL_CACHE: dict = {}
 ABC_CACHE: dict = {}
@@ -272,44 +273,71 @@ def _get_cached_forecast(key: str):
 def _set_cached_forecast(key: str, result):
     FORECAST_CACHE[key] = {"result": result, "time": time.time()}
     # Evict oldest non-permanent entry if cache grows too large
-    if len(FORECAST_CACHE) > 200:
+    if len(FORECAST_CACHE) > 300:
         evictable = [k for k, v in FORECAST_CACHE.items() if v["time"] != float("inf")]
         if evictable:
             oldest = min(evictable, key=lambda k: FORECAST_CACHE[k]["time"])
             del FORECAST_CACHE[oldest]
 
 
-# ═══════════════════════════════════════════════════════════════
-# CORE FORECAST PIPELINE (mirrors get_forecast_and_impact from app.py)
-# ═══════════════════════════════════════════════════════════════
-def _run_forecast_pipeline(filtered_df, sku_id, lead_time, abc_class, stock):
-    """Run ModelAutoSelector + OperationsImpactCalculator + LLMPrescriptiveAgent."""
+def _get_or_compute_base_forecast(request: Request, sku: str, region: str, sid: Optional[str]):
+    """Retrieve base ML forecast (history, winning model, forecast points) from RAM or compute once."""
+    cache_k = (sid or "default", sku, region)
+    if cache_k in SKU_FORECAST_CACHE:
+        return SKU_FORECAST_CACHE[cache_k]
+
+    df = _get_session_df(request)
+    filtered = _filter_data(df, sku, region)
+    if filtered.empty or len(filtered) < 30:
+        raise HTTPException(status_code=400, detail=f"Insufficient data for SKU {sku} in region {region}")
+
+    sku_info = _get_product_info(sku)
+
+    # Check precomputed bundle for default SKU on ALL region (<0.1ms instant load)
+    if (not sid or sid not in SESSION_STORE) and region == "ALL" and f"default_{sku}" in PRECOMPUTED_BUNDLE:
+        bundle = PRECOMPUTED_BUNDLE[f"default_{sku}"]
+        forecast_res = bundle["forecast_res"]
+        chart_history = bundle["chart_history"]
+        data_summary = bundle["data_summary"]
+        forecast_df = pd.DataFrame(forecast_res["winning_forecast"])
+        entry = {
+            "forecast_res": forecast_res,
+            "forecast_df": forecast_df,
+            "chart_history": chart_history,
+            "data_summary": data_summary,
+            "sku_info": sku_info,
+            "filtered": filtered
+        }
+        SKU_FORECAST_CACHE[cache_k] = entry
+        return entry
+
+    # Otherwise compute ML once and cache permanently
     selector = ModelAutoSelector(test_days=60, metric="mape")
-    forecast_res = selector.evaluate_and_select(filtered_df)
+    res = selector.evaluate_and_select(filtered)
+    forecast_df = res["winning_forecast"]
+    forecast_res = _serialize_forecast_res(res)
 
-    calc = OperationsImpactCalculator(lead_time_days=lead_time)
-    p_info = _get_product_info(sku_id)
-    impact_data = calc.calculate_sku_impact(
-        product_info=p_info,
-        historical_df=filtered_df,
-        forecast_df=forecast_res["winning_forecast"],
-        current_stock=stock,
-        abc_class=abc_class
-    )
+    chart_history = filtered[["date", "units_sold"]].copy()
+    chart_history["date"] = chart_history["date"].dt.strftime("%Y-%m-%d")
+    chart_history["rolling_7d"] = filtered["units_sold"].rolling(7, min_periods=1).mean().round(1)
 
-    agent = LLMPrescriptiveAgent()
-    try:
-        llm_report = agent.generate_prescriptive_report(
-            impact_data, forecast_res["winning_model_name"],
-            float(forecast_res["winning_metrics"]["mape"])
-        )
-    except Exception as e:
-        logger.warning(f"LLM Prescriptive Agent fallback triggered: {e}")
-        llm_report = agent._generate_rule_based_report(
-            impact_data, forecast_res["winning_model_name"],
-            float(forecast_res["winning_metrics"]["mape"])
-        )
-    return forecast_res, impact_data, llm_report
+    data_summary = {
+        "data_start": filtered["date"].min().strftime("%b %d, %Y"),
+        "data_end": filtered["date"].max().strftime("%b %d, %Y"),
+        "total_days": int((filtered["date"].max() - filtered["date"].min()).days),
+        "total_skus": int(df["sku_id"].nunique()),
+    }
+
+    entry = {
+        "forecast_res": forecast_res,
+        "forecast_df": forecast_df,
+        "chart_history": chart_history.to_dict(orient="records"),
+        "data_summary": data_summary,
+        "sku_info": sku_info,
+        "filtered": filtered
+    }
+    SKU_FORECAST_CACHE[cache_k] = entry
+    return entry
 
 
 # ═══════════════════════════════════════════════════════════════
@@ -455,52 +483,56 @@ async def get_forecast(
     sid = request.cookies.get("ds_session_id")
     abc_class = _parse_service_level(service_level)
 
-    # 1. Instant check in runtime cache
+    # 1. Instant check in runtime cache (<0.1ms)
     ck = _cache_key(sid, sku, region, lead_time, abc_class, stock)
     cached = _get_cached_forecast(ck)
     if cached:
         return cached
 
-    # 2. Instant check in precomputed bundle (all 20 default SKUs)
+    # 2. Instant check in precomputed bundle (exact match for default values)
     is_default_request = (not sid or sid not in SESSION_STORE) and region == "ALL" and lead_time == DEFAULT_LEAD_TIME_DAYS and abc_class == "A" and stock == 25000
-    if is_default_request:
-        if f"default_{sku}" in PRECOMPUTED_BUNDLE:
-            result = PRECOMPUTED_BUNDLE[f"default_{sku}"]
-            _set_cached_forecast(ck, result)
-            return result
+    if is_default_request and f"default_{sku}" in PRECOMPUTED_BUNDLE:
+        result = PRECOMPUTED_BUNDLE[f"default_{sku}"]
+        _set_cached_forecast(ck, result)
+        return result
 
-    # 3. Fallback for custom uploads / custom slider combinations: run asynchronously in worker thread
-    df = _get_session_df(request)
-    filtered = _filter_data(df, sku, region)
+    # 3. Retrieve or compute base ML forecast (history, winning model, forecast points)
+    base = await asyncio.to_thread(_get_or_compute_base_forecast, request, sku, region, sid)
 
-    if filtered.empty or len(filtered) < 30:
-        raise HTTPException(status_code=400, detail=f"Insufficient data for SKU {sku} in region {region}")
-
-    forecast_res, impact_data, llm_report = await asyncio.to_thread(
-        _run_forecast_pipeline, filtered, sku, lead_time, abc_class, stock
+    # 4. Instant Operations Impact, LLM Prescriptive Report & KPI Bar Calculation (<0.5ms)
+    calc = OperationsImpactCalculator(lead_time_days=lead_time)
+    p_info = base["sku_info"]
+    impact_data = calc.calculate_sku_impact(
+        product_info=p_info,
+        historical_df=base["filtered"],
+        forecast_df=base["forecast_df"],
+        current_stock=stock,
+        abc_class=abc_class
     )
 
-    sku_info = _get_product_info(sku)
-    kpi_bar = _compute_kpi_bar(filtered, forecast_res["winning_forecast"], impact_data, sku_info)
+    agent = LLMPrescriptiveAgent()
+    try:
+        llm_report = agent.generate_prescriptive_report(
+            impact_data, base["forecast_res"]["winning_model_name"],
+            float(base["forecast_res"]["winning_metrics"]["mape"])
+        )
+    except Exception as e:
+        logger.warning(f"LLM Prescriptive Agent fallback: {e}")
+        llm_report = agent._generate_rule_based_report(
+            impact_data, base["forecast_res"]["winning_model_name"],
+            float(base["forecast_res"]["winning_metrics"]["mape"])
+        )
 
-    # Prepare historical data for the hero chart
-    chart_history = filtered[["date", "units_sold"]].copy()
-    chart_history["date"] = chart_history["date"].dt.strftime("%Y-%m-%d")
-    chart_history["rolling_7d"] = filtered["units_sold"].rolling(7, min_periods=1).mean().round(1)
+    kpi_bar = _compute_kpi_bar(base["filtered"], base["forecast_df"], impact_data, p_info)
 
     result = {
-        "forecast_res": _serialize_forecast_res(forecast_res),
+        "forecast_res": base["forecast_res"],
         "impact_data": _serialize_impact(impact_data),
         "llm_report": llm_report,
         "kpi_bar": kpi_bar,
-        "chart_history": chart_history.to_dict(orient="records"),
-        "sku_info": sku_info,
-        "data_summary": {
-            "data_start": filtered["date"].min().strftime("%b %d, %Y"),
-            "data_end": filtered["date"].max().strftime("%b %d, %Y"),
-            "total_days": int((filtered["date"].max() - filtered["date"].min()).days),
-            "total_skus": int(df["sku_id"].nunique()),
-        }
+        "chart_history": base["chart_history"],
+        "sku_info": p_info,
+        "data_summary": base["data_summary"]
     }
 
     _set_cached_forecast(ck, result)
