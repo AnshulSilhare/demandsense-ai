@@ -109,7 +109,8 @@ def get_festival_impact_summary(sku_id: str) -> pd.DataFrame:
     Extract festival demand multipliers for a specific SKU from config.py.
     Returns DataFrame with columns: ['festival_name', 'multiplier_pct', 'impact_type']
     """
-    sku_info = next((p for p in PRODUCTS if p["sku_id"] == sku_id), None)
+    norm = sku_id.replace("-", "").upper() if sku_id else "SKU001"
+    sku_info = next((p for p in PRODUCTS if p.get("sku_id", "").replace("-", "").upper() == norm), PRODUCTS[0] if PRODUCTS else None)
     if not sku_info:
         return pd.DataFrame()
 

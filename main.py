@@ -297,34 +297,40 @@ def _set_cached_forecast(key: str, result):
 
 def _get_or_compute_base_forecast(request: Request, sku: str, region: str, sid: Optional[str]):
     """Retrieve base ML forecast (history, winning model, forecast points) from RAM or compute once."""
-    cache_k = (sid or "default", sku, region)
+    norm_sku = sku.replace("-", "").upper() if sku else "SKU001"
+    cache_k = (sid or "default", norm_sku, region)
     if cache_k in SKU_FORECAST_CACHE:
         return SKU_FORECAST_CACHE[cache_k]
+    if (sid or "default", sku, region) in SKU_FORECAST_CACHE:
+        return SKU_FORECAST_CACHE[(sid or "default", sku, region)]
 
     df = _get_session_df(request)
-    filtered = _filter_data(df, sku, region)
+    filtered = _filter_data(df, norm_sku, region)
     if filtered.empty or len(filtered) < 30:
         raise HTTPException(status_code=400, detail=f"Insufficient data for SKU {sku} in region {region}")
 
-    sku_info = _get_product_info(sku)
+    sku_info = _get_product_info(norm_sku)
 
     # Check precomputed bundle for default SKU on ALL region (<0.1ms instant load)
-    if (not sid or sid not in SESSION_STORE) and region == "ALL" and f"default_{sku}" in PRECOMPUTED_BUNDLE:
-        bundle = PRECOMPUTED_BUNDLE[f"default_{sku}"]
-        forecast_res = bundle["forecast_res"]
-        chart_history = bundle["chart_history"]
-        data_summary = bundle["data_summary"]
-        forecast_df = pd.DataFrame(forecast_res["winning_forecast"])
-        entry = {
-            "forecast_res": forecast_res,
-            "forecast_df": forecast_df,
-            "chart_history": chart_history,
-            "data_summary": data_summary,
-            "sku_info": sku_info,
-            "filtered": filtered
-        }
-        SKU_FORECAST_CACHE[cache_k] = entry
-        return entry
+    if (not sid or sid not in SESSION_STORE) and region == "ALL":
+        for test_key in [f"default_{norm_sku}", f"default_{sku}", norm_sku]:
+            if test_key in PRECOMPUTED_BUNDLE:
+                bundle = PRECOMPUTED_BUNDLE[test_key]
+                forecast_res = bundle["forecast_res"]
+                chart_history = bundle["chart_history"]
+                data_summary = bundle["data_summary"]
+                forecast_df = pd.DataFrame(forecast_res["winning_forecast"])
+                entry = {
+                    "forecast_res": forecast_res,
+                    "forecast_df": forecast_df,
+                    "chart_history": chart_history,
+                    "data_summary": data_summary,
+                    "sku_info": sku_info,
+                    "filtered": filtered
+                }
+                SKU_FORECAST_CACHE[cache_k] = entry
+                SKU_FORECAST_CACHE[(sid or "default", sku, region)] = entry
+                return entry
 
     # Otherwise compute ML once and cache permanently
     selector = ModelAutoSelector(test_days=60, metric="mape")
@@ -413,7 +419,7 @@ app.add_middleware(
 
 @app.on_event("startup")
 async def startup():
-    global DEFAULT_DF, PRECOMPUTED_BUNDLE, FORECAST_CACHE
+    global DEFAULT_DF, PRECOMPUTED_BUNDLE, FORECAST_CACHE, SKU_FORECAST_CACHE
     DEFAULT_DF = _load_default_data()
     logger.info(f"Loaded {len(DEFAULT_DF):,} rows, {DEFAULT_DF['sku_id'].nunique()} SKUs")
 
@@ -426,6 +432,30 @@ async def startup():
                 PRECOMPUTED_BUNDLE = json.load(f)
             for k, v in PRECOMPUTED_BUNDLE.items():
                 FORECAST_CACHE[k] = {"result": v, "time": float("inf")}
+                # Pre-populate SKU_FORECAST_CACHE with all aliases for 0ms instant responses
+                if k.startswith("default_"):
+                    raw_sku = k.replace("default_", "")
+                    norm_sku = raw_sku.replace("-", "").upper()
+                    forecast_res = v.get("forecast_res", {})
+                    forecast_df = pd.DataFrame(forecast_res.get("winning_forecast", []))
+                    sku_info = v.get("sku_info", {})
+                    chart_history = v.get("chart_history", [])
+                    data_summary = v.get("data_summary", {})
+                    filtered = _filter_data(DEFAULT_DF, raw_sku, "ALL")
+
+                    entry = {
+                        "forecast_res": forecast_res,
+                        "forecast_df": forecast_df,
+                        "chart_history": chart_history,
+                        "data_summary": data_summary,
+                        "sku_info": sku_info,
+                        "filtered": filtered
+                    }
+                    num_suffix = norm_sku.replace("SKU", "")
+                    for s_alias in [raw_sku, norm_sku, f"SKU-{num_suffix}", f"SKU{num_suffix}"]:
+                        for sid_alias in ["default", "global_default", None]:
+                            SKU_FORECAST_CACHE[(sid_alias, s_alias, "ALL")] = entry
+
             logger.info(f"Precomputed cache active ({len(PRECOMPUTED_BUNDLE)} keys ready in RAM for instant <1ms response).")
         except Exception as e:
             logger.warning(f"Failed to load precomputed forecast cache: {e}")
@@ -561,13 +591,14 @@ def get_decomposition(
     region: str = Query(default="ALL")
 ):
     """Time series decomposition for Tab 1 (cached <1ms)."""
+    norm_sku = sku.replace("-", "").upper() if sku else "SKU001"
     sid = request.cookies.get("ds_session_id")
-    cache_k = (sid or "default", sku, region)
+    cache_k = (sid or "default", norm_sku, region)
     if cache_k in DECOMP_CACHE:
         return DECOMP_CACHE[cache_k]
 
     df = _get_session_df(request)
-    filtered = _filter_data(df, sku, region)
+    filtered = _filter_data(df, norm_sku, region)
     if filtered.empty:
         raise HTTPException(status_code=400, detail="No data for decomposition")
 
@@ -585,15 +616,16 @@ def get_decomposition(
 @app.get("/api/festival-impact")
 def get_festival_impact(sku: str = Query(default="SKU001")):
     """Festival multiplier summary for Tab 1 (cached <1ms)."""
-    if sku in FESTIVAL_CACHE:
-        return FESTIVAL_CACHE[sku]
+    norm_sku = sku.replace("-", "").upper() if sku else "SKU001"
+    if norm_sku in FESTIVAL_CACHE:
+        return FESTIVAL_CACHE[norm_sku]
 
-    fest_df = get_festival_impact_summary(sku)
+    fest_df = get_festival_impact_summary(norm_sku)
     if fest_df.empty:
         res = {"festivals": []}
     else:
         res = {"festivals": fest_df.to_dict(orient="records")}
-    FESTIVAL_CACHE[sku] = res
+    FESTIVAL_CACHE[norm_sku] = res
     return res
 
 
@@ -619,13 +651,15 @@ def get_abc_classification(request: Request):
 @app.get("/api/regional-summary")
 def get_regional_summary(request: Request, sku: str = Query(default="SKU001")):
     """Regional demand/revenue summary for Tab 3 map (cached <1ms)."""
+    norm_sku = sku.replace("-", "").upper() if sku else "SKU001"
     sid = request.cookies.get("ds_session_id")
-    cache_k = (sid or "default", sku)
+    cache_k = (sid or "default", norm_sku)
     if cache_k in REGIONAL_CACHE:
         return REGIONAL_CACHE[cache_k]
 
     df = _get_session_df(request)
-    sku_data = df[df["sku_id"] == sku]
+    sku_mask = df["sku_id"].astype(str).str.replace("-", "").str.upper() == norm_sku
+    sku_data = df[sku_mask]
 
     if "region_id" not in sku_data.columns or "revenue_inr" not in sku_data.columns:
         return {"regions": []}
@@ -660,13 +694,14 @@ async def get_feature_importance(
     region: str = Query(default="ALL")
 ):
     """XGBoost feature importance for Tab 2 (cached <1ms)."""
+    norm_sku = sku.replace("-", "").upper() if sku else "SKU001"
     sid = request.cookies.get("ds_session_id")
-    cache_k = (sid or "default", sku, region)
+    cache_k = (sid or "default", norm_sku, region)
     if cache_k in FI_CACHE:
         return FI_CACHE[cache_k]
 
     df = _get_session_df(request)
-    filtered = _filter_data(df, sku, region)
+    filtered = _filter_data(df, norm_sku, region)
 
     def _fit_fi():
         from src.forecasting.xgboost_model import XGBoostForecaster, FEATURE_COLS
@@ -696,7 +731,7 @@ async def get_feature_importance(
 
 @app.post("/api/simulate")
 def simulate_scenario(request: Request, body: dict):
-    """What-If scenario simulation for Tab 4."""
+    """What-If scenario simulation for Tab 4 (<1ms)."""
     sku = body.get("sku", "SKU001")
     region = body.get("region", "ALL")
     lead_time = body.get("lead_time", DEFAULT_LEAD_TIME_DAYS)
@@ -708,24 +743,29 @@ def simulate_scenario(request: Request, body: dict):
     sim_elasticity = body.get("sim_elasticity", -1.2)
     sim_promo = body.get("sim_promo", 0)
 
+    norm_sku = sku.replace("-", "").upper() if sku else "SKU001"
     abc_class = _parse_service_level(service_level)
     df = _get_session_df(request)
-    filtered = _filter_data(df, sku, region)
+    filtered = _filter_data(df, norm_sku, region)
 
     if filtered.empty:
         raise HTTPException(status_code=400, detail="No data for simulation")
 
-    # Get baseline forecast (may be cached)
+    # Get baseline forecast instantly from RAM
     sid = request.cookies.get("ds_session_id")
-    ck = _cache_key(sid, sku, region, lead_time, abc_class, stock)
-    cached = _get_cached_forecast(ck)
-    if cached:
-        base_forecast_df = pd.DataFrame(cached["forecast_res"]["winning_forecast"])
-        base_impact = cached["impact_data"]
-    else:
-        forecast_res, base_impact_raw, _ = _run_forecast_pipeline(filtered, sku, lead_time, abc_class, stock)
-        base_forecast_df = forecast_res["winning_forecast"]
-        base_impact = _serialize_impact(base_impact_raw)
+    base = _get_or_compute_base_forecast(request, norm_sku, region, sid)
+    base_forecast_df = base["forecast_df"].copy()
+
+    calc = OperationsImpactCalculator(lead_time_days=lead_time)
+    p_info = base["sku_info"]
+    base_impact_raw = calc.calculate_sku_impact(
+        product_info=p_info,
+        historical_df=base["filtered"],
+        forecast_df=base_forecast_df,
+        current_stock=stock,
+        abc_class=abc_class
+    )
+    base_impact = _serialize_impact(base_impact_raw)
 
     # Compute effective parameters
     eff_lt = max(1, lead_time + sim_lt_add)
@@ -733,7 +773,6 @@ def simulate_scenario(request: Request, body: dict):
     elasticity_demand_delta = price_delta_pct * sim_elasticity
     eff_dem_scale = (1.0 + sim_demand_mult / 100.0) * (1.0 + elasticity_demand_delta) * (1.0 + sim_promo / 100.0)
 
-    p_info = _get_product_info(sku)
     base_price = p_info.get("base_price", 100)
     eff_price = base_price * (1.0 + price_delta_pct)
 
@@ -822,29 +861,31 @@ def export_po_csv(
     stock: int = Query(default=25000)
 ):
     """Download Purchase Order as CSV."""
+    norm_sku = sku.replace("-", "").upper() if sku else "SKU001"
     sid = request.cookies.get("ds_session_id")
-    df = _get_session_df(request)
     abc_class = _parse_service_level(service_level)
-    filtered = _filter_data(df, sku, region)
 
-    ck = _cache_key(sid, sku, region, lead_time, abc_class, stock)
-    cached = _get_cached_forecast(ck)
-    if cached:
-        impact_data = cached["impact_data"]
-    else:
-        _, impact_raw, _ = _run_forecast_pipeline(filtered, sku, lead_time, abc_class, stock)
-        impact_data = _serialize_impact(impact_raw)
+    base = _get_or_compute_base_forecast(request, norm_sku, region, sid)
+    calc = OperationsImpactCalculator(lead_time_days=lead_time)
+    p_info = base["sku_info"]
+    impact_raw = calc.calculate_sku_impact(
+        product_info=p_info,
+        historical_df=base["filtered"],
+        forecast_df=base["forecast_df"],
+        current_stock=stock,
+        abc_class=abc_class
+    )
+    impact_data = _serialize_impact(impact_raw)
 
-    sku_info = _get_product_info(sku)
-    unit_price = sku_info.get("base_price", 100)
+    unit_price = p_info.get("base_price", 100)
     rec_qty = impact_data.get("recommended_po_qty_units", 0)
     status_str = impact_data.get("po_trigger_status", "STABLE")
 
     po_df = pd.DataFrame([{
-        "PO_ID": f"PO-2026-{sku}-01",
-        "SKU_ID": sku,
-        "SKU_Name": sku_info.get("name", sku_info.get("sku_name", "")),
-        "Category": sku_info.get("category", "FMCG"),
+        "PO_ID": f"PO-2026-{norm_sku}-01",
+        "SKU_ID": norm_sku,
+        "SKU_Name": p_info.get("name", p_info.get("sku_name", "")),
+        "Category": p_info.get("category", "FMCG"),
         "Recommended_Order_Qty": rec_qty,
         "Unit_Cost_INR": unit_price * 0.7,
         "Total_PO_Value_INR": impact_data.get("recommended_po_value_inr", rec_qty * unit_price * 0.7),
@@ -856,7 +897,7 @@ def export_po_csv(
     po_df.to_csv(csv_buffer, index=False)
     csv_buffer.seek(0)
 
-    filename = f"PO_{sku}_{datetime.now().strftime('%Y%m%d')}.csv"
+    filename = f"PO_{norm_sku}_{datetime.now().strftime('%Y%m%d')}.csv"
     return StreamingResponse(
         io.BytesIO(csv_buffer.getvalue().encode("utf-8")),
         media_type="text/csv",
@@ -874,32 +915,44 @@ def export_brief_pdf(
     stock: int = Query(default=25000)
 ):
     """Download Executive PDF Brief."""
+    norm_sku = sku.replace("-", "").upper() if sku else "SKU001"
     sid = request.cookies.get("ds_session_id")
-    df = _get_session_df(request)
     abc_class = _parse_service_level(service_level)
-    filtered = _filter_data(df, sku, region)
 
-    ck = _cache_key(sid, sku, region, lead_time, abc_class, stock)
-    cached = _get_cached_forecast(ck)
+    base = _get_or_compute_base_forecast(request, norm_sku, region, sid)
+    calc = OperationsImpactCalculator(lead_time_days=lead_time)
+    p_info = base["sku_info"]
+    impact_raw = calc.calculate_sku_impact(
+        product_info=p_info,
+        historical_df=base["filtered"],
+        forecast_df=base["forecast_df"],
+        current_stock=stock,
+        abc_class=abc_class
+    )
+    impact_data_raw = _serialize_impact(impact_raw)
 
-    if cached:
-        impact_data_raw = cached["impact_data"]
-        llm_report = cached["llm_report"]
-        winning_model = cached["forecast_res"]["winning_model_name"]
-        winning_mape = cached["forecast_res"]["winning_metrics"]["mape"]
-    else:
-        forecast_res, impact_raw, llm_report = _run_forecast_pipeline(filtered, sku, lead_time, abc_class, stock)
-        impact_data_raw = _serialize_impact(impact_raw)
-        winning_model = forecast_res["winning_model_name"]
-        winning_mape = forecast_res["winning_metrics"]["mape"]
+    agent = LLMPrescriptiveAgent()
+    try:
+        llm_report = agent.generate_prescriptive_report(
+            impact_data_raw, base["forecast_res"]["winning_model_name"],
+            float(base["forecast_res"]["winning_metrics"]["mape"])
+        )
+    except Exception as e:
+        logger.warning(f"LLM Prescriptive Agent fallback: {e}")
+        llm_report = agent._generate_rule_based_report(
+            impact_data_raw, base["forecast_res"]["winning_model_name"],
+            float(base["forecast_res"]["winning_metrics"]["mape"])
+        )
 
-    sku_info = _get_product_info(sku)
+    winning_model = base["forecast_res"]["winning_model_name"]
+    winning_mape = base["forecast_res"]["winning_metrics"]["mape"]
+
     region_options = {"ALL": "National Aggregation (India)"}
     region_options.update({r["id"]: f"{r['name']} ({r['id']})" for r in REGIONS})
     region_name = region_options.get(region, "National Aggregation (India)")
 
     pdf_bytes = generate_executive_pdf_report(
-        sku_info=sku_info,
+        sku_info=p_info,
         region_name=region_name,
         impact_data=impact_data_raw,
         winning_model=winning_model,
@@ -907,7 +960,7 @@ def export_brief_pdf(
         llm_report=llm_report
     )
 
-    filename = f"Executive_Brief_{sku}.pdf"
+    filename = f"Executive_Brief_{norm_sku}.pdf"
     return StreamingResponse(
         io.BytesIO(pdf_bytes),
         media_type="application/pdf",

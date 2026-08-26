@@ -893,9 +893,13 @@
   }, 120);
 
   const debouncedSkuLoad = debounce(() => {
-    clearCachedData();
+    state.decompData = null;
+    state.festivalData = null;
+    state.regionalData = null;
+    state.fiData = null;
+    state.simData = null;
     loadForecast(false);
-  }, 120);
+  }, 100);
 
   function setupFilters() {
     // 1. SKU Selector
@@ -1144,13 +1148,23 @@
         if (!state.decompData) loadDecomp();
         if (!state.festivalData) loadFestival();
       }
-      if (state.activeTab === 'tab2') renderTab2();
+      if (state.activeTab === 'tab2') {
+        renderTab2();
+        if (!state.fiData) loadFeatureImportance();
+      }
       if (state.activeTab === 'tab3') {
+        renderInventory();
         if (!state.abcData) loadAbc();
         if (!state.regionalData) loadRegional();
       }
-      if (state.activeTab === 'tab4') { renderSimSliders(); renderSimMetrics(); renderSimChart(false); }
-      if (state.activeTab === 'tab5') renderTab5();
+      if (state.activeTab === 'tab4') {
+        renderSimSliders();
+        renderSimMetrics();
+        renderSimChart(false);
+      }
+      if (state.activeTab === 'tab5') {
+        renderTab5();
+      }
     } catch (e) {
       if (activeForecastPromise !== promise && activeForecastPromise !== null) return;
       console.warn('Forecast fetch attempt failed:', e);
