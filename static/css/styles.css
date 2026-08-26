@@ -3000,30 +3000,51 @@ body.dark .guide-protip-box {
 }
 
 /* ══════════════════════════════════════════════════════════════
+   BOTTOM TAB BAR (Hidden on Widescreen Desktop by default)
+   ════════════════════════════════════════════════════════════ */
+.bottom-tab-bar {
+  display: none;
+}
+
+/* ══════════════════════════════════════════════════════════════
    RESPONSIVE BREAKPOINTS
    ════════════════════════════════════════════════════════════ */
 
-/* ── 1. TABLETS, IFRAMES & POPUP WINDOWS (768px to 1140px) ── */
-@media (min-width: 768px) and (max-width: 1140px) {
+/* ── 1. ALL SCREENS UNDER 1360px (Laptops, Popups, Tablets & Mobile) ──
+   Top header shows Brand (Left) + Actions (Right) with ZERO clipping.
+   Navigation shifts seamlessly to the Liquid Glass Bottom Tab Bar!
+*/
+@media (max-width: 1359px) {
   body {
     overflow-x: hidden !important;
-    padding-bottom: calc(70px + env(safe-area-inset-bottom)) !important;
+    padding-bottom: calc(76px + env(safe-area-inset-bottom, 0px)) !important;
   }
 
   .app-container {
-    padding: 0 1rem !important;
-    padding-top: 4.5rem !important;
-    padding-bottom: calc(84px + env(safe-area-inset-bottom)) !important;
+    padding: 0 1.25rem !important;
+    padding-top: 4.8rem !important;
+    padding-bottom: calc(88px + env(safe-area-inset-bottom, 0px)) !important;
   }
 
   header.top-nav,
   nav.top-nav {
-    padding: 0 1rem !important;
+    padding: 0 1.25rem !important;
     height: auto !important;
-    top: 0.6rem !important;
+    top: 0.75rem !important;
+    max-width: 100% !important;
+    width: 100% !important;
+    box-sizing: border-box !important;
+  }
+
+  .top-nav .nav-inner {
+    display: flex !important;
+    align-items: center !important;
+    justify-content: space-between !important;
+    width: 100% !important;
     max-width: 100% !important;
   }
 
+  /* Hide center top tabs capsule to prevent any cut-off/clipping */
   .rail-toggle-nav,
   .top-left-brand-icon,
   .brand-emblem-link,
@@ -3034,18 +3055,25 @@ body.dark .guide-protip-box {
   }
 
   .nav-brand-capsule {
-    height: 40px !important;
-    padding: 0 0.95rem !important;
+    height: 42px !important;
+    padding: 0 1rem !important;
+    gap: 0.4rem !important;
+    flex-shrink: 0 !important;
+  }
+
+  .nav-brand-capsule .brand-title {
+    font-size: 0.92rem !important;
   }
 
   .nav-actions-capsule {
-    gap: 0.35rem !important;
+    gap: 0.4rem !important;
+    flex-shrink: 0 !important;
   }
 
   .satellite-pill-btn {
-    height: 40px !important;
-    padding: 0 0.8rem !important;
-    font-size: 0.75rem !important;
+    height: 42px !important;
+    padding: 0 0.85rem !important;
+    font-size: 0.76rem !important;
   }
 
   .satellite-pill-btn.rail-btn,
@@ -3054,89 +3082,26 @@ body.dark .guide-protip-box {
   }
 
   .satellite-pill-btn.theme-btn {
-    width: 40px !important;
-    height: 40px !important;
+    width: 42px !important;
+    height: 42px !important;
   }
 
-  .control-clusters {
-    grid-template-columns: repeat(2, 1fr) !important;
-    gap: 1rem !important;
-  }
-
-  .kpi-bar {
-    grid-template-columns: repeat(2, 1fr) !important;
-    gap: 0.85rem !important;
-    position: static !important;
-  }
-
-  .sticky-context-pill {
-    top: 56px !important;
-    width: calc(100% - 1.5rem) !important;
-    max-width: 580px !important;
-    height: auto !important;
-    min-height: 48px !important;
-    padding: 6px 14px !important;
-    border-radius: 99px !important;
-    flex-direction: column !important;
-    justify-content: center !important;
-    gap: 4px !important;
-    transform: translate3d(-50%, -14px, 0) scale(0.95) !important;
-  }
-
-  .sticky-context-pill.is-visible {
-    opacity: 1 !important;
-    visibility: visible !important;
-    pointer-events: auto !important;
-    transform: translate3d(-50%, 0, 0) scale(1) !important;
-  }
-
-  .sticky-context-pill .context-pill-content {
-    flex-direction: column !important;
-    align-items: stretch !important;
-    gap: 4px !important;
-    width: 100% !important;
-  }
-
-  .sticky-context-pill .pill-top-row {
-    display: flex !important;
-    align-items: center !important;
-    justify-content: space-between !important;
-    width: 100% !important;
-  }
-
-  .sticky-context-pill .pill-sku-title {
-    font-size: 0.76rem !important;
-    font-weight: 700 !important;
-  }
-
-  .sticky-context-pill .pill-divider {
-    display: none !important;
-  }
-
-  .sticky-context-pill .pill-metrics {
-    display: flex !important;
-    align-items: center !important;
-    justify-content: space-between !important;
-    gap: 0.5rem !important;
-    font-size: 0.68rem !important;
-    width: 100% !important;
-  }
-
+  /* Activate Liquid Glass Bottom Tab Bar */
   .bottom-tab-bar {
     display: flex !important;
     position: fixed !important;
     bottom: calc(0.75rem + env(safe-area-inset-bottom, 0px)) !important;
     left: 50% !important;
     transform: translateX(-50%) !important;
-    width: calc(100% - 2rem) !important;
-    max-width: 560px !important;
+    width: calc(100% - 1.75rem) !important;
+    max-width: 540px !important;
     z-index: 9999 !important;
     height: 56px !important;
     padding: 4px 8px !important;
-    background: rgba(255, 255, 255, 0.72) !important;
+    background: rgba(255, 255, 255, 0.78) !important;
     backdrop-filter: blur(28px) saturate(200%) !important;
     -webkit-backdrop-filter: blur(28px) saturate(200%) !important;
-    border: 1px solid rgba(255, 255, 255, 0.8) !important;
+    border: 1px solid rgba(255, 255, 255, 0.85) !important;
     border-radius: 99px !important;
     box-shadow: 0 16px 40px rgba(15, 23, 42, 0.18), inset 0 1px 1.5px rgba(255, 255, 255, 0.85) !important;
     align-items: center !important;
@@ -3145,7 +3110,7 @@ body.dark .guide-protip-box {
   }
 
   body.dark .bottom-tab-bar {
-    background: rgba(15, 23, 42, 0.78) !important;
+    background: rgba(15, 23, 42, 0.82) !important;
     border: 1px solid rgba(255, 255, 255, 0.22) !important;
     box-shadow: 0 20px 48px rgba(0, 0, 0, 0.65), inset 0 1px 1.5px rgba(255, 255, 255, 0.22), 0 0 24px rgba(56, 189, 248, 0.12) !important;
   }
@@ -3188,6 +3153,8 @@ body.dark .guide-protip-box {
     font-weight: 500 !important;
     position: relative !important;
     z-index: 2 !important;
+    cursor: pointer !important;
+    -webkit-tap-highlight-color: transparent !important;
   }
 
   .bottom-tab-bar .btab svg {
@@ -3215,8 +3182,21 @@ body.dark .guide-protip-box {
     stroke: var(--accent-title) !important;
     filter: drop-shadow(0 0 6px rgba(56, 189, 248, 0.45)) !important;
   }
+}
 
-  /* ─── 1-COLUMN FULL-WIDTH CHART & GRID STACKING ON TABLET ─── */
+/* ── 1.2 TABLETS & MEDIUM SCREENS (768px to 1024px) ── */
+@media (min-width: 768px) and (max-width: 1024px) {
+  .control-clusters {
+    grid-template-columns: repeat(2, 1fr) !important;
+    gap: 1rem !important;
+  }
+
+  .kpi-bar {
+    grid-template-columns: repeat(2, 1fr) !important;
+    gap: 0.85rem !important;
+    position: static !important;
+  }
+
   .grid-2,
   .grid-3,
   .grid-4,
@@ -3238,54 +3218,6 @@ body.dark .guide-protip-box {
     max-width: 100% !important;
     width: 100% !important;
     box-sizing: border-box !important;
-}
-
-/* ── 1.5. LAPTOPS & POPUP WINDOWS (1141px to 1359px) ── */
-@media (min-width: 1141px) and (max-width: 1359px) {
-  header.top-nav,
-  nav.top-nav {
-    padding: 0 1rem !important;
-  }
-
-  .nav-inner {
-    gap: 0.65rem !important;
-  }
-
-  .nav-brand-capsule {
-    height: 40px !important;
-    padding: 0 0.85rem !important;
-    gap: 0.35rem !important;
-  }
-
-  .nav-brand-capsule .brand-title {
-    font-size: 0.88rem !important;
-  }
-
-  .nav-tabs-capsule {
-    height: 40px !important;
-    padding: 2px 3px !important;
-    gap: 0.15rem !important;
-  }
-
-  .nav-tab {
-    padding: 0.22rem 0.6rem !important;
-    font-size: 0.74rem !important;
-  }
-
-  .satellite-pill-btn {
-    height: 40px !important;
-    padding: 0 0.75rem !important;
-    font-size: 0.72rem !important;
-  }
-
-  .satellite-pill-btn.rail-btn,
-  #railSideToggle {
-    display: none !important;
-  }
-
-  .satellite-pill-btn.theme-btn {
-    width: 40px !important;
-    height: 40px !important;
   }
 }
 
