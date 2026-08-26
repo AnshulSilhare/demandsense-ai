@@ -3629,24 +3629,24 @@ body.dark .guide-protip-box {
   }
 
   #heroChart {
-    height: 230px !important;
-    min-height: 230px !important;
+    height: 290px !important;
+    min-height: 290px !important;
   }
 
   #inventoryChart,
   #simChart,
   #radarChart,
   #mapChart {
-    height: 220px !important;
-    min-height: 220px !important;
+    height: 260px !important;
+    min-height: 260px !important;
   }
 
   #fiChart,
   #scatterChart,
   #festivalChart,
   #abcTreemap {
-    height: 210px !important;
-    min-height: 210px !important;
+    height: 250px !important;
+    min-height: 250px !important;
   }
 
   .decomp-panel {

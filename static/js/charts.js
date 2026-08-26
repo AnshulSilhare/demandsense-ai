@@ -26,6 +26,7 @@ const Charts = (() => {
   }
 
   function _isDark() { return document.body.classList.contains('dark'); }
+  function _isMobile() { return window.innerWidth < 768; }
 
   /** Format large numbers compactly */
   function _fmt(v) {
@@ -151,6 +152,8 @@ const Charts = (() => {
       }
     }
 
+    const isMobile = _isMobile();
+
     const option = {
       tooltip: {
         trigger: 'axis',
@@ -160,29 +163,30 @@ const Charts = (() => {
       legend: {
         data: ['Raw Daily Demand', '7-Day Rolling Avg', '30-Day Forecast', '95% Confidence'],
         bottom: 0,
-        itemWidth: 14,
-        itemHeight: 14,
-        itemGap: 16,
+        itemWidth: isMobile ? 10 : 14,
+        itemHeight: isMobile ? 10 : 14,
+        itemGap: isMobile ? 8 : 16,
+        textStyle: { fontSize: isMobile ? 9 : 11, fontFamily: c.bodyFont },
       },
       toolbox: {
         feature: {
           brush: { type: ['lineX'], title: { lineX: 'Range Select' } },
           dataZoom: { title: { zoom: 'Zoom', back: 'Reset' } },
         },
-        right: 16, top: 4,
+        right: isMobile ? 8 : 16, top: 4,
       },
       brush: { toolbox: ['lineX'], xAxisIndex: 0 },
       dataZoom: [
         { type: 'inside', xAxisIndex: 0, filterMode: 'none' },
-        { type: 'slider', xAxisIndex: 0, height: 24, bottom: 32, borderColor: c.border,
+        { type: 'slider', xAxisIndex: 0, height: isMobile ? 18 : 22, bottom: isMobile ? 48 : 34, borderColor: c.border,
           fillerColor: c.teal + '18', handleStyle: { color: c.teal },
           dataBackground: { lineStyle: { color: c.text3 }, areaStyle: { color: c.border } },
         },
       ],
-      grid: { left: 56, right: 24, top: 24, bottom: 80, containLabel: false },
+      grid: { left: isMobile ? 42 : 56, right: isMobile ? 14 : 24, top: 24, bottom: isMobile ? 104 : 80, containLabel: false },
       xAxis: {
         type: 'category', data: allDates, boundaryGap: false,
-        axisLabel: { fontSize: 10, fontFamily: c.monoFont, color: c.text3,
+        axisLabel: { fontSize: isMobile ? 9 : 10, fontFamily: c.monoFont, color: c.text3,
           formatter: v => { const d = new Date(v); return d.toLocaleDateString('en-IN', {month:'short', day:'numeric'}); }
         },
         axisLine: { lineStyle: { color: c.border } },
@@ -190,7 +194,7 @@ const Charts = (() => {
       },
       yAxis: {
         type: 'value',
-        axisLabel: { fontSize: 10, fontFamily: c.monoFont, color: c.text3, formatter: v => v >= 1000 ? (v/1000).toFixed(0)+'K' : v },
+        axisLabel: { fontSize: isMobile ? 9 : 10, fontFamily: c.monoFont, color: c.text3, formatter: v => v >= 1000 ? (v/1000).toFixed(0)+'K' : v },
         axisLine: { show: false },
         splitLine: { lineStyle: { color: c.border, type: 'dashed' } },
       },
@@ -372,6 +376,7 @@ const Charts = (() => {
   // ═══ 4. RADAR CHART (Native ECharts Radar) ═══
   function radarChart(containerId, radarData, leaderboard, winnerName) {
     const c = _c();
+    const isMobile = _isMobile();
     const metrics = ['MAPE', 'RMSE', 'MAE', 'WAPE'];
 
     // Fallback: if radarData is empty/missing, synthesize from leaderboard
@@ -442,8 +447,8 @@ const Charts = (() => {
       },
       legend: {
         data: modelNames, bottom: 0,
-        itemWidth: 14, itemHeight: 14, itemGap: 16,
-        textStyle: { fontSize: 10, fontFamily: c.bodyFont },
+        itemWidth: isMobile ? 10 : 14, itemHeight: isMobile ? 10 : 14, itemGap: isMobile ? 8 : 16,
+        textStyle: { fontSize: isMobile ? 9 : 10, fontFamily: c.bodyFont },
       },
       radar: {
         indicator,
@@ -451,8 +456,8 @@ const Charts = (() => {
         splitArea: { areaStyle: { color: ['transparent'] } },
         splitLine: { lineStyle: { color: c.border } },
         axisLine: { lineStyle: { color: c.border } },
-        axisName: { color: c.text2, fontSize: 11, fontFamily: c.monoFont },
-        center: ['50%', '48%'], radius: '65%',
+        axisName: { color: c.text2, fontSize: isMobile ? 9 : 11, fontFamily: c.monoFont },
+        center: ['50%', isMobile ? '42%' : '48%'], radius: isMobile ? '52%' : '65%',
       },
       series,
       animationDuration: 1000,
@@ -634,6 +639,7 @@ const Charts = (() => {
   // ═══ 7. INVENTORY TRAJECTORY ═══
   function inventoryChart(containerId, trajectory, safetyStock, rop) {
     const c = _c();
+    const isMobile = _isMobile();
     const dates = trajectory.map(d => d.date);
     const stock = trajectory.map(d => d.projected_stock);
     const maxStock = Math.max(...stock) * 1.15;
@@ -690,7 +696,7 @@ const Charts = (() => {
     }
 
     const option = {
-      grid: { left: 56, right: 24, top: 16, bottom: 56, containLabel: false },
+      grid: { left: isMobile ? 42 : 56, right: isMobile ? 14 : 24, top: 16, bottom: 56, containLabel: false },
       tooltip: {
         trigger: 'axis', axisPointer: { type: 'cross' },
         formatter: params => {
@@ -700,20 +706,20 @@ const Charts = (() => {
       },
       dataZoom: [
         { type: 'inside', xAxisIndex: 0 },
-        { type: 'slider', xAxisIndex: 0, height: 20, bottom: 4, borderColor: c.border,
+        { type: 'slider', xAxisIndex: 0, height: isMobile ? 18 : 20, bottom: 4, borderColor: c.border,
           fillerColor: c.teal + '18', handleStyle: { color: c.teal },
         },
       ],
       xAxis: {
         type: 'category', data: dates, boundaryGap: false,
-        axisLabel: { fontSize: 10, fontFamily: c.monoFont, color: c.text3,
+        axisLabel: { fontSize: isMobile ? 9 : 10, fontFamily: c.monoFont, color: c.text3,
           formatter: v => { const d = new Date(v); return d.toLocaleDateString('en-IN', {month:'short', day:'numeric'}); }
         },
         axisLine: { lineStyle: { color: c.border } },
       },
       yAxis: {
         type: 'value', max: maxStock,
-        axisLabel: { fontSize: 10, fontFamily: c.monoFont, color: c.text3, formatter: v => v >= 1000 ? (v/1000).toFixed(0)+'K' : v },
+        axisLabel: { fontSize: isMobile ? 9 : 10, fontFamily: c.monoFont, color: c.text3, formatter: v => v >= 1000 ? (v/1000).toFixed(0)+'K' : v },
         axisLine: { show: false },
         splitLine: { lineStyle: { color: c.border, type: 'dashed' } },
       },
@@ -978,6 +984,7 @@ const Charts = (() => {
   // ═══ 11. SCENARIO SIMULATOR (setOption merge for morphing) ═══
   function simChart(containerId, baseTraj, simTraj, baseSS, simSS, simRop, merge) {
     const c = _c();
+    const isMobile = _isMobile();
     const baseDates = (baseTraj || []).map(d => d.date);
     const baseStock = (baseTraj || []).map(d => d.projected_stock);
     const simDates = (simTraj || []).map(d => d.date);
@@ -1024,7 +1031,7 @@ const Charts = (() => {
     }
 
     const option = {
-      grid: { left: 56, right: 24, top: 16, bottom: 48, containLabel: false },
+      grid: { left: isMobile ? 42 : 56, right: isMobile ? 14 : 24, top: 16, bottom: isMobile ? 44 : 48, containLabel: false },
       tooltip: {
         trigger: 'axis',
         confine: true,
@@ -1033,20 +1040,21 @@ const Charts = (() => {
       legend: {
         data: ['Baseline', 'Simulated'],
         bottom: 0,
-        itemWidth: 14,
-        itemHeight: 14,
-        itemGap: 16,
+        itemWidth: isMobile ? 10 : 14,
+        itemHeight: isMobile ? 10 : 14,
+        itemGap: isMobile ? 8 : 16,
+        textStyle: { fontSize: isMobile ? 9 : 11, fontFamily: c.bodyFont },
       },
       xAxis: {
         type: 'category', data: allDates, boundaryGap: false,
-        axisLabel: { fontSize: 10, fontFamily: c.monoFont, color: c.text3,
+        axisLabel: { fontSize: isMobile ? 9 : 10, fontFamily: c.monoFont, color: c.text3,
           formatter: v => { const d = new Date(v); return d.toLocaleDateString('en-IN', {month:'short', day:'numeric'}); }
         },
         axisLine: { lineStyle: { color: c.border } },
       },
       yAxis: {
         type: 'value',
-        axisLabel: { fontSize: 10, fontFamily: c.monoFont, color: c.text3, formatter: v => v >= 1000 ? (v/1000).toFixed(0)+'K' : v },
+        axisLabel: { fontSize: isMobile ? 9 : 10, fontFamily: c.monoFont, color: c.text3, formatter: v => v >= 1000 ? (v/1000).toFixed(0)+'K' : v },
         axisLine: { show: false },
         splitLine: { lineStyle: { color: c.border, type: 'dashed' } },
       },
