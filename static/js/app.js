@@ -35,25 +35,23 @@
     return (...args) => { clearTimeout(t); t = setTimeout(() => fn(...args), ms); };
   }
 
-  // ═══ API LAYER WITH AUTOMATIC COLD-START RETRY ═══
+  // ═══ API LAYER WITH AUTOMATIC COLD-START & DEPLOYMENT RETRY ═══
   const API = {
-    async get(path, retries = 3, initialDelay = 2500) {
+    async get(path, retries = 4, initialDelay = 1200) {
       let delay = initialDelay;
       for (let attempt = 0; attempt <= retries; attempt++) {
         try {
           const res = await fetch(path);
           if (res.ok) return await res.json();
-          // If server is 502, 503, 504 (cold start or deployment in progress), auto-retry
-          if ([502, 503, 504].includes(res.status) && attempt < retries) {
-            toast(`⚡ Container waking up, retrying in ${Math.round(delay / 1000)}s...`);
+          // If server is 500, 502, 503, 504 (cold start, deployment reload, or worker restart), auto-retry
+          if ([500, 502, 503, 504].includes(res.status) && attempt < retries) {
             await new Promise(r => setTimeout(r, delay));
             delay *= 1.5;
             continue;
           }
           throw new Error(`API ${path}: ${res.status}`);
         } catch (err) {
-          if (attempt < retries && (err.name === 'TypeError' || String(err.message).includes('502') || String(err.message).includes('503'))) {
-            toast(`⚡ Container waking up, retrying in ${Math.round(delay / 1000)}s...`);
+          if (attempt < retries) {
             await new Promise(r => setTimeout(r, delay));
             delay *= 1.5;
             continue;
@@ -62,7 +60,7 @@
         }
       }
     },
-    async post(path, body, retries = 2, initialDelay = 2500) {
+    async post(path, body, retries = 3, initialDelay = 1500) {
       let delay = initialDelay;
       for (let attempt = 0; attempt <= retries; attempt++) {
         try {
@@ -72,7 +70,7 @@
             body: JSON.stringify(body),
           });
           if (res.ok) return await res.json();
-          if ([502, 503, 504].includes(res.status) && attempt < retries) {
+          if ([500, 502, 503, 504].includes(res.status) && attempt < retries) {
             await new Promise(r => setTimeout(r, delay));
             delay *= 1.5;
             continue;
@@ -1156,38 +1154,42 @@
     } catch (e) {
       if (activeForecastPromise !== promise && activeForecastPromise !== null) return;
       console.warn('Forecast fetch attempt failed:', e);
-      if (_forecastRetryCount < 2) {
+      if (_forecastRetryCount < 3) {
         _forecastRetryCount++;
-        if (el('lastUpdated')) el('lastUpdated').textContent = `Server waking up... retrying connection (${_forecastRetryCount}/2)`;
-        setTimeout(() => loadForecast(isInitial), 3500);
+        if (!state.forecastData && el('lastUpdated')) {
+          el('lastUpdated').textContent = `Connecting to AI Inference Engine (${_forecastRetryCount}/3)...`;
+        }
+        setTimeout(() => loadForecast(isInitial), 2000);
         return;
       }
 
-      toast('Instance waking up: ' + e.message, true);
-      if (el('lastUpdated')) {
-        el('lastUpdated').innerHTML = `<span style="color:var(--amber)">Server cold start. <a href="javascript:void(0)" onclick="window.DemandSenseApp?.retryLoad()" style="color:var(--teal);text-decoration:underline">Click to Retry</a></span>`;
-      }
-      for (let i = 0; i < 4; i++) {
-        const card = el(`kpi${i}`);
-        if (card) {
-          card.innerHTML = `
-            <div style="padding:14px 6px;text-align:center;color:var(--text3);font-size:0.75rem">
-              <span style="font-size:1.1rem;display:block;margin-bottom:3px">⏳</span>
-              Waking up
+      // If we already have valid data showing, do NOT destroy the UI cards!
+      if (!state.forecastData) {
+        if (el('lastUpdated')) {
+          el('lastUpdated').innerHTML = `<span style="color:var(--amber)">Server cold start. <a href="javascript:void(0)" onclick="window.DemandSenseApp?.retryLoad()" style="color:var(--teal);text-decoration:underline">Click to Retry</a></span>`;
+        }
+        for (let i = 0; i < 4; i++) {
+          const card = el(`kpi${i}`);
+          if (card) {
+            card.innerHTML = `
+              <div style="padding:14px 6px;text-align:center;color:var(--text3);font-size:0.75rem">
+                <span style="font-size:1.1rem;display:block;margin-bottom:3px">⏳</span>
+                Waking up
+              </div>
+            `;
+          }
+        }
+        const hero = el('heroChart');
+        if (hero) {
+          hero.innerHTML = `
+            <div style="display:flex;flex-direction:column;align-items:center;justify-content:center;height:280px;color:var(--text2);gap:10px;text-align:center;padding:1rem">
+              <div style="font-size:1.6rem">⚡</div>
+              <div style="font-size:0.95rem;font-weight:600">Instance Warming Up (~15s)</div>
+              <div style="font-size:0.78rem;color:var(--text3);max-width:320px">The free cloud container was sleeping. Please click below to refresh data.</div>
+              <button class="export-btn primary" onclick="window.DemandSenseApp?.retryLoad()" style="font-size:0.8rem;padding:6px 18px;margin-top:4px">Retry Connection</button>
             </div>
           `;
         }
-      }
-      const hero = el('heroChart');
-      if (hero) {
-        hero.innerHTML = `
-          <div style="display:flex;flex-direction:column;align-items:center;justify-content:center;height:280px;color:var(--text2);gap:10px;text-align:center;padding:1rem">
-            <div style="font-size:1.6rem">⚡</div>
-            <div style="font-size:0.95rem;font-weight:600">Instance Warming Up (~15s)</div>
-            <div style="font-size:0.78rem;color:var(--text3);max-width:320px">The free cloud container was sleeping. Please click below to refresh data.</div>
-            <button class="export-btn primary" onclick="window.DemandSenseApp?.retryLoad()" style="font-size:0.8rem;padding:6px 18px;margin-top:4px">Retry Connection</button>
-          </div>
-        `;
       }
     } finally {
       if (activeForecastPromise === promise) {

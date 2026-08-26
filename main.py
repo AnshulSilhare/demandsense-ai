@@ -139,29 +139,44 @@ def _cleanup_sessions():
 
 def _filter_data(df: pd.DataFrame, sku_id: str, region: str = "ALL") -> pd.DataFrame:
     """Filter and aggregate the master dataset by SKU and region, matching app.py get_filtered_timeseries."""
+    if df.empty:
+        return df
     exclude_cols = {"sku_id", "sku_name", "category", "region_id", "region_name", "unit_price_inr", "revenue_inr", "date"}
     numeric_cols = [c for c in df.columns if c not in exclude_cols and pd.api.types.is_numeric_dtype(df[c])]
     if "units_sold" not in numeric_cols:
         numeric_cols.insert(0, "units_sold")
 
+    norm_sku = sku_id.replace("-", "").upper()
+    sku_mask = df["sku_id"].astype(str).str.replace("-", "").str.upper() == norm_sku
+
     if region == "ALL":
-        filtered = df[df["sku_id"] == sku_id].groupby("date")[numeric_cols].sum().reset_index()
+        filtered = df[sku_mask].groupby("date")[numeric_cols].sum().reset_index()
     else:
         if "region_id" in df.columns:
-            filtered = df[(df["sku_id"] == sku_id) & (df["region_id"] == region)].groupby("date")[numeric_cols].sum().reset_index()
+            filtered = df[sku_mask & (df["region_id"] == region)].groupby("date")[numeric_cols].sum().reset_index()
         else:
-            filtered = df[df["sku_id"] == sku_id].groupby("date")[numeric_cols].sum().reset_index()
+            filtered = df[sku_mask].groupby("date")[numeric_cols].sum().reset_index()
     return filtered.sort_values("date").reset_index(drop=True)
 
 
 def _get_product_info(sku_id: str) -> dict:
     """Get product info dict from config."""
-    return next((p for p in PRODUCTS if p.get("sku_id") == sku_id), PRODUCTS[0])
+    norm = sku_id.replace("-", "").upper()
+    return next((p for p in PRODUCTS if p.get("sku_id", "").replace("-", "").upper() == norm), PRODUCTS[0])
 
 
 def _parse_service_level(sl: str) -> str:
-    """Parse service level string like 'A (98%)' to just 'A'."""
-    return sl.strip()[0].upper() if sl else "A"
+    """Parse service level string like 'A (98%)' or 'A' or 'B' to just 'A', 'B', 'C'."""
+    if not sl:
+        return "A"
+    clean = str(sl).strip().upper()
+    if clean.startswith("A"):
+        return "A"
+    if clean.startswith("B"):
+        return "B"
+    if clean.startswith("C"):
+        return "C"
+    return "A"
 
 
 def _compute_kpi_bar(filtered_df, forecast_df, impact_data, sku_info):
