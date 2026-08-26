@@ -388,10 +388,15 @@ def health():
 
 
 @app.api_route("/", methods=["GET", "HEAD"])
+@app.api_route("/index.html", methods=["GET", "HEAD"])
 def root(request: Request):
     if request.method == "HEAD":
         return Response(status_code=200, media_type="text/html")
-    return FileResponse(str(PROJECT_ROOT / "static" / "index.html"))
+    response = FileResponse(str(PROJECT_ROOT / "static" / "index.html"))
+    response.headers["Cache-Control"] = "no-cache, no-store, must-revalidate, max-age=0"
+    response.headers["Pragma"] = "no-cache"
+    response.headers["Expires"] = "0"
+    return response
 
 
 # ═══════════════════════════════════════════════════════════════

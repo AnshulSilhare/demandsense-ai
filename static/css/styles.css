@@ -3130,23 +3130,24 @@ body.dark .guide-protip-box {
     transform: translateX(-50%) !important;
     width: calc(100% - 2rem) !important;
     max-width: 560px !important;
-    z-index: 200 !important;
+    z-index: 9999 !important;
     height: 56px !important;
     padding: 4px 8px !important;
-    background: rgba(255, 255, 255, 0.35) !important;
-    backdrop-filter: blur(24px) saturate(200%) !important;
-    -webkit-backdrop-filter: blur(24px) saturate(200%) !important;
-    border: 1px solid rgba(255, 255, 255, 0.45) !important;
+    background: rgba(255, 255, 255, 0.72) !important;
+    backdrop-filter: blur(28px) saturate(200%) !important;
+    -webkit-backdrop-filter: blur(28px) saturate(200%) !important;
+    border: 1px solid rgba(255, 255, 255, 0.8) !important;
     border-radius: 99px !important;
-    box-shadow: 0 16px 40px rgba(15, 23, 42, 0.12), inset 0 1px 1.5px rgba(255, 255, 255, 0.7) !important;
+    box-shadow: 0 16px 40px rgba(15, 23, 42, 0.18), inset 0 1px 1.5px rgba(255, 255, 255, 0.85) !important;
     align-items: center !important;
     justify-content: space-between !important;
+    pointer-events: auto !important;
   }
 
   body.dark .bottom-tab-bar {
-    background: rgba(15, 23, 42, 0.38) !important;
-    border: 1px solid rgba(255, 255, 255, 0.14) !important;
-    box-shadow: 0 20px 48px rgba(0, 0, 0, 0.55), inset 0 1px 1.5px rgba(255, 255, 255, 0.18), 0 0 24px rgba(56, 189, 248, 0.08) !important;
+    background: rgba(15, 23, 42, 0.78) !important;
+    border: 1px solid rgba(255, 255, 255, 0.22) !important;
+    box-shadow: 0 20px 48px rgba(0, 0, 0, 0.65), inset 0 1px 1.5px rgba(255, 255, 255, 0.22), 0 0 24px rgba(56, 189, 248, 0.12) !important;
   }
 
   .btab-indicator {
@@ -3447,23 +3448,24 @@ body.dark .guide-protip-box {
     transform: translateX(-50%) !important;
     width: calc(100% - 1.25rem) !important;
     max-width: 480px !important;
-    z-index: 200 !important;
+    z-index: 9999 !important;
     height: 54px !important;
     padding: 4px 5px !important;
-    background: rgba(255, 255, 255, 0.35) !important;
-    backdrop-filter: blur(24px) saturate(200%) !important;
-    -webkit-backdrop-filter: blur(24px) saturate(200%) !important;
-    border: 1px solid rgba(255, 255, 255, 0.45) !important;
+    background: rgba(255, 255, 255, 0.72) !important;
+    backdrop-filter: blur(28px) saturate(200%) !important;
+    -webkit-backdrop-filter: blur(28px) saturate(200%) !important;
+    border: 1px solid rgba(255, 255, 255, 0.8) !important;
     border-radius: 99px !important;
-    box-shadow: 0 16px 40px rgba(15, 23, 42, 0.12), inset 0 1px 1.5px rgba(255, 255, 255, 0.7) !important;
+    box-shadow: 0 16px 40px rgba(15, 23, 42, 0.18), inset 0 1px 1.5px rgba(255, 255, 255, 0.85) !important;
     align-items: center !important;
     justify-content: space-between !important;
+    pointer-events: auto !important;
   }
 
   body.dark .bottom-tab-bar {
-    background: rgba(15, 23, 42, 0.38) !important;
-    border: 1px solid rgba(255, 255, 255, 0.14) !important;
-    box-shadow: 0 20px 48px rgba(0, 0, 0, 0.55), inset 0 1px 1.5px rgba(255, 255, 255, 0.18), 0 0 24px rgba(56, 189, 248, 0.08) !important;
+    background: rgba(15, 23, 42, 0.78) !important;
+    border: 1px solid rgba(255, 255, 255, 0.22) !important;
+    box-shadow: 0 20px 48px rgba(0, 0, 0, 0.65), inset 0 1px 1.5px rgba(255, 255, 255, 0.22), 0 0 24px rgba(56, 189, 248, 0.12) !important;
   }
 
   .btab-indicator {
