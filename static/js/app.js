@@ -889,17 +889,20 @@
   }
 
   const debouncedParamLoad = debounce(() => {
+    // Parameter changes (lead_time, service_level, stock) re-use same ML forecast
+    // but recompute KPI/impact server-side — so force a fresh fetch
     loadForecast(false);
-  }, 120);
+  }, 80);
 
   const debouncedSkuLoad = debounce(() => {
+    // SKU/region changes need fresh tab-specific data too
     state.decompData = null;
     state.festivalData = null;
     state.regionalData = null;
     state.fiData = null;
     state.simData = null;
     loadForecast(false);
-  }, 100);
+  }, 80);
 
   function setupFilters() {
     // 1. SKU Selector

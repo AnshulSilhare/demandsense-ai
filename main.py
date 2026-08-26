@@ -296,7 +296,8 @@ def _set_cached_forecast(key: str, result):
 
 
 def _get_or_compute_base_forecast(request: Request, sku: str, region: str, sid: Optional[str]):
-    """Retrieve base ML forecast (history, winning model, forecast points) from RAM or compute once."""
+    """Retrieve base ML forecast (history, winning model, forecast points) from RAM or compute once.
+    For non-ALL regions, uses the ALL-region forecast as base but filters historical data by region."""
     norm_sku = sku.replace("-", "").upper() if sku else "SKU001"
     cache_k = (sid or "default", norm_sku, region)
     if cache_k in SKU_FORECAST_CACHE:
@@ -306,13 +307,34 @@ def _get_or_compute_base_forecast(request: Request, sku: str, region: str, sid: 
 
     df = _get_session_df(request)
     filtered = _filter_data(df, norm_sku, region)
-    if filtered.empty or len(filtered) < 30:
-        raise HTTPException(status_code=400, detail=f"Insufficient data for SKU {sku} in region {region}")
-
     sku_info = _get_product_info(norm_sku)
 
-    # Check precomputed bundle for default SKU on ALL region (<0.1ms instant load)
-    if (not sid or sid not in SESSION_STORE) and region == "ALL":
+    # For non-ALL regions or custom sessions, try to use ALL-region precomputed forecast as base
+    # This avoids expensive ML retraining
+    all_cache_k = (sid or "default", norm_sku, "ALL")
+    if all_cache_k in SKU_FORECAST_CACHE:
+        all_base = SKU_FORECAST_CACHE[all_cache_k]
+        # Build a region-specific entry using ALL's ML forecast but region-filtered history
+        if not filtered.empty and len(filtered) >= 7:
+            chart_history = filtered[["date", "units_sold"]].copy()
+            chart_history["date"] = chart_history["date"].dt.strftime("%Y-%m-%d")
+            chart_history["rolling_7d"] = filtered["units_sold"].rolling(7, min_periods=1).mean().round(1)
+            entry = {
+                "forecast_res": all_base["forecast_res"],
+                "forecast_df": all_base["forecast_df"],
+                "chart_history": chart_history.to_dict(orient="records"),
+                "data_summary": all_base["data_summary"],
+                "sku_info": sku_info,
+                "filtered": filtered
+            }
+        else:
+            # Region has too little data, fall back to ALL region data entirely
+            entry = {**all_base, "sku_info": sku_info}
+        SKU_FORECAST_CACHE[cache_k] = entry
+        return entry
+
+    # Check precomputed bundle for default SKU on ALL region
+    if (not sid or sid not in SESSION_STORE):
         for test_key in [f"default_{norm_sku}", f"default_{sku}", norm_sku]:
             if test_key in PRECOMPUTED_BUNDLE:
                 bundle = PRECOMPUTED_BUNDLE[test_key]
@@ -320,19 +342,45 @@ def _get_or_compute_base_forecast(request: Request, sku: str, region: str, sid: 
                 chart_history = bundle["chart_history"]
                 data_summary = bundle["data_summary"]
                 forecast_df = pd.DataFrame(forecast_res["winning_forecast"])
-                entry = {
+
+                # Build ALL-region entry first
+                all_filtered = _filter_data(df, norm_sku, "ALL")
+                all_entry = {
                     "forecast_res": forecast_res,
                     "forecast_df": forecast_df,
                     "chart_history": chart_history,
                     "data_summary": data_summary,
                     "sku_info": sku_info,
-                    "filtered": filtered
+                    "filtered": all_filtered
                 }
-                SKU_FORECAST_CACHE[cache_k] = entry
-                SKU_FORECAST_CACHE[(sid or "default", sku, region)] = entry
-                return entry
+                SKU_FORECAST_CACHE[(sid or "default", norm_sku, "ALL")] = all_entry
 
-    # Otherwise compute ML once and cache permanently
+                if region == "ALL":
+                    SKU_FORECAST_CACHE[cache_k] = all_entry
+                    return all_entry
+                else:
+                    # Build region-specific entry
+                    if not filtered.empty and len(filtered) >= 7:
+                        r_chart = filtered[["date", "units_sold"]].copy()
+                        r_chart["date"] = r_chart["date"].dt.strftime("%Y-%m-%d")
+                        r_chart["rolling_7d"] = filtered["units_sold"].rolling(7, min_periods=1).mean().round(1)
+                        entry = {
+                            "forecast_res": forecast_res,
+                            "forecast_df": forecast_df,
+                            "chart_history": r_chart.to_dict(orient="records"),
+                            "data_summary": data_summary,
+                            "sku_info": sku_info,
+                            "filtered": filtered
+                        }
+                    else:
+                        entry = all_entry
+                    SKU_FORECAST_CACHE[cache_k] = entry
+                    return entry
+
+    if filtered.empty or len(filtered) < 30:
+        raise HTTPException(status_code=400, detail=f"Insufficient data for SKU {sku} in region {region}")
+
+    # Last resort: compute ML models from scratch (only for custom CSV uploads)
     selector = ModelAutoSelector(test_days=60, metric="mape")
     res = selector.evaluate_and_select(filtered)
     forecast_df = res["winning_forecast"]
@@ -524,27 +572,28 @@ async def get_forecast(
     service_level: str = Query(default="A"),
     stock: int = Query(default=25000)
 ):
-    """Main endpoint: returns forecast, impact, LLM report, and KPI bar data in <1ms."""
+    """Main endpoint: returns forecast, impact, LLM report, and KPI bar data.
+    Base ML forecast is served from RAM (<0.1ms). Impact/KPI are recomputed per-parameter."""
+    norm_sku = sku.replace("-", "").upper() if sku else "SKU001"
     sid = request.cookies.get("ds_session_id")
     abc_class = _parse_service_level(service_level)
 
-    # 1. Instant check in runtime cache (<0.1ms)
-    ck = _cache_key(sid, sku, region, lead_time, abc_class, stock)
+    # 1. Check full result cache (same SKU + same params = exact hit)
+    ck = _cache_key(sid, norm_sku, region, lead_time, abc_class, stock)
     cached = _get_cached_forecast(ck)
     if cached:
         return cached
 
-    # 2. Instant check in precomputed bundle (exact match for default values)
-    is_default_request = (not sid or sid not in SESSION_STORE) and region == "ALL" and lead_time == DEFAULT_LEAD_TIME_DAYS and abc_class == "A" and stock == 25000
-    if is_default_request and f"default_{sku}" in PRECOMPUTED_BUNDLE:
-        result = PRECOMPUTED_BUNDLE[f"default_{sku}"]
-        _set_cached_forecast(ck, result)
-        return result
+    # 2. Get base ML forecast from RAM (instant for all 20 default SKUs)
+    try:
+        base = await asyncio.to_thread(_get_or_compute_base_forecast, request, norm_sku, region, sid)
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Base forecast failed for {norm_sku}/{region}: {e}")
+        raise HTTPException(status_code=500, detail=f"Forecast computation failed: {e}")
 
-    # 3. Retrieve or compute base ML forecast (history, winning model, forecast points)
-    base = await asyncio.to_thread(_get_or_compute_base_forecast, request, sku, region, sid)
-
-    # 4. Instant Operations Impact, LLM Prescriptive Report & KPI Bar Calculation (<0.5ms)
+    # 3. Recompute Operations Impact with user's ACTUAL lead_time, stock, service_level
     calc = OperationsImpactCalculator(lead_time_days=lead_time)
     p_info = base["sku_info"]
     impact_data = calc.calculate_sku_impact(
