@@ -105,7 +105,10 @@ class OperationsImpactCalculator:
             po_trigger_date_str = "No PO needed in next 30 days"
         else:
             po_trigger_status = "ACTION REQUIRED — Place PO soon"
-            po_trigger_date_str = po_trigger_date.strftime("%d %b %Y")
+            if hasattr(po_trigger_date, 'strftime'):
+                po_trigger_date_str = po_trigger_date.strftime("%d %b %Y")
+            else:
+                po_trigger_date_str = pd.to_datetime(po_trigger_date).strftime("%d %b %Y")
 
         # 8. Financial Risk Quantification
         # Revenue at risk = stockout units × selling price
