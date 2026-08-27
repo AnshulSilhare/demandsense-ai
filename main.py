@@ -270,9 +270,9 @@ FI_CACHE: dict = {}
 CACHE_TTL = 3600 * 24  # 24 hours for live calculations
 
 
-def _cache_key(sid: Optional[str], sku: str, region: str, lt: int, sl: str, stock: int) -> str:
+def _cache_key(sid: Optional[str], sku: str, region: str, lt: int, sl: str, stock: int, include_llm: bool = False) -> str:
     session_prefix = sid or "global_default"
-    raw = f"{session_prefix}|{sku}|{region}|{lt}|{sl}|{stock}"
+    raw = f"{session_prefix}|{sku}|{region}|{lt}|{sl}|{stock}|{include_llm}"
     return hashlib.md5(raw.encode()).hexdigest()
 
 
@@ -595,7 +595,8 @@ async def get_forecast(
     abc_class = _parse_service_level(service_level)
 
     # 1. Check full result cache (same SKU + same params = exact hit)
-    ck = _cache_key(sid, norm_sku, region, lead_time, abc_class, stock)
+    include_llm_flag = request.query_params.get("include_llm", "false").lower() == "true"
+    ck = _cache_key(sid, norm_sku, region, lead_time, abc_class, stock, include_llm_flag)
     cached = _get_cached_forecast(ck)
     if cached:
         return cached
@@ -621,17 +622,21 @@ async def get_forecast(
     )
 
     agent = LLMPrescriptiveAgent()
-    try:
-        llm_report = agent.generate_prescriptive_report(
-            impact_data, base["forecast_res"]["winning_model_name"],
-            float(base["forecast_res"]["winning_metrics"]["mape"])
-        )
-    except Exception as e:
-        logger.warning(f"LLM Prescriptive Agent fallback: {e}")
-        llm_report = agent._generate_rule_based_report(
-            impact_data, base["forecast_res"]["winning_model_name"],
-            float(base["forecast_res"]["winning_metrics"]["mape"])
-        )
+    include_llm_flag = request.query_params.get("include_llm", "false").lower() == "true"
+    llm_report = {}
+    
+    if include_llm_flag:
+        try:
+            llm_report = agent.generate_prescriptive_report(
+                impact_data, base["forecast_res"]["winning_model_name"],
+                float(base["forecast_res"]["winning_metrics"]["mape"])
+            )
+        except Exception as e:
+            logger.warning(f"LLM Prescriptive Agent fallback: {e}")
+            llm_report = agent._generate_rule_based_report(
+                impact_data, base["forecast_res"]["winning_model_name"],
+                float(base["forecast_res"]["winning_metrics"]["mape"])
+            )
 
     kpi_bar = _compute_kpi_bar(base["filtered"], base["forecast_df"], impact_data, p_info)
 

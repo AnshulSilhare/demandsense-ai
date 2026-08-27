@@ -37,11 +37,11 @@
 
   // ═══ API LAYER WITH AUTOMATIC COLD-START & DEPLOYMENT RETRY ═══
   const API = {
-    async get(path, retries = 4, initialDelay = 1200) {
+    async get(path, retries = 4, initialDelay = 1200, signal = null) {
       let delay = initialDelay;
       for (let attempt = 0; attempt <= retries; attempt++) {
         try {
-          const res = await fetch(path);
+          const res = await fetch(path, { signal });
           if (res.ok) return await res.json();
           // If server is 500, 502, 503, 504 (cold start, deployment reload, or worker restart), auto-retry
           if ([500, 502, 503, 504].includes(res.status) && attempt < retries) {
@@ -89,7 +89,8 @@
   };
 
   function _qs() {
-    return `sku=${state.sku}&region=${state.region}&lead_time=${state.leadTime}&service_level=${state.serviceLevel}&stock=${state.stock}&_t=${Date.now()}`;
+    const incLlm = state.activeTab === 'tab5' ? 'true' : 'false';
+    return `sku=${state.sku}&region=${state.region}&lead_time=${state.leadTime}&service_level=${state.serviceLevel}&stock=${state.stock}&include_llm=${incLlm}&_t=${Date.now()}`;
   }
 
   // ═══ INIT ═══
@@ -1111,7 +1112,6 @@
     }
   }
 
-  let _forecastRetryCount = 0;
 
   // ═══ MAIN FORECAST LOAD ═══
   async function loadForecast(isInitial = false) {
