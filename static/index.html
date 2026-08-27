@@ -19,7 +19,7 @@
 <script src="https://cdn.jsdelivr.net/npm/echarts@5/dist/echarts.min.js"></script>
 
 <!-- App CSS -->
-<link rel="stylesheet" href="/static/css/styles.css?v=2.8.3">
+<link rel="stylesheet" href="/static/css/styles.css?v=2.9.0">
 
 <!-- FOUC prevention: apply saved theme before paint -->
 <script>
@@ -49,7 +49,7 @@ if(localStorage.getItem('ds-theme')==='dark'||(!localStorage.getItem('ds-theme')
         <rect x="32" y="24" width="11.31" height="11.31" rx="2.5" transform="rotate(45 32 24)" fill="var(--teal)"/>
       </svg>
       <span class="brand-title">DemandSense AI</span>
-      <span class="brand-version" id="appVersion">v1.0.14</span>
+      <span class="brand-version" id="appVersion">v1.0.15</span>
     </div>
 
     <!-- Center: Desktop Navigation Tabs Capsule (Hidden on Tablet & Mobile) -->
@@ -77,17 +77,22 @@ if(localStorage.getItem('ds-theme')==='dark'||(!localStorage.getItem('ds-theme')
   </div>
 </header>
 
-<!-- ═══ Smart Floating Sticky Context Pill (Docks on scroll) ═══ -->
-<div class="sticky-context-pill" id="stickyContextPill" role="region" aria-label="Active Parameter Summary" title="Click to view or edit parameters">
-  <div class="context-pill-content">
+<!-- ═══ Adaptive Control Capsule (Unified Primary Parameter Hub & Dynamic Island HUD) ═══ -->
+<!-- Backdrop for in-place Floating HUD Popover -->
+<div class="capsule-hud-backdrop" id="capsuleBackdrop"></div>
+
+<div class="adaptive-control-capsule is-docked" id="controlCapsule" role="region" aria-label="Executive Parameter Suite">
+  
+  <!-- 1. Floating Pill Summary Bar (Visible on scroll, morphs to floating Dynamic Island HUD) -->
+  <div class="capsule-pill-bar" id="capsulePillBar" title="Click to edit executive parameters in-place">
     <div class="pill-top-row">
       <div class="pill-badge">
         <span class="pill-dot"></span>
         <span class="pill-sku-title" id="pillSku">SKU001 — Premium Detergent</span>
       </div>
       <button type="button" class="pill-edit-btn" id="pillEditBtn" aria-label="Edit Executive Parameters" title="Edit Parameters">
-        <span>Edit</span>
-        <svg viewBox="0 0 24 24" width="11" height="11" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>
+        <span>Edit Parameters</span>
+        <svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>
       </button>
     </div>
     <div class="pill-divider"></div>
@@ -101,195 +106,177 @@ if(localStorage.getItem('ds-theme')==='dark'||(!localStorage.getItem('ds-theme')
       <span class="pill-metric-item" title="Operating Warehouse Stock"><span class="pill-icon">🏬</span><span id="pillStock">25,000 units</span></span>
     </div>
   </div>
-</div>
 
-<!-- ═══ Main App Container ═══ -->
-<div class="app-container">
-
-  <!-- ═══ Executive Parameter Control Suite (Redesigned & Collapsible) ═══ -->
-  <div class="filter-panel" id="filterPanel">
-    <!-- Header: Title + Status Badge on left, Reset Defaults + Collapse Toggle on right -->
-    <div class="filter-header" id="filterHeader">
-      <div class="filter-header-left">
+  <!-- 2. Full Parameter Controls Panel (Expanded at top OR as Floating HUD Modal on scroll) -->
+  <div class="capsule-body-card" id="capsuleBodyCard">
+    <!-- Header: Console Badge, Title, Reset Defaults, and Close (when floating) -->
+    <div class="capsule-header" id="capsuleHeader">
+      <div class="capsule-header-left">
         <div class="console-badge">
           <span class="pulse-dot"></span>
-          <span>CONTROL TOWER</span>
+          <span>STEP 1 · CONTROL TOWER</span>
         </div>
         <h2 class="console-title">Executive Parameter Suite</h2>
       </div>
-      <div class="filter-header-right">
+      <div class="capsule-header-right">
         <button type="button" class="btn-ghost-sm" id="resetParamsBtn" title="Reset all parameters to default">
           <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/></svg>
           <span>Reset Defaults</span>
         </button>
-        <button type="button" class="btn-collapse-toggle" id="filterCollapseBtn" title="Toggle Collapse / Expand" aria-label="Toggle parameter suite collapse">
-          <span class="collapse-label" id="collapseLabel">Collapse</span>
-          <svg class="chevron-icon" id="collapseChevron" viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="6 9 12 15 18 9"></polyline></svg>
+        <button type="button" class="btn-close-hud" id="capsuleCloseBtn" title="Apply & Close HUD" aria-label="Close parameters HUD">
+          <span>Apply & Close</span>
+          <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M18 6L6 18M6 6l12 12"/></svg>
         </button>
       </div>
     </div>
 
-    <!-- Condensed Summary Bar (Visible ONLY when collapsed) -->
-    <div class="filter-summary-bar" id="filterSummaryBar" title="Click to expand full Executive Parameter Suite">
-      <div class="summary-chip-item"><span class="summary-chip-icon">🏷️</span><span id="sumSku">SKU001</span></div>
-      <span class="summary-sep">·</span>
-      <div class="summary-chip-item"><span class="summary-chip-icon">📍</span><span id="sumRegion">National</span></div>
-      <span class="summary-sep">·</span>
-      <div class="summary-chip-item"><span class="summary-chip-icon">⏱️</span><span id="sumLeadTime">7d Std</span></div>
-      <span class="summary-sep">·</span>
-      <div class="summary-chip-item"><span class="summary-chip-icon">🎯</span><span id="sumServiceLevel">Grade A (98%)</span></div>
-      <span class="summary-sep">·</span>
-      <div class="summary-chip-item"><span class="summary-chip-icon">📦</span><span id="sumStock">25,000 units</span></div>
-      <span class="summary-sep">·</span>
-      <div class="summary-chip-item dataset-chip"><span class="pulse-dot"></span><span id="sumDataset">Enterprise FMCG (20 SKUs)</span></div>
-      <span class="summary-expand-hint">Click to expand ▾</span>
+    <!-- 4 Interactive Control Clusters: Target Scope, Supply Dynamics, Operating Stock, Data Source -->
+    <div class="control-clusters">
+
+      <!-- CLUSTER 1: Product & Territory Scope -->
+      <div class="control-cluster cluster-scope">
+        <div class="cluster-label">
+          <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="7" width="20" height="14" rx="2" ry="2"/><path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"/></svg>
+          <span>Target Scope</span>
+        </div>
+        <div class="cluster-inputs">
+          <div class="control-field">
+            <label class="field-label" for="skuSelect">Product SKU</label>
+            <div class="select-wrapper">
+              <select class="custom-select" id="skuSelect"></select>
+              <span class="select-chevron">▾</span>
+            </div>
+          </div>
+          <div class="control-field">
+            <label class="field-label" for="regionSelect">Geographic Territory</label>
+            <div class="select-wrapper">
+              <select class="custom-select" id="regionSelect"></select>
+              <span class="select-chevron">▾</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- CLUSTER 2: Supply Chain Dynamics -->
+      <div class="control-cluster cluster-dynamics">
+        <div class="cluster-label">
+          <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
+          <span>Supply Dynamics</span>
+        </div>
+        <div class="cluster-inputs">
+          <!-- Lead Time with Tick Marks & Unified Presets -->
+          <div class="control-field lead-time-field">
+            <div class="field-label-row">
+              <label class="field-label" for="leadTimeSlider">Supplier Lead Time</label>
+              <span class="val-pill" id="leadTimeValue">7d</span>
+            </div>
+            <div class="slider-container">
+              <div class="slider-track-wrap">
+                <input type="range" class="tactile-slider" id="leadTimeSlider" min="1" max="30" value="7">
+                <div class="slider-ticks-markers">
+                  <span class="tick-mark" style="left: 6.9%" title="3d Air"></span>
+                  <span class="tick-mark" style="left: 20.7%" title="7d Std"></span>
+                  <span class="tick-mark" style="left: 44.8%" title="14d Rail"></span>
+                  <span class="tick-mark" style="left: 69.0%" title="21d Sea"></span>
+                </div>
+              </div>
+              <!-- Unified Segmented Preset Pills -->
+              <div class="segmented-group" id="leadTimePresets">
+                <button type="button" class="segmented-btn" data-val="3">3d Air</button>
+                <button type="button" class="segmented-btn is-selected" data-val="7">7d Std</button>
+                <button type="button" class="segmented-btn" data-val="14">14d Rail</button>
+                <button type="button" class="segmented-btn" data-val="21">21d Sea</button>
+              </div>
+            </div>
+          </div>
+
+          <!-- Service Level Unified Segmented Control -->
+          <div class="control-field">
+            <div class="field-label-row">
+              <label class="field-label">Service Level Target</label>
+              <span class="field-sub-label">SLA Grade</span>
+            </div>
+            <div class="segmented-group" id="serviceLevelSegmented">
+              <button type="button" class="segmented-btn" data-val="C">
+                <span class="seg-letter">C</span>
+                <span class="seg-pct">90%</span>
+              </button>
+              <button type="button" class="segmented-btn" data-val="B">
+                <span class="seg-letter">B</span>
+                <span class="seg-pct">95%</span>
+              </button>
+              <button type="button" class="segmented-btn is-selected" data-val="A">
+                <span class="seg-letter">A</span>
+                <span class="seg-pct">98%</span>
+              </button>
+            </div>
+            <select id="serviceLevelSelect" style="display:none">
+              <option value="C">C (90%)</option>
+              <option value="B">B (95%)</option>
+              <option value="A" selected>A (98%)</option>
+            </select>
+          </div>
+        </div>
+      </div>
+
+      <!-- CLUSTER 3: Operating Stock (Dedicated Stepper) -->
+      <div class="control-cluster cluster-stock">
+        <div class="cluster-label">
+          <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/><polyline points="3.27 6.96 12 12.01 20.73 6.96"/><line x1="12" y1="22.08" x2="12" y2="12"/></svg>
+          <span>Operating Stock</span>
+        </div>
+        <div class="cluster-inputs">
+          <div class="control-field">
+            <label class="field-label" for="stockInput">Current Warehouse Stock</label>
+            <div class="stepper-input-wrapper">
+              <button type="button" class="stepper-btn" id="stockDecBtn" title="Decrease 1,000">−</button>
+              <input type="number" class="stepper-input" id="stockInput" value="25000" min="0" step="1000">
+              <button type="button" class="stepper-btn" id="stockIncBtn" title="Increase 1,000">+</button>
+            </div>
+            <span class="field-hint-text">Simulated against 30d forecast demand</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- CLUSTER 4: Data Source (Active Dataset + File Ingestion) -->
+      <div class="control-cluster cluster-datasource">
+        <div class="cluster-label">
+          <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2"><ellipse cx="12" cy="5" rx="9" ry="3"/><path d="M21 12c0 1.66-4 3-9 3s-9-1.34-9-3"/><path d="M3 5v14c0 1.66 4 3 9 3s9-1.34 9-3V5"/></svg>
+          <span>Data Source</span>
+        </div>
+        <div class="cluster-inputs">
+          <!-- Active Dataset Meta Badge -->
+          <div class="dataset-meta-badge" id="activeDatasetBadge">
+            <span class="pulse-dot"></span>
+            <span class="dataset-name" id="datasetNameText">Enterprise FMCG · 20 SKUs</span>
+          </div>
+
+          <!-- Ingestion Action with Explicit Consequence Caution -->
+          <div class="control-field">
+            <div class="file-upload-card" id="fileUploadDropzone">
+              <input type="file" id="csvUpload" accept=".csv" class="file-input-hidden">
+              <label for="csvUpload" class="upload-label-btn" id="uploadLabel">
+                <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+                <span id="uploadText">Upload Custom CSV</span>
+              </label>
+            </div>
+            <span class="upload-caution-caption">⚠️ Replaces active dataset for this session</span>
+          </div>
+        </div>
+      </div>
+
     </div>
 
-    <!-- Collapsible Body Section -->
-    <div class="filter-panel-body" id="filterPanelBody">
-      <!-- 4 Interactive Control Clusters: Target Scope, Supply Dynamics, Operating Stock, Data Source -->
-      <div class="control-clusters">
+    <!-- Bottom Diagnostic Strip -->
+    <div class="console-footer">
+      <div class="data-freshness" id="dataFreshness"></div>
+    </div>
+  </div> <!-- /capsule-body-card -->
 
-        <!-- CLUSTER 1: Product & Territory Scope -->
-        <div class="control-cluster cluster-scope">
-          <div class="cluster-label">
-            <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="7" width="20" height="14" rx="2" ry="2"/><path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"/></svg>
-            <span>Target Scope</span>
-          </div>
-          <div class="cluster-inputs">
-            <div class="control-field">
-              <label class="field-label" for="skuSelect">Product SKU</label>
-              <div class="select-wrapper">
-                <select class="custom-select" id="skuSelect"></select>
-                <span class="select-chevron">▾</span>
-              </div>
-            </div>
-            <div class="control-field">
-              <label class="field-label" for="regionSelect">Geographic Territory</label>
-              <div class="select-wrapper">
-                <select class="custom-select" id="regionSelect"></select>
-                <span class="select-chevron">▾</span>
-              </div>
-            </div>
-          </div>
-        </div>
+</div> <!-- /adaptive-control-capsule -->
 
-        <!-- CLUSTER 2: Supply Chain Dynamics -->
-        <div class="control-cluster cluster-dynamics">
-          <div class="cluster-label">
-            <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
-            <span>Supply Dynamics</span>
-          </div>
-          <div class="cluster-inputs">
-            <!-- Lead Time with Tick Marks & Unified Presets -->
-            <div class="control-field lead-time-field">
-              <div class="field-label-row">
-                <label class="field-label" for="leadTimeSlider">Supplier Lead Time</label>
-                <span class="val-pill" id="leadTimeValue">7d</span>
-              </div>
-              <div class="slider-container">
-                <div class="slider-track-wrap">
-                  <input type="range" class="tactile-slider" id="leadTimeSlider" min="1" max="30" value="7">
-                  <div class="slider-ticks-markers">
-                    <span class="tick-mark" style="left: 6.9%" title="3d Air"></span>
-                    <span class="tick-mark" style="left: 20.7%" title="7d Std"></span>
-                    <span class="tick-mark" style="left: 44.8%" title="14d Rail"></span>
-                    <span class="tick-mark" style="left: 69.0%" title="21d Sea"></span>
-                  </div>
-                </div>
-                <!-- Unified Segmented Preset Pills -->
-                <div class="segmented-group" id="leadTimePresets">
-                  <button type="button" class="segmented-btn" data-val="3">3d Air</button>
-                  <button type="button" class="segmented-btn is-selected" data-val="7">7d Std</button>
-                  <button type="button" class="segmented-btn" data-val="14">14d Rail</button>
-                  <button type="button" class="segmented-btn" data-val="21">21d Sea</button>
-                </div>
-              </div>
-            </div>
-
-            <!-- Service Level Unified Segmented Control -->
-            <div class="control-field">
-              <div class="field-label-row">
-                <label class="field-label">Service Level Target</label>
-                <span class="field-sub-label">SLA Grade</span>
-              </div>
-              <div class="segmented-group" id="serviceLevelSegmented">
-                <button type="button" class="segmented-btn" data-val="C">
-                  <span class="seg-letter">C</span>
-                  <span class="seg-pct">90%</span>
-                </button>
-                <button type="button" class="segmented-btn" data-val="B">
-                  <span class="seg-letter">B</span>
-                  <span class="seg-pct">95%</span>
-                </button>
-                <button type="button" class="segmented-btn is-selected" data-val="A">
-                  <span class="seg-letter">A</span>
-                  <span class="seg-pct">98%</span>
-                </button>
-              </div>
-              <select id="serviceLevelSelect" style="display:none">
-                <option value="C">C (90%)</option>
-                <option value="B">B (95%)</option>
-                <option value="A" selected>A (98%)</option>
-              </select>
-            </div>
-          </div>
-        </div>
-
-        <!-- CLUSTER 3: Operating Stock (Dedicated Stepper) -->
-        <div class="control-cluster cluster-stock">
-          <div class="cluster-label">
-            <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/><polyline points="3.27 6.96 12 12.01 20.73 6.96"/><line x1="12" y1="22.08" x2="12" y2="12"/></svg>
-            <span>Operating Stock</span>
-          </div>
-          <div class="cluster-inputs">
-            <div class="control-field">
-              <label class="field-label" for="stockInput">Current Warehouse Stock</label>
-              <div class="stepper-input-wrapper">
-                <button type="button" class="stepper-btn" id="stockDecBtn" title="Decrease 1,000">−</button>
-                <input type="number" class="stepper-input" id="stockInput" value="25000" min="0" step="1000">
-                <button type="button" class="stepper-btn" id="stockIncBtn" title="Increase 1,000">+</button>
-              </div>
-              <span class="field-hint-text">Simulated against 30d forecast demand</span>
-            </div>
-          </div>
-        </div>
-
-        <!-- CLUSTER 4: Data Source (Active Dataset + File Ingestion) -->
-        <div class="control-cluster cluster-datasource">
-          <div class="cluster-label">
-            <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2"><ellipse cx="12" cy="5" rx="9" ry="3"/><path d="M21 12c0 1.66-4 3-9 3s-9-1.34-9-3"/><path d="M3 5v14c0 1.66 4 3 9 3s9-1.34 9-3V5"/></svg>
-            <span>Data Source</span>
-          </div>
-          <div class="cluster-inputs">
-            <!-- Active Dataset Meta Badge -->
-            <div class="dataset-meta-badge" id="activeDatasetBadge">
-              <span class="pulse-dot"></span>
-              <span class="dataset-name" id="datasetNameText">Enterprise FMCG · 20 SKUs</span>
-            </div>
-
-            <!-- Ingestion Action with Explicit Consequence Caution -->
-            <div class="control-field">
-              <div class="file-upload-card" id="fileUploadDropzone">
-                <input type="file" id="csvUpload" accept=".csv" class="file-input-hidden">
-                <label for="csvUpload" class="upload-label-btn" id="uploadLabel">
-                  <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
-                  <span id="uploadText">Upload Custom CSV</span>
-                </label>
-              </div>
-              <span class="upload-caution-caption">⚠️ Replaces active dataset for this session</span>
-            </div>
-          </div>
-        </div>
-
-      </div>
-
-      <!-- Bottom Diagnostic Strip -->
-      <div class="console-footer">
-        <div class="data-freshness" id="dataFreshness"></div>
-      </div>
-    </div> <!-- /filter-panel-body -->
-  </div> <!-- /filter-panel -->
+<!-- ═══ Main App Container ═══ -->
+<div class="app-container">
 
   <!-- ═══ KPI Command Bar (Inline 4-Col -> Vertical Right HUD Dock on Scroll) ═══ -->
   <div class="kpi-bar-wrapper" id="kpiBarWrapper">
@@ -771,11 +758,11 @@ if(localStorage.getItem('ds-theme')==='dark'||(!localStorage.getItem('ds-theme')
 </nav>
 
 <!-- App Scripts (load order: theme → drawer → guide → chart builders → app controller) -->
-<script src="/static/js/chartTheme.js?v=2.8.2"></script>
-<script src="/static/js/detailDrawer.js?v=2.8.2"></script>
-<script src="/static/js/walkthroughGuide.js?v=2.8.2"></script>
-<script src="/static/js/charts.js?v=2.8.2"></script>
-<script src="/static/js/app.js?v=2.8.2"></script>
+<script src="/static/js/chartTheme.js?v=2.9.0"></script>
+<script src="/static/js/detailDrawer.js?v=2.9.0"></script>
+<script src="/static/js/walkthroughGuide.js?v=2.9.0"></script>
+<script src="/static/js/charts.js?v=2.9.0"></script>
+<script src="/static/js/app.js?v=2.9.0"></script>
 
 </div>
 </body>

@@ -709,29 +709,26 @@ let _forecastRetryCount = 0;
       }
     }
 
-    const stickyPill = el('stickyContextPill');
-    const filterPanel = el('filterPanel');
-    let cachedTriggerY = 0;
-    let isPillVisible = false;
+    const capsule = el('controlCapsule');
+    const backdrop = el('capsuleBackdrop');
+    let isFloatingMode = false;
 
-    function measureStickyTrigger() {
-      if (filterPanel) {
-        cachedTriggerY = filterPanel.offsetTop + filterPanel.offsetHeight - 40;
-      }
-    }
-
-    function updateStickyPill(y) {
-      if (!stickyPill || !filterPanel) return;
-      if (!cachedTriggerY) measureStickyTrigger();
-      const shouldShow = y > cachedTriggerY;
-      if (shouldShow !== isPillVisible) {
-        stickyPill.classList.toggle('is-visible', shouldShow);
-        isPillVisible = shouldShow;
+    function updateCapsuleScroll(y) {
+      if (!capsule) return;
+      const shouldFloat = y > 55;
+      if (shouldFloat !== isFloatingMode) {
+        isFloatingMode = shouldFloat;
+        capsule.classList.toggle('is-floating', shouldFloat);
+        capsule.classList.toggle('is-docked', !shouldFloat);
+        if (!shouldFloat) {
+          capsule.classList.remove('is-hud-open');
+          backdrop?.classList.remove('is-active');
+        }
       }
     }
 
     window.renderKpiConveyorGlobal = renderKpiConveyor;
-    window.updateStickyPillGlobal = updateStickyPill;
+    window.updateStickyPillGlobal = updateCapsuleScroll;
 
     let isRafScheduled = false;
 
@@ -739,7 +736,7 @@ let _forecastRetryCount = 0;
       if (!activeScrollAnim) {
         const y = window.scrollY;
         renderKpiConveyor(y);
-        updateStickyPill(y);
+        updateCapsuleScroll(y);
       }
       isRafScheduled = false;
     }
@@ -755,24 +752,21 @@ let _forecastRetryCount = 0;
     window.addEventListener('resize', () => {
       initCanvas();
       cachedMetrics = null;
-      cachedTriggerY = 0;
       isCompactClean = false;
       handleScroll();
     }, { passive: true });
 
     initCanvas();
     measureMetrics();
-    updateStickyPill(window.scrollY);
+    updateCapsuleScroll(window.scrollY);
     renderKpiConveyor(window.scrollY);
   }
 
-  // ═══ FILTERS & COLLAPSIBLE EXECUTIVE PARAMETER SUITE ═══
+  // ═══ FILTERS & ADAPTIVE CONTROL CAPSULE (Dynamic Island & In-Place HUD) ═══
   function updateCollapsedSummary() {
     const skuObj = state.config?.products?.find(p => p.sku_id === state.sku);
     const skuFullLabel = skuObj ? `${skuObj.sku_id} — ${skuObj.name}` : state.sku;
-    const skuShortLabel = skuObj ? `${skuObj.sku_id} (${skuObj.name})` : state.sku;
     const regionObj = state.config?.regions?.find(r => r.id === state.region);
-    const regionLabel = state.region === 'ALL' ? 'National Scope' : (regionObj ? regionObj.name : state.region);
     const regionShort = state.region === 'ALL' ? 'National' : (regionObj ? regionObj.name.split(' ')[0] : state.region);
 
     // Preset mapping
@@ -780,19 +774,10 @@ let _forecastRetryCount = 0;
     const ltLabel = presetNames[state.leadTime] || `${state.leadTime}d Lead Time`;
 
     const slPcts = { 'C': '90%', 'B': '95%', 'A': '98%' };
-    const slLabel = `Grade ${state.serviceLevel} (${slPcts[state.serviceLevel] || '98%'})`;
     const slShort = `${slPcts[state.serviceLevel] || '98%'} SLA`;
-
     const stockLabel = `${(state.stock || 0).toLocaleString()} units`;
 
-    // 1. In-place summary bar (when collapsed)
-    if (el('sumSku')) el('sumSku').textContent = skuShortLabel;
-    if (el('sumRegion')) el('sumRegion').textContent = regionLabel;
-    if (el('sumLeadTime')) el('sumLeadTime').textContent = ltLabel;
-    if (el('sumServiceLevel')) el('sumServiceLevel').textContent = slLabel;
-    if (el('sumStock')) el('sumStock').textContent = stockLabel;
-
-    // 2. Smart Floating Sticky Context Pill (on scroll)
+    // Smart Floating Dynamic Island Pill (on scroll)
     if (el('pillSku')) el('pillSku').textContent = skuFullLabel;
     if (el('pillRegion')) el('pillRegion').textContent = regionShort;
     if (el('pillLeadTime')) el('pillLeadTime').textContent = ltLabel;
@@ -801,51 +786,49 @@ let _forecastRetryCount = 0;
   }
 
   function setupCollapsibleFilterPanel() {
-    const panel = el('filterPanel');
-    const collapseBtn = el('filterCollapseBtn');
-    const collapseLabel = el('collapseLabel');
-    const summaryBar = el('filterSummaryBar');
-    const stickyPill = el('stickyContextPill');
+    const capsule = el('controlCapsule');
+    const pillBar = el('capsulePillBar');
+    const backdrop = el('capsuleBackdrop');
+    const closeBtn = el('capsuleCloseBtn');
+    const editBtn = el('pillEditBtn');
 
-    // Restore saved state from localStorage (or default collapsed on first mobile load)
-    const savedCollapsed = localStorage.getItem('ds-filter-collapsed');
-    const shouldCollapse = savedCollapsed === '1' || (savedCollapsed === null && window.innerWidth < 768);
-    if (shouldCollapse && panel) {
-      panel.classList.add('is-collapsed');
-      if (collapseLabel) collapseLabel.textContent = 'Expand';
+    function openHud() {
+      if (!capsule) return;
+      capsule.classList.add('is-hud-open');
+      backdrop?.classList.add('is-active');
+      setTimeout(() => el('skuSelect')?.focus(), 120);
     }
 
-    function toggleCollapse() {
-      if (!panel) return;
-      const isNowCollapsed = panel.classList.toggle('is-collapsed');
-      localStorage.setItem('ds-filter-collapsed', isNowCollapsed ? '1' : '0');
-      if (collapseLabel) collapseLabel.textContent = isNowCollapsed ? 'Expand' : 'Collapse';
-      updateCollapsedSummary();
+    function closeHud() {
+      if (!capsule) return;
+      capsule.classList.remove('is-hud-open');
+      backdrop?.classList.remove('is-active');
     }
 
-    function jumpToParams() {
-      if (panel && panel.classList.contains('is-collapsed')) {
-        toggleCollapse();
-      }
-      gracefulScrollTo(0, 850);
-      setTimeout(() => el('skuSelect')?.focus(), 450);
-    }
-
-    collapseBtn?.addEventListener('click', (e) => {
-      e.stopPropagation();
-      toggleCollapse();
-    });
-
-    summaryBar?.addEventListener('click', () => {
-      if (panel && panel.classList.contains('is-collapsed')) {
-        toggleCollapse();
+    // Toggle HUD in-place when floating pill is clicked (Zero scrolling needed!)
+    pillBar?.addEventListener('click', (e) => {
+      if (capsule?.classList.contains('is-floating')) {
+        openHud();
       }
     });
 
-    stickyPill?.addEventListener('click', jumpToParams);
-    el('pillEditBtn')?.addEventListener('click', (e) => {
+    editBtn?.addEventListener('click', (e) => {
       e.stopPropagation();
-      jumpToParams();
+      openHud();
+    });
+
+    closeBtn?.addEventListener('click', (e) => {
+      e.stopPropagation();
+      closeHud();
+    });
+
+    backdrop?.addEventListener('click', closeHud);
+
+    // Escape key closes floating HUD
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape' && capsule?.classList.contains('is-hud-open')) {
+        closeHud();
+      }
     });
   }
 
