@@ -334,7 +334,10 @@ def _get_or_compute_base_forecast(request: Request, sku: str, region: str, sid: 
             # Also scale the forecast_res components for accuracy
             scaled_res = {**all_base["forecast_res"]}
             if "winning_forecast" in scaled_res:
-                scaled_res["winning_forecast"] = [round(v * scale_factor, 1) for v in scaled_res["winning_forecast"]]
+                scaled_res["winning_forecast"] = [
+                    {**v, "predicted_units": round(v.get("predicted_units", 0) * scale_factor, 1)}
+                    for v in scaled_res["winning_forecast"]
+                ]
 
             entry = {
                 "forecast_res": scaled_res,
@@ -391,7 +394,10 @@ def _get_or_compute_base_forecast(request: Request, sku: str, region: str, sid: 
                         
                         scaled_res = {**forecast_res}
                         if "winning_forecast" in scaled_res:
-                            scaled_res["winning_forecast"] = [round(v * scale_factor, 1) for v in scaled_res["winning_forecast"]]
+                            scaled_res["winning_forecast"] = [
+                                {**v, "predicted_units": round(v.get("predicted_units", 0) * scale_factor, 1)}
+                                for v in scaled_res["winning_forecast"]
+                            ]
                         
                         entry = {
                             "forecast_res": scaled_res,
