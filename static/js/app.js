@@ -711,15 +711,18 @@ let _forecastRetryCount = 0;
 
     const capsule = el('controlCapsule');
     const backdrop = el('capsuleBackdrop');
+    const placeholder = el('capsulePlaceholder');
     let isFloatingMode = false;
 
     function updateCapsuleScroll(y) {
       if (!capsule) return;
-      const shouldFloat = y > 55;
+      const shouldFloat = y > 45;
       if (shouldFloat !== isFloatingMode) {
         isFloatingMode = shouldFloat;
         capsule.classList.toggle('is-floating', shouldFloat);
         capsule.classList.toggle('is-docked', !shouldFloat);
+        placeholder?.classList.toggle('is-collapsed', shouldFloat);
+
         if (!shouldFloat) {
           capsule.classList.remove('is-hud-open');
           backdrop?.classList.remove('is-active');
@@ -794,7 +797,6 @@ let _forecastRetryCount = 0;
 
     function openHud() {
       if (!capsule) return;
-      capsule.classList.remove('is-hud-closing');
       capsule.classList.add('is-hud-open');
       backdrop?.classList.add('is-active');
       setTimeout(() => el('skuSelect')?.focus(), 140);
@@ -802,15 +804,11 @@ let _forecastRetryCount = 0;
 
     function closeHud() {
       if (!capsule || !capsule.classList.contains('is-hud-open')) return;
-      capsule.classList.add('is-hud-closing');
+      capsule.classList.remove('is-hud-open');
       backdrop?.classList.remove('is-active');
-      setTimeout(() => {
-        capsule.classList.remove('is-hud-open');
-        capsule.classList.remove('is-hud-closing');
-      }, 250);
     }
 
-    // Toggle HUD in-place with iPhone Dynamic Island spring expansion
+    // Toggle HUD in-place with pure shared container spring morphing
     pillBar?.addEventListener('click', (e) => {
       if (capsule?.classList.contains('is-floating')) {
         openHud();
@@ -829,7 +827,7 @@ let _forecastRetryCount = 0;
 
     backdrop?.addEventListener('click', closeHud);
 
-    // Escape key closes floating HUD with elastic snapback
+    // Escape key closes floating HUD with morph back to pill
     document.addEventListener('keydown', (e) => {
       if (e.key === 'Escape' && capsule?.classList.contains('is-hud-open')) {
         closeHud();

@@ -479,18 +479,18 @@ body.kpi-dock-right .top-left-brand-icon {
   transition: transform .3s ease, border-color .3s ease;
 }
 
-/* ═══ ADAPTIVE CONTROL CAPSULE & IPHONE DYNAMIC ISLAND SPRING ANIMATION ═══ */
+/* ═══ UNIFIED DYNAMIC ISLAND SHARED CONTAINER MORPHING PHYSICS ═══════════ */
 .capsule-hud-backdrop {
   position: fixed;
   inset: 0;
   background: rgba(15, 23, 42, 0.65);
   backdrop-filter: blur(14px) saturate(160%);
   -webkit-backdrop-filter: blur(14px) saturate(160%);
-  z-index: 1999;
+  z-index: 990;
   opacity: 0;
   visibility: hidden;
   pointer-events: none;
-  transition: opacity 0.28s cubic-bezier(0.16, 1, 0.3, 1), visibility 0.28s ease;
+  transition: opacity 0.32s cubic-bezier(0.16, 1, 0.3, 1), visibility 0.32s ease;
 }
 
 body.dark .capsule-hud-backdrop {
@@ -503,141 +503,52 @@ body.dark .capsule-hud-backdrop {
   pointer-events: auto;
 }
 
-.adaptive-control-capsule {
-  position: relative;
+/* Document flow placeholder to reserve vertical height at page top */
+.capsule-placeholder {
   width: 100%;
-  max-width: 100%;
-  margin: 0 auto 1.35rem;
-  z-index: 50;
-  transition: transform 0.35s cubic-bezier(0.175, 0.885, 0.32, 1.2), opacity 0.25s ease;
+  height: 250px;
+  margin-bottom: 1.25rem;
+  pointer-events: none;
+  transition: height 0.38s cubic-bezier(0.175, 0.885, 0.32, 1.15), margin-bottom 0.38s ease;
 }
 
-/* 1. DOCKED TOP STATE (Master Hero Capsule when at the top of the page) */
-.adaptive-control-capsule.is-docked {
-  position: relative;
-  display: block;
-  background: var(--glass-bg);
-  backdrop-filter: var(--glass-blur);
-  -webkit-backdrop-filter: var(--glass-blur);
-  border: 1px solid var(--glass-border);
-  border-radius: var(--radius2);
-  box-shadow: var(--glass-shadow);
-  padding: 0.85rem 1.25rem;
-  overflow: hidden;
-  animation: dynamicIslandMasterExpand 0.45s cubic-bezier(0.175, 0.885, 0.32, 1.15);
+.capsule-placeholder.is-collapsed {
+  height: 0px;
+  margin-bottom: 0px;
 }
 
-@keyframes dynamicIslandMasterExpand {
-  0% {
-    transform: scale(0.96, 0.6);
-    border-radius: 99px;
-    opacity: 0.5;
-  }
-  60% {
-    transform: scale(1.01, 1.02);
-    border-radius: 20px;
-    opacity: 1;
-  }
-  100% {
-    transform: scale(1, 1);
-    border-radius: var(--radius2);
-    opacity: 1;
-  }
-}
-
-.adaptive-control-capsule.is-docked .capsule-pill-bar {
-  display: none;
-}
-
-.adaptive-control-capsule.is-docked .capsule-body-card {
-  display: block;
-  background: transparent;
-  border: none;
-  box-shadow: none;
-  padding: 0;
-}
-
-.adaptive-control-capsule.is-docked .control-cluster {
-  animation: islandClusterFloat 0.38s cubic-bezier(0.16, 1, 0.3, 1) backwards;
-}
-.adaptive-control-capsule.is-docked .cluster-scope { animation-delay: 0.04s; }
-.adaptive-control-capsule.is-docked .cluster-dynamics { animation-delay: 0.08s; }
-.adaptive-control-capsule.is-docked .cluster-stock { animation-delay: 0.12s; }
-.adaptive-control-capsule.is-docked .cluster-datasource { animation-delay: 0.16s; }
-
-@keyframes islandClusterFloat {
-  0% {
-    opacity: 0;
-    transform: translateY(-8px) scale(0.98);
-  }
-  100% {
-    opacity: 1;
-    transform: translateY(0) scale(1);
-  }
-}
-
-.adaptive-control-capsule.is-docked .btn-close-hud {
-  display: none;
-}
-
-/* 2. FLOATING DYNAMIC ISLAND PILL (When scrolling down the page) */
-.adaptive-control-capsule.is-floating {
+/* ─── THE UNIFIED DYNAMIC ISLAND MASTER CONTAINER (Always Fixed & Centered) ─── */
+.adaptive-control-capsule {
   position: fixed;
   top: 72px;
   left: 50%;
   transform: translate3d(-50%, 0, 0);
-  z-index: 150;
-  max-width: 940px;
-  width: calc(100% - 2.5rem);
-  margin: 0;
-}
-
-.adaptive-control-capsule.is-floating .capsule-pill-bar {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  height: 42px;
-  padding: 0 0.65rem 0 1rem;
+  z-index: 1000;
   background: var(--nav-bg);
-  backdrop-filter: blur(24px) saturate(190%);
-  -webkit-backdrop-filter: blur(24px) saturate(190%);
+  backdrop-filter: blur(28px) saturate(190%);
+  -webkit-backdrop-filter: blur(28px) saturate(190%);
   border: 1px solid var(--glass-border);
-  border-radius: 99px;
-  box-shadow: 0 14px 38px rgba(15, 23, 42, 0.18), inset 0 1px 1.5px rgba(255, 255, 255, 0.65), var(--glow);
-  cursor: pointer;
+  box-shadow: 0 16px 40px rgba(15, 23, 42, 0.18), inset 0 1px 1.5px rgba(255, 255, 255, 0.65), var(--glow);
   overflow: hidden;
-  position: relative;
-  transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.2);
-  animation: dynamicIslandPillDrop 0.42s cubic-bezier(0.175, 0.885, 0.32, 1.25);
+  will-change: width, max-width, height, max-height, border-radius, box-shadow;
+  /* Pure Spring Physics Layout Interpolation */
+  transition: 
+    width 0.38s cubic-bezier(0.175, 0.885, 0.32, 1.15),
+    max-width 0.38s cubic-bezier(0.175, 0.885, 0.32, 1.15),
+    max-height 0.38s cubic-bezier(0.175, 0.885, 0.32, 1.15),
+    border-radius 0.38s cubic-bezier(0.175, 0.885, 0.32, 1.15),
+    box-shadow 0.35s ease,
+    background-color 0.3s ease,
+    top 0.35s cubic-bezier(0.175, 0.885, 0.32, 1.15);
 }
 
-@keyframes dynamicIslandPillDrop {
-  0% {
-    transform: translateY(-26px) scale(0.68, 0.45);
-    opacity: 0;
-    filter: blur(5px);
-  }
-  60% {
-    transform: translateY(3px) scale(1.03, 1.05);
-    opacity: 1;
-    filter: blur(0);
-  }
-  80% {
-    transform: translateY(-1px) scale(0.99, 0.99);
-  }
-  100% {
-    transform: translateY(0) scale(1, 1);
-    opacity: 1;
-  }
-}
-
-/* Specular fluid light rim */
-.capsule-pill-bar::before {
+/* Specular fluid light rim along top edge */
+.adaptive-control-capsule::before {
   content: '';
   position: absolute;
   top: 0;
-  left: 10%;
-  right: 10%;
+  left: 8%;
+  right: 8%;
   height: 1.5px;
   background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.9), transparent);
   pointer-events: none;
@@ -645,7 +556,7 @@ body.dark .capsule-hud-backdrop {
 }
 
 /* Apple Siri AI Iridescent Chromatic Ribbon Aura */
-.capsule-pill-bar::after {
+.adaptive-control-capsule::after {
   content: '';
   position: absolute;
   inset: -1px;
@@ -661,116 +572,138 @@ body.dark .capsule-hud-backdrop {
   animation: siriAuraFlow 6s linear infinite;
 }
 
-body.dark .capsule-pill-bar {
-  background: rgba(15, 23, 42, 0.88);
+body.dark .adaptive-control-capsule {
+  background: rgba(15, 23, 42, 0.92);
   border-color: rgba(255, 255, 255, 0.16);
-  box-shadow: 0 14px 40px rgba(0, 0, 0, 0.55), inset 0 1px 1.5px rgba(255, 255, 255, 0.22), 0 0 26px rgba(56, 189, 248, 0.14);
+  box-shadow: 0 16px 45px rgba(0, 0, 0, 0.6), inset 0 1px 1.5px rgba(255, 255, 255, 0.2), 0 0 28px rgba(56, 189, 248, 0.15);
 }
 
-body.dark .capsule-pill-bar::after {
+body.dark .adaptive-control-capsule::after {
   opacity: 0.65;
 }
 
-.capsule-pill-bar:hover {
-  border-color: var(--teal);
-  box-shadow: 0 16px 44px rgba(13, 148, 136, 0.32), 0 0 24px rgba(56, 189, 248, 0.24);
-  transform: scale(1.02);
+/* ═════ 1. EXPANDED START STATE (Page Top / Step 1) ═════ */
+.adaptive-control-capsule.is-docked {
+  max-width: 1160px;
+  width: calc(100% - 3rem);
+  max-height: 500px;
+  border-radius: var(--radius2);
+  padding: 0.85rem 1.25rem;
 }
 
-.adaptive-control-capsule.is-floating .capsule-body-card {
+.adaptive-control-capsule.is-docked .capsule-pill-bar {
+  opacity: 0;
+  pointer-events: none;
+  height: 0;
+  padding: 0;
+  overflow: hidden;
+  transform: translateY(-8px) scale(0.95);
+  transition: opacity 0.2s ease, transform 0.2s ease, height 0.3s ease;
+}
+
+.adaptive-control-capsule.is-docked .capsule-body-card {
+  opacity: 1;
+  pointer-events: auto;
+  transform: translateY(0) scale(1);
+  transition: opacity 0.32s ease 0.08s, transform 0.35s cubic-bezier(0.16, 1, 0.3, 1) 0.08s;
+}
+
+.adaptive-control-capsule.is-docked .btn-close-hud {
   display: none;
 }
 
-/* 3. IN-PLACE FLOATING HUD MODAL (Fluid iPhone Dynamic Island Balloon Spring Expansion) */
-.adaptive-control-capsule.is-floating.is-hud-open .capsule-body-card {
-  display: block;
-  position: fixed;
-  top: 52%;
-  left: 50%;
-  transform: translate(-50%, -50%);
-  z-index: 2001;
+.adaptive-control-capsule.is-docked .control-cluster {
+  animation: islandClusterCascade 0.4s cubic-bezier(0.16, 1, 0.3, 1) backwards;
+}
+.adaptive-control-capsule.is-docked .cluster-scope { animation-delay: 0.04s; }
+.adaptive-control-capsule.is-docked .cluster-dynamics { animation-delay: 0.08s; }
+.adaptive-control-capsule.is-docked .cluster-stock { animation-delay: 0.12s; }
+.adaptive-control-capsule.is-docked .cluster-datasource { animation-delay: 0.16s; }
+
+@keyframes islandClusterCascade {
+  0% {
+    opacity: 0;
+    transform: translateY(-8px) scale(0.98);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+/* ═════ 2. COLLAPSED DYNAMIC ISLAND PILL (While Scrolling) ═════ */
+.adaptive-control-capsule.is-floating {
+  max-width: 920px;
+  width: calc(100% - 2.5rem);
+  max-height: 44px;
+  border-radius: 99px;
+  padding: 0 0.65rem 0 1rem;
+}
+
+.adaptive-control-capsule.is-floating .capsule-pill-bar {
+  opacity: 1;
+  pointer-events: auto;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  height: 42px;
+  transform: translateY(0) scale(1);
+  transition: opacity 0.28s ease 0.1s, transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.2) 0.1s;
+}
+
+.adaptive-control-capsule.is-floating .capsule-body-card {
+  opacity: 0;
+  pointer-events: none;
+  height: 0;
+  overflow: hidden;
+  transform: translateY(8px) scale(0.96);
+  transition: opacity 0.2s ease, transform 0.2s ease, height 0.3s ease;
+}
+
+.adaptive-control-capsule.is-floating:hover {
+  border-color: var(--teal);
+  box-shadow: 0 18px 46px rgba(13, 148, 136, 0.32), 0 0 24px rgba(56, 189, 248, 0.25);
+  transform: translate3d(-50%, 0, 0) scale(1.015);
+}
+
+/* ═════ 3. IN-PLACE FLOATING HUD MODAL (When Expanded on Scroll) ═════ */
+.adaptive-control-capsule.is-floating.is-hud-open {
   max-width: 1040px;
   width: calc(100% - 2rem);
   max-height: 84vh;
-  overflow-y: auto;
-  background: var(--surface);
-  backdrop-filter: blur(32px) saturate(200%);
-  -webkit-backdrop-filter: blur(32px) saturate(200%);
-  border: 1px solid var(--glass-border);
   border-radius: var(--radius2);
-  box-shadow: 0 32px 85px rgba(0, 0, 0, 0.5), 0 0 50px rgba(13, 148, 136, 0.35);
-  padding: 1.25rem 1.6rem;
-  transform-origin: center top;
-  animation: dynamicIslandModalExpand 0.44s cubic-bezier(0.175, 0.885, 0.32, 1.25) forwards;
+  padding: 1.15rem 1.45rem;
+  overflow-y: auto;
+  box-shadow: 0 32px 90px rgba(0, 0, 0, 0.55), 0 0 55px rgba(13, 148, 136, 0.4);
 }
 
-body.dark .adaptive-control-capsule.is-floating.is-hud-open .capsule-body-card {
-  background: rgba(15, 23, 42, 0.96);
-  box-shadow: 0 32px 90px rgba(0, 0, 0, 0.75), 0 0 55px rgba(56, 189, 248, 0.25);
+body.dark .adaptive-control-capsule.is-floating.is-hud-open {
+  background: rgba(15, 23, 42, 0.97);
+  box-shadow: 0 32px 95px rgba(0, 0, 0, 0.8), 0 0 60px rgba(56, 189, 248, 0.28);
 }
 
-@keyframes dynamicIslandModalExpand {
-  0% {
-    transform: translate(-50%, -88%) scale(0.6, 0.12);
-    border-radius: 99px;
-    opacity: 0;
-    filter: blur(6px);
-  }
-  55% {
-    transform: translate(-50%, -49%) scale(1.025, 1.038);
-    border-radius: 26px;
-    opacity: 1;
-    filter: blur(0px);
-  }
-  78% {
-    transform: translate(-50%, -50.6%) scale(0.99, 0.99);
-    border-radius: var(--radius2);
-  }
-  100% {
-    transform: translate(-50%, -50%) scale(1, 1);
-    border-radius: var(--radius2);
-    opacity: 1;
-  }
-}
-
-/* Modal Elastic Snapback Collapse Animation */
-.adaptive-control-capsule.is-floating.is-hud-closing .capsule-body-card {
-  display: block;
-  position: fixed;
-  top: 52%;
-  left: 50%;
-  z-index: 2001;
-  max-width: 1040px;
-  width: calc(100% - 2rem);
-  transform-origin: center top;
-  animation: dynamicIslandModalCollapse 0.26s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+.adaptive-control-capsule.is-floating.is-hud-open .capsule-pill-bar {
+  opacity: 0;
   pointer-events: none;
+  height: 0;
+  overflow: hidden;
+  display: none;
 }
 
-@keyframes dynamicIslandModalCollapse {
-  0% {
-    transform: translate(-50%, -50%) scale(1, 1);
-    border-radius: var(--radius2);
-    opacity: 1;
-  }
-  40% {
-    transform: translate(-50%, -65%) scale(0.88, 0.4);
-    border-radius: 40px;
-    opacity: 0.8;
-  }
-  100% {
-    transform: translate(-50%, -88%) scale(0.55, 0.1);
-    border-radius: 99px;
-    opacity: 0;
-    filter: blur(5px);
-  }
+.adaptive-control-capsule.is-floating.is-hud-open .capsule-body-card {
+  opacity: 1;
+  pointer-events: auto;
+  height: auto;
+  overflow: visible;
+  transform: translateY(0) scale(1);
+  transition: opacity 0.3s ease 0.08s, transform 0.35s cubic-bezier(0.16, 1, 0.3, 1) 0.08s;
 }
 
 .adaptive-control-capsule.is-floating.is-hud-open .btn-close-hud {
   display: inline-flex;
 }
 
-/* Capsule Header */
+/* Header & Sub-elements */
 .capsule-header {
   display: flex;
   justify-content: space-between;
