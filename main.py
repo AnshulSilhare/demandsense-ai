@@ -319,9 +319,23 @@ def _get_or_compute_base_forecast(request: Request, sku: str, region: str, sid: 
             chart_history = filtered[["date", "units_sold"]].copy()
             chart_history["date"] = chart_history["date"].dt.strftime("%Y-%m-%d")
             chart_history["rolling_7d"] = filtered["units_sold"].rolling(7, min_periods=1).mean().round(1)
+            
+            # Scale the forecast proportionately to region's historical volume vs ALL volume
+            all_hist_sum = all_base["filtered"]["units_sold"].sum()
+            reg_hist_sum = filtered["units_sold"].sum()
+            scale_factor = reg_hist_sum / all_hist_sum if all_hist_sum > 0 else 1.0
+            
+            scaled_forecast_df = all_base["forecast_df"].copy()
+            scaled_forecast_df["predicted_units"] = (scaled_forecast_df["predicted_units"] * scale_factor).round(1)
+            
+            # Also scale the forecast_res components for accuracy
+            scaled_res = {**all_base["forecast_res"]}
+            if "winning_forecast" in scaled_res:
+                scaled_res["winning_forecast"] = [round(v * scale_factor, 1) for v in scaled_res["winning_forecast"]]
+
             entry = {
-                "forecast_res": all_base["forecast_res"],
-                "forecast_df": all_base["forecast_df"],
+                "forecast_res": scaled_res,
+                "forecast_df": scaled_forecast_df,
                 "chart_history": chart_history.to_dict(orient="records"),
                 "data_summary": all_base["data_summary"],
                 "sku_info": sku_info,
@@ -566,6 +580,7 @@ def get_config():
 @app.get("/api/forecast")
 async def get_forecast(
     request: Request,
+    response: Response,
     sku: str = Query(default="SKU001"),
     region: str = Query(default="ALL"),
     lead_time: int = Query(default=DEFAULT_LEAD_TIME_DAYS),
@@ -574,6 +589,7 @@ async def get_forecast(
 ):
     """Main endpoint: returns forecast, impact, LLM report, and KPI bar data.
     Base ML forecast is served from RAM (<0.1ms). Impact/KPI are recomputed per-parameter."""
+    response.headers["Cache-Control"] = "no-store, no-cache, must-revalidate, max-age=0"
     norm_sku = sku.replace("-", "").upper() if sku else "SKU001"
     sid = request.cookies.get("ds_session_id")
     abc_class = _parse_service_level(service_level)
@@ -636,10 +652,12 @@ async def get_forecast(
 @app.get("/api/decomposition")
 def get_decomposition(
     request: Request,
+    response: Response,
     sku: str = Query(default="SKU001"),
     region: str = Query(default="ALL")
 ):
     """Time series decomposition for Tab 1 (cached <1ms)."""
+    response.headers["Cache-Control"] = "no-store, no-cache, must-revalidate, max-age=0"
     norm_sku = sku.replace("-", "").upper() if sku else "SKU001"
     sid = request.cookies.get("ds_session_id")
     cache_k = (sid or "default", norm_sku, region)

@@ -89,7 +89,7 @@
   };
 
   function _qs() {
-    return `sku=${state.sku}&region=${state.region}&lead_time=${state.leadTime}&service_level=${state.serviceLevel}&stock=${state.stock}`;
+    return `sku=${state.sku}&region=${state.region}&lead_time=${state.leadTime}&service_level=${state.serviceLevel}&stock=${state.stock}&_t=${Date.now()}`;
   }
 
   // ═══ INIT ═══
@@ -1301,7 +1301,7 @@
     showLoading('decompSeasonal');
     showLoading('decompResidual');
     try {
-      state.decompData = await API.get(`/api/decomposition?sku=${state.sku}&region=${state.region}`);
+      state.decompData = await API.get(`/api/decomposition?sku=${state.sku}&region=${state.region}&_t=${Date.now()}`);
       const { dates, trend, seasonal, residual } = state.decompData;
       Charts.decompChart('decompTrend', 'decompSeasonal', 'decompResidual', dates, trend, seasonal, residual);
     } catch (e) {
@@ -1312,7 +1312,7 @@
   async function loadFestival() {
     showLoading('festivalChart');
     try {
-      state.festivalData = await API.get(`/api/festival-impact?sku=${state.sku}`);
+      state.festivalData = await API.get(`/api/festival-impact?sku=${state.sku}&_t=${Date.now()}`);
       Charts.festivalChart('festivalChart', state.festivalData.festivals, (festName) => {
         state.festivalFilter = state.festivalFilter === festName ? null : festName;
         renderHeroChart();
@@ -1360,7 +1360,7 @@
   async function loadFeatureImportance() {
     showLoading('fiChart');
     try {
-      state.fiData = await API.get(`/api/feature-importance?sku=${state.sku}&region=${state.region}`);
+      state.fiData = await API.get(`/api/feature-importance?sku=${state.sku}&region=${state.region}&_t=${Date.now()}`);
       Charts.featureImportanceChart('fiChart', state.fiData.features);
     } catch (e) {
       el('fiChart').innerHTML = `<div style="color:var(--text3);padding:20px">Feature importance unavailable</div>`;
