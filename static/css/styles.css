@@ -479,13 +479,13 @@ body.kpi-dock-right .top-left-brand-icon {
   transition: transform .3s ease, border-color .3s ease;
 }
 
-/* ═══ ADAPTIVE CONTROL CAPSULE & DYNAMIC ISLAND HUD ═══════════════════════ */
+/* ═══ ADAPTIVE CONTROL CAPSULE & IPHONE DYNAMIC ISLAND SPRING ANIMATION ═══ */
 .capsule-hud-backdrop {
   position: fixed;
   inset: 0;
   background: rgba(15, 23, 42, 0.65);
-  backdrop-filter: blur(12px) saturate(160%);
-  -webkit-backdrop-filter: blur(12px) saturate(160%);
+  backdrop-filter: blur(14px) saturate(160%);
+  -webkit-backdrop-filter: blur(14px) saturate(160%);
   z-index: 1999;
   opacity: 0;
   visibility: hidden;
@@ -494,7 +494,7 @@ body.kpi-dock-right .top-left-brand-icon {
 }
 
 body.dark .capsule-hud-backdrop {
-  background: rgba(0, 0, 0, 0.75);
+  background: rgba(0, 0, 0, 0.78);
 }
 
 .capsule-hud-backdrop.is-active {
@@ -509,7 +509,7 @@ body.dark .capsule-hud-backdrop {
   max-width: 100%;
   margin: 0 auto 1.35rem;
   z-index: 50;
-  transition: transform 0.35s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.25s ease;
+  transition: transform 0.35s cubic-bezier(0.175, 0.885, 0.32, 1.2), opacity 0.25s ease;
 }
 
 /* 1. DOCKED TOP STATE (Master Hero Capsule when at the top of the page) */
@@ -524,6 +524,25 @@ body.dark .capsule-hud-backdrop {
   box-shadow: var(--glass-shadow);
   padding: 0.85rem 1.25rem;
   overflow: hidden;
+  animation: dynamicIslandMasterExpand 0.45s cubic-bezier(0.175, 0.885, 0.32, 1.15);
+}
+
+@keyframes dynamicIslandMasterExpand {
+  0% {
+    transform: scale(0.96, 0.6);
+    border-radius: 99px;
+    opacity: 0.5;
+  }
+  60% {
+    transform: scale(1.01, 1.02);
+    border-radius: 20px;
+    opacity: 1;
+  }
+  100% {
+    transform: scale(1, 1);
+    border-radius: var(--radius2);
+    opacity: 1;
+  }
 }
 
 .adaptive-control-capsule.is-docked .capsule-pill-bar {
@@ -536,6 +555,25 @@ body.dark .capsule-hud-backdrop {
   border: none;
   box-shadow: none;
   padding: 0;
+}
+
+.adaptive-control-capsule.is-docked .control-cluster {
+  animation: islandClusterFloat 0.38s cubic-bezier(0.16, 1, 0.3, 1) backwards;
+}
+.adaptive-control-capsule.is-docked .cluster-scope { animation-delay: 0.04s; }
+.adaptive-control-capsule.is-docked .cluster-dynamics { animation-delay: 0.08s; }
+.adaptive-control-capsule.is-docked .cluster-stock { animation-delay: 0.12s; }
+.adaptive-control-capsule.is-docked .cluster-datasource { animation-delay: 0.16s; }
+
+@keyframes islandClusterFloat {
+  0% {
+    opacity: 0;
+    transform: translateY(-8px) scale(0.98);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
 }
 
 .adaptive-control-capsule.is-docked .btn-close-hud {
@@ -569,13 +607,28 @@ body.dark .capsule-hud-backdrop {
   cursor: pointer;
   overflow: hidden;
   position: relative;
-  transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
-  animation: pillSlideIn 0.35s cubic-bezier(0.16, 1, 0.3, 1);
+  transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.2);
+  animation: dynamicIslandPillDrop 0.42s cubic-bezier(0.175, 0.885, 0.32, 1.25);
 }
 
-@keyframes pillSlideIn {
-  from { transform: translateY(-16px); opacity: 0; }
-  to { transform: translateY(0); opacity: 1; }
+@keyframes dynamicIslandPillDrop {
+  0% {
+    transform: translateY(-26px) scale(0.68, 0.45);
+    opacity: 0;
+    filter: blur(5px);
+  }
+  60% {
+    transform: translateY(3px) scale(1.03, 1.05);
+    opacity: 1;
+    filter: blur(0);
+  }
+  80% {
+    transform: translateY(-1px) scale(0.99, 0.99);
+  }
+  100% {
+    transform: translateY(0) scale(1, 1);
+    opacity: 1;
+  }
 }
 
 /* Specular fluid light rim */
@@ -621,14 +674,14 @@ body.dark .capsule-pill-bar::after {
 .capsule-pill-bar:hover {
   border-color: var(--teal);
   box-shadow: 0 16px 44px rgba(13, 148, 136, 0.32), 0 0 24px rgba(56, 189, 248, 0.24);
-  transform: scale(1.015);
+  transform: scale(1.02);
 }
 
 .adaptive-control-capsule.is-floating .capsule-body-card {
   display: none;
 }
 
-/* 3. IN-PLACE FLOATING HUD MODAL (High z-index: 2000+ above everything including top navbar) */
+/* 3. IN-PLACE FLOATING HUD MODAL (Fluid iPhone Dynamic Island Balloon Spring Expansion) */
 .adaptive-control-capsule.is-floating.is-hud-open .capsule-body-card {
   display: block;
   position: fixed;
@@ -645,19 +698,72 @@ body.dark .capsule-pill-bar::after {
   -webkit-backdrop-filter: blur(32px) saturate(200%);
   border: 1px solid var(--glass-border);
   border-radius: var(--radius2);
-  box-shadow: 0 30px 80px rgba(0, 0, 0, 0.45), 0 0 45px rgba(13, 148, 136, 0.3);
+  box-shadow: 0 32px 85px rgba(0, 0, 0, 0.5), 0 0 50px rgba(13, 148, 136, 0.35);
   padding: 1.25rem 1.6rem;
-  animation: hudPopIn 0.28s cubic-bezier(0.16, 1, 0.3, 1);
+  transform-origin: center top;
+  animation: dynamicIslandModalExpand 0.44s cubic-bezier(0.175, 0.885, 0.32, 1.25) forwards;
 }
 
 body.dark .adaptive-control-capsule.is-floating.is-hud-open .capsule-body-card {
   background: rgba(15, 23, 42, 0.96);
-  box-shadow: 0 30px 85px rgba(0, 0, 0, 0.75), 0 0 50px rgba(56, 189, 248, 0.22);
+  box-shadow: 0 32px 90px rgba(0, 0, 0, 0.75), 0 0 55px rgba(56, 189, 248, 0.25);
 }
 
-@keyframes hudPopIn {
-  from { transform: translate(-50%, -46%) scale(0.96); opacity: 0; }
-  to { transform: translate(-50%, -50%) scale(1); opacity: 1; }
+@keyframes dynamicIslandModalExpand {
+  0% {
+    transform: translate(-50%, -88%) scale(0.6, 0.12);
+    border-radius: 99px;
+    opacity: 0;
+    filter: blur(6px);
+  }
+  55% {
+    transform: translate(-50%, -49%) scale(1.025, 1.038);
+    border-radius: 26px;
+    opacity: 1;
+    filter: blur(0px);
+  }
+  78% {
+    transform: translate(-50%, -50.6%) scale(0.99, 0.99);
+    border-radius: var(--radius2);
+  }
+  100% {
+    transform: translate(-50%, -50%) scale(1, 1);
+    border-radius: var(--radius2);
+    opacity: 1;
+  }
+}
+
+/* Modal Elastic Snapback Collapse Animation */
+.adaptive-control-capsule.is-floating.is-hud-closing .capsule-body-card {
+  display: block;
+  position: fixed;
+  top: 52%;
+  left: 50%;
+  z-index: 2001;
+  max-width: 1040px;
+  width: calc(100% - 2rem);
+  transform-origin: center top;
+  animation: dynamicIslandModalCollapse 0.26s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+  pointer-events: none;
+}
+
+@keyframes dynamicIslandModalCollapse {
+  0% {
+    transform: translate(-50%, -50%) scale(1, 1);
+    border-radius: var(--radius2);
+    opacity: 1;
+  }
+  40% {
+    transform: translate(-50%, -65%) scale(0.88, 0.4);
+    border-radius: 40px;
+    opacity: 0.8;
+  }
+  100% {
+    transform: translate(-50%, -88%) scale(0.55, 0.1);
+    border-radius: 99px;
+    opacity: 0;
+    filter: blur(5px);
+  }
 }
 
 .adaptive-control-capsule.is-floating.is-hud-open .btn-close-hud {

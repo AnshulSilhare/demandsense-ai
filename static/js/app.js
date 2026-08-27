@@ -794,18 +794,23 @@ let _forecastRetryCount = 0;
 
     function openHud() {
       if (!capsule) return;
+      capsule.classList.remove('is-hud-closing');
       capsule.classList.add('is-hud-open');
       backdrop?.classList.add('is-active');
-      setTimeout(() => el('skuSelect')?.focus(), 120);
+      setTimeout(() => el('skuSelect')?.focus(), 140);
     }
 
     function closeHud() {
-      if (!capsule) return;
-      capsule.classList.remove('is-hud-open');
+      if (!capsule || !capsule.classList.contains('is-hud-open')) return;
+      capsule.classList.add('is-hud-closing');
       backdrop?.classList.remove('is-active');
+      setTimeout(() => {
+        capsule.classList.remove('is-hud-open');
+        capsule.classList.remove('is-hud-closing');
+      }, 250);
     }
 
-    // Toggle HUD in-place when floating pill is clicked (Zero scrolling needed!)
+    // Toggle HUD in-place with iPhone Dynamic Island spring expansion
     pillBar?.addEventListener('click', (e) => {
       if (capsule?.classList.contains('is-floating')) {
         openHud();
@@ -824,7 +829,7 @@ let _forecastRetryCount = 0;
 
     backdrop?.addEventListener('click', closeHud);
 
-    // Escape key closes floating HUD
+    // Escape key closes floating HUD with elastic snapback
     document.addEventListener('keydown', (e) => {
       if (e.key === 'Escape' && capsule?.classList.contains('is-hud-open')) {
         closeHud();
