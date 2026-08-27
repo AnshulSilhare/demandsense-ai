@@ -245,16 +245,6 @@ def _compute_kpi_bar(filtered_df, forecast_df, impact_data, sku_info):
                 "sparkline": spark_values
             },
             {
-                "label": "Safety Stock Compliance",
-                "value": round(compliance, 1),
-                "value_fmt": f"{compliance:.1f}%",
-                "unit": "%",
-                "delta_pct": round(compliance_delta, 1),
-                "favorable": bool(is_delta_favorable("compliance", compliance_delta)),
-                "chip": "SS", "chip_color": "teal",
-                "sparkline": spark_values
-            },
-            {
                 "label": "Revenue at Risk",
                 "value": rev_risk,
                 "value_fmt": f"₹{rev_risk / 100000:.1f}L" if rev_risk < 1e7 else f"₹{rev_risk / 1e7:.2f}Cr",
