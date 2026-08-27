@@ -733,13 +733,22 @@ let _forecastRetryCount = 0;
 
     function updateCapsuleScroll(y) {
       if (!capsule) return;
-      // Auto-collapse when scrolling down past 60px IF currently expanded
-      if (y > 60 && isUserExpanded) {
+      
+      const anchor = el('capsuleAnchor');
+      
+      // 1. Auto-collapse when scrolling down from top (to prevent large layout jumps)
+      if (y > 15 && y < 60 && isUserExpanded && !capsule.classList.contains('is-floating')) {
         applyCapsuleState(false);
       }
-      // Auto-expand when returned exactly to top
-      if (y <= 10 && !isUserExpanded) {
-        applyCapsuleState(true);
+      
+      // 2. Detach to floating pill mode when scrolled past threshold
+      const threshold = 45;
+      const past = y > threshold;
+      
+      if (past !== isScrolledPast) {
+        isScrolledPast = past;
+        capsule.classList.toggle('is-floating', isScrolledPast);
+        if (anchor) anchor.classList.toggle('is-active', isScrolledPast);
       }
     }
 

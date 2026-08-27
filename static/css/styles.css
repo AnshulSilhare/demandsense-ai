@@ -480,11 +480,20 @@ body.kpi-dock-right .top-left-brand-icon {
 }
 
 /* ═══ PURE APPLE DYNAMIC ISLAND MORPHING PHYSICS (NO GLOBAL BACKDROP) ═══ */
-/* ─── THE UNIFIED DYNAMIC ISLAND MASTER CONTAINER (Sticky Layout Morphing) ─── */
+/* ─── THE UNIFIED DYNAMIC ISLAND MASTER CONTAINER (Modal & Inline Modes) ─── */
+.capsule-anchor {
+  display: none;
+  width: 100%;
+}
+.capsule-anchor.is-active {
+  display: block;
+  height: 72px; /* 48px pill height + 1.5rem (24px) margin = exactly 72px reserved space */
+}
+
 .adaptive-control-capsule {
-  position: sticky;
-  top: 72px; /* Clears top navigation perfectly */
-  z-index: 100;
+  /* INITIAL STATE: Normal Document Flow */
+  position: relative;
+  z-index: 900;
   margin: 0 auto 1.5rem auto;
   background: var(--nav-bg);
   backdrop-filter: blur(28px) saturate(190%);
@@ -493,17 +502,45 @@ body.kpi-dock-right .top-left-brand-icon {
   box-shadow: 0 12px 32px rgba(15, 23, 42, 0.12), inset 0 1px 1.5px rgba(255, 255, 255, 0.65), var(--glow);
   overflow: hidden;
   
-  /* Smooth Layout Interpolation (Framer Motion Equivalent) */
+  /* Smooth Layout Interpolation (Framer Motion 'layout' Equivalent) */
   transition: 
-    max-width 0.4s cubic-bezier(0.34, 1.35, 0.64, 1),
-    height 0.4s cubic-bezier(0.34, 1.35, 0.64, 1),
+    max-width 0.45s cubic-bezier(0.34, 1.35, 0.64, 1),
+    height 0.45s cubic-bezier(0.34, 1.35, 0.64, 1),
     border-radius 0.4s cubic-bezier(0.34, 1.35, 0.64, 1),
     box-shadow 0.35s ease,
-    background-color 0.3s ease;
+    background-color 0.3s ease,
+    transform 0.4s cubic-bezier(0.34, 1.35, 0.64, 1);
+  transform-origin: top center;
+}
+
+/* SCROLLED STATE: Fixed Floating Pill / Modal */
+.adaptive-control-capsule.is-floating {
+  position: fixed;
+  top: 76px; /* Slightly below the navbar for floating aesthetic */
+  left: 50%;
+  transform: translateX(-50%);
+  margin: 0; /* Remove inline margin when floating */
+  z-index: 1000;
+}
+
+/* Ensure background is completely solid for the overlay effect so text doesn't bleed through */
+.adaptive-control-capsule.is-floating::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: rgba(255, 255, 255, 0.94);
+  backdrop-filter: blur(32px) saturate(200%);
+  -webkit-backdrop-filter: blur(32px) saturate(200%);
+  border-radius: inherit;
+  z-index: -1;
+  pointer-events: none;
+}
+body.dark .adaptive-control-capsule.is-floating::before {
+  background: rgba(15, 23, 42, 0.95);
 }
 
 /* Specular fluid light rim along top edge */
-.adaptive-control-capsule::before {
+.adaptive-control-capsule::after {
   content: '';
   position: absolute;
   top: 0;
@@ -515,51 +552,38 @@ body.kpi-dock-right .top-left-brand-icon {
   opacity: 0.85;
 }
 
-/* Apple Siri AI Iridescent Chromatic Ribbon Aura */
-.adaptive-control-capsule::after {
-  content: '';
-  position: absolute;
-  inset: -1px;
-  border-radius: inherit;
-  background: linear-gradient(90deg, #38bdf8, #818cf8, #c084fc, #34d399, #38bdf8);
-  background-size: 300% 100%;
-  -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
-  -webkit-mask-composite: xor;
-  mask-composite: exclude;
-  padding: 1px;
-  opacity: 0.45;
-  pointer-events: none;
-  animation: siriAuraFlow 6s linear infinite;
-}
-
 body.dark .adaptive-control-capsule {
   background: rgba(15, 23, 42, 0.92);
   border-color: rgba(255, 255, 255, 0.16);
   box-shadow: 0 12px 36px rgba(0, 0, 0, 0.4), inset 0 1px 1.5px rgba(255, 255, 255, 0.2), 0 0 20px rgba(56, 189, 248, 0.12);
 }
 
-body.dark .adaptive-control-capsule::after {
-  opacity: 0.65;
-}
-
-/* ═════ 1. EXPANDED STATE (Full Parameter Suite Card) ═════ */
+/* ═════ 1. EXPANDED STATE ═════ */
 .adaptive-control-capsule.is-expanded {
   max-width: 1160px;
   width: calc(100% - 2.5rem);
-  height: 440px; /* Specific height for perfect spring transition, adjusts based on content naturally if we let it, but fixed height makes pure CSS spring perfect */
+  height: 440px; 
   border-radius: 1.25rem;
   box-shadow: 0 20px 50px rgba(15, 23, 42, 0.18), 0 0 35px rgba(13, 148, 136, 0.2);
 }
 
+/* Modal-style overlay shadow when expanded AND floating */
+.adaptive-control-capsule.is-floating.is-expanded {
+  box-shadow: 0 40px 100px rgba(15, 23, 42, 0.35), 0 0 60px rgba(13, 148, 136, 0.2);
+}
+
 @media (max-width: 1024px) {
-  .adaptive-control-capsule.is-expanded { height: 600px; } /* taller on small screens where grid wraps */
+  .adaptive-control-capsule.is-expanded { height: 600px; }
 }
 
 body.dark .adaptive-control-capsule.is-expanded {
   box-shadow: 0 24px 60px rgba(0, 0, 0, 0.6), 0 0 40px rgba(56, 189, 248, 0.2);
 }
+body.dark .adaptive-control-capsule.is-floating.is-expanded {
+  box-shadow: 0 50px 120px rgba(0, 0, 0, 0.8), 0 0 60px rgba(56, 189, 248, 0.25);
+}
 
-/* ═════ 2. COLLAPSED STATE (Compact Floating Sticky Pill) ═════ */
+/* ═════ 2. COLLAPSED STATE (Compact Pill) ═════ */
 .adaptive-control-capsule.is-collapsed {
   max-width: 900px;
   width: calc(100% - 2.5rem);
