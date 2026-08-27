@@ -19,7 +19,7 @@
 <script src="https://cdn.jsdelivr.net/npm/echarts@5/dist/echarts.min.js"></script>
 
 <!-- App CSS -->
-<link rel="stylesheet" href="/static/css/styles.css?v=2.9.3">
+<link rel="stylesheet" href="/static/css/styles.css?v=2.9.4">
 
 <!-- FOUC prevention: apply saved theme before paint -->
 <script>
@@ -49,7 +49,7 @@ if(localStorage.getItem('ds-theme')==='dark'||(!localStorage.getItem('ds-theme')
         <rect x="32" y="24" width="11.31" height="11.31" rx="2.5" transform="rotate(45 32 24)" fill="var(--teal)"/>
       </svg>
       <span class="brand-title">DemandSense AI</span>
-      <span class="brand-version" id="appVersion">v1.0.18</span>
+      <span class="brand-version" id="appVersion">v1.0.19</span>
     </div>
 
     <!-- Center: Desktop Navigation Tabs Capsule (Hidden on Tablet & Mobile) -->
@@ -77,14 +77,11 @@ if(localStorage.getItem('ds-theme')==='dark'||(!localStorage.getItem('ds-theme')
   </div>
 </header>
 
-<!-- Backdrop for in-place Floating HUD Popover (Global Overlay) -->
-<div class="capsule-hud-backdrop" id="capsuleBackdrop"></div>
-
 <!-- ═══ Main App Container ═══ -->
 <div class="app-container">
 
   <!-- ═══ Adaptive Control Capsule (Unified Dynamic Island & Primary Parameter Hub) ═══ -->
-  <div class="adaptive-control-capsule is-docked" id="controlCapsule" role="region" aria-label="Executive Parameter Suite">
+  <div class="adaptive-control-capsule is-expanded" id="controlCapsule" role="region" aria-label="Executive Parameter Suite">
     
     <!-- 1. Master Capsule Top Bar (Always present: Beacon, SKU, Scope chips, and Action button) -->
     <div class="capsule-pill-bar" id="capsulePillBar" title="Click to edit executive parameters">
@@ -126,9 +123,9 @@ if(localStorage.getItem('ds-theme')==='dark'||(!localStorage.getItem('ds-theme')
             <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/></svg>
             <span>Reset Defaults</span>
           </button>
-          <button type="button" class="btn-close-hud" id="capsuleCloseBtn" title="Apply & Close HUD" aria-label="Close parameters HUD">
-            <span>Apply & Close</span>
-            <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M18 6L6 18M6 6l12 12"/></svg>
+          <button type="button" class="btn-collapse-capsule" id="capsuleCollapseBtn" title="Collapse into Floating Pill" aria-label="Collapse into Floating Pill">
+            <span>Done</span>
+            <svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="18 15 12 9 6 15"></polyline></svg>
           </button>
         </div>
       </div>
@@ -759,11 +756,11 @@ if(localStorage.getItem('ds-theme')==='dark'||(!localStorage.getItem('ds-theme')
 </nav>
 
 <!-- App Scripts (load order: theme → drawer → guide → chart builders → app controller) -->
-<script src="/static/js/chartTheme.js?v=2.9.3"></script>
-<script src="/static/js/detailDrawer.js?v=2.9.3"></script>
-<script src="/static/js/walkthroughGuide.js?v=2.9.3"></script>
-<script src="/static/js/charts.js?v=2.9.3"></script>
-<script src="/static/js/app.js?v=2.9.3"></script>
+<script src="/static/js/chartTheme.js?v=2.9.4"></script>
+<script src="/static/js/detailDrawer.js?v=2.9.4"></script>
+<script src="/static/js/walkthroughGuide.js?v=2.9.4"></script>
+<script src="/static/js/charts.js?v=2.9.4"></script>
+<script src="/static/js/app.js?v=2.9.4"></script>
 
 </div>
 </body>

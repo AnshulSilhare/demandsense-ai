@@ -479,37 +479,14 @@ body.kpi-dock-right .top-left-brand-icon {
   transition: transform .3s ease, border-color .3s ease;
 }
 
-/* ═══ UNIFIED DYNAMIC ISLAND SHARED CONTAINER MORPHING PHYSICS ═══════════ */
-.capsule-hud-backdrop {
-  position: fixed;
-  inset: 0;
-  background: rgba(15, 23, 42, 0.65);
-  backdrop-filter: blur(14px) saturate(160%);
-  -webkit-backdrop-filter: blur(14px) saturate(160%);
-  z-index: 990;
-  opacity: 0;
-  visibility: hidden;
-  pointer-events: none;
-  transition: opacity 0.32s cubic-bezier(0.16, 1, 0.3, 1), visibility 0.32s ease;
-}
-
-body.dark .capsule-hud-backdrop {
-  background: rgba(0, 0, 0, 0.78);
-}
-
-.capsule-hud-backdrop.is-active {
-  opacity: 1;
-  visibility: visible;
-  pointer-events: auto;
-}
-
+/* ═══ PURE APPLE DYNAMIC ISLAND MORPHING PHYSICS (NO GLOBAL BACKDROP) ═══ */
 /* Document flow placeholder to reserve vertical height at page top */
 .capsule-placeholder {
   width: 100%;
   height: 250px;
   margin-bottom: 1.25rem;
   pointer-events: none;
-  transition: height 0.38s cubic-bezier(0.175, 0.885, 0.32, 1.15), margin-bottom 0.38s ease;
+  transition: height 0.38s cubic-bezier(0.34, 1.35, 0.64, 1), margin-bottom 0.38s ease;
 }
 
 .capsule-placeholder.is-collapsed {
@@ -528,18 +505,18 @@ body.dark .capsule-hud-backdrop {
   backdrop-filter: blur(28px) saturate(190%);
   -webkit-backdrop-filter: blur(28px) saturate(190%);
   border: 1px solid var(--glass-border);
-  box-shadow: 0 16px 40px rgba(15, 23, 42, 0.18), inset 0 1px 1.5px rgba(255, 255, 255, 0.65), var(--glow);
+  box-shadow: 0 16px 40px rgba(15, 23, 42, 0.16), inset 0 1px 1.5px rgba(255, 255, 255, 0.65), var(--glow);
   overflow: hidden;
-  will-change: width, max-width, height, max-height, border-radius, box-shadow;
-  /* Pure Spring Physics Layout Interpolation */
+  will-change: width, max-width, height, max-height, border-radius, box-shadow, padding;
+  /* Pure Apple Spring Physics: stiffness: 380, damping: 30, mass: 0.8 */
   transition: 
-    width 0.38s cubic-bezier(0.175, 0.885, 0.32, 1.15),
-    max-width 0.38s cubic-bezier(0.175, 0.885, 0.32, 1.15),
-    max-height 0.38s cubic-bezier(0.175, 0.885, 0.32, 1.15),
-    border-radius 0.38s cubic-bezier(0.175, 0.885, 0.32, 1.15),
+    width 0.38s cubic-bezier(0.34, 1.35, 0.64, 1),
+    max-width 0.38s cubic-bezier(0.34, 1.35, 0.64, 1),
+    max-height 0.38s cubic-bezier(0.34, 1.35, 0.64, 1),
+    border-radius 0.38s cubic-bezier(0.34, 1.35, 0.64, 1),
+    padding 0.38s cubic-bezier(0.34, 1.35, 0.64, 1),
     box-shadow 0.35s ease,
-    background-color 0.3s ease,
-    top 0.35s cubic-bezier(0.175, 0.885, 0.32, 1.15);
+    background-color 0.3s ease;
 }
 
 /* Specular fluid light rim along top edge */
@@ -582,16 +559,21 @@ body.dark .adaptive-control-capsule::after {
   opacity: 0.65;
 }
 
-/* ═════ 1. EXPANDED START STATE (Page Top / Step 1) ═════ */
-.adaptive-control-capsule.is-docked {
+/* ═════ 1. EXPANDED STATE (Full Parameter Suite Card) ═════ */
+.adaptive-control-capsule.is-expanded {
   max-width: 1160px;
-  width: calc(100% - 3rem);
+  width: calc(100% - 2.5rem);
   max-height: 500px;
-  border-radius: var(--radius2);
+  border-radius: 1.25rem;
   padding: 0.85rem 1.25rem;
+  box-shadow: 0 20px 50px rgba(15, 23, 42, 0.22), 0 0 35px rgba(13, 148, 136, 0.25);
 }
 
-.adaptive-control-capsule.is-docked .capsule-pill-bar {
+body.dark .adaptive-control-capsule.is-expanded {
+  box-shadow: 0 24px 60px rgba(0, 0, 0, 0.7), 0 0 40px rgba(56, 189, 248, 0.2);
+}
+
+.adaptive-control-capsule.is-expanded .capsule-pill-bar {
   opacity: 0;
   pointer-events: none;
   height: 0;
@@ -601,24 +583,22 @@ body.dark .adaptive-control-capsule::after {
   transition: opacity 0.2s ease, transform 0.2s ease, height 0.3s ease;
 }
 
-.adaptive-control-capsule.is-docked .capsule-body-card {
+.adaptive-control-capsule.is-expanded .capsule-body-card {
   opacity: 1;
   pointer-events: auto;
+  height: auto;
+  overflow: visible;
   transform: translateY(0) scale(1);
   transition: opacity 0.32s ease 0.08s, transform 0.35s cubic-bezier(0.16, 1, 0.3, 1) 0.08s;
 }
 
-.adaptive-control-capsule.is-docked .btn-close-hud {
-  display: none;
+.adaptive-control-capsule.is-expanded .control-cluster {
+  animation: islandClusterCascade 0.38s cubic-bezier(0.16, 1, 0.3, 1) backwards;
 }
-
-.adaptive-control-capsule.is-docked .control-cluster {
-  animation: islandClusterCascade 0.4s cubic-bezier(0.16, 1, 0.3, 1) backwards;
-}
-.adaptive-control-capsule.is-docked .cluster-scope { animation-delay: 0.04s; }
-.adaptive-control-capsule.is-docked .cluster-dynamics { animation-delay: 0.08s; }
-.adaptive-control-capsule.is-docked .cluster-stock { animation-delay: 0.12s; }
-.adaptive-control-capsule.is-docked .cluster-datasource { animation-delay: 0.16s; }
+.adaptive-control-capsule.is-expanded .cluster-scope { animation-delay: 0.04s; }
+.adaptive-control-capsule.is-expanded .cluster-dynamics { animation-delay: 0.08s; }
+.adaptive-control-capsule.is-expanded .cluster-stock { animation-delay: 0.12s; }
+.adaptive-control-capsule.is-expanded .cluster-datasource { animation-delay: 0.16s; }
 
 @keyframes islandClusterCascade {
   0% {
@@ -631,16 +611,21 @@ body.dark .adaptive-control-capsule::after {
   }
 }
 
-/* ═════ 2. COLLAPSED DYNAMIC ISLAND PILL (While Scrolling) ═════ */
-.adaptive-control-capsule.is-floating {
-  max-width: 920px;
+/* ═════ 2. COLLAPSED STATE (Compact Floating Sticky Pill) ═════ */
+.adaptive-control-capsule.is-collapsed {
+  max-width: 900px;
   width: calc(100% - 2.5rem);
   max-height: 44px;
-  border-radius: 99px;
+  border-radius: 9999px;
   padding: 0 0.65rem 0 1rem;
+  box-shadow: 0 12px 32px rgba(15, 23, 42, 0.14), inset 0 1px 1.5px rgba(255, 255, 255, 0.6), var(--glow);
 }
 
-.adaptive-control-capsule.is-floating .capsule-pill-bar {
+body.dark .adaptive-control-capsule.is-collapsed {
+  box-shadow: 0 12px 36px rgba(0, 0, 0, 0.5), inset 0 1px 1.5px rgba(255, 255, 255, 0.2), 0 0 20px rgba(56, 189, 248, 0.12);
+}
+
+.adaptive-control-capsule.is-collapsed .capsule-pill-bar {
   opacity: 1;
   pointer-events: auto;
   display: flex;
@@ -651,7 +636,7 @@ body.dark .adaptive-control-capsule::after {
   transition: opacity 0.28s ease 0.1s, transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.2) 0.1s;
 }
 
-.adaptive-control-capsule.is-floating .capsule-body-card {
+.adaptive-control-capsule.is-collapsed .capsule-body-card {
   opacity: 0;
   pointer-events: none;
   height: 0;
@@ -660,50 +645,13 @@ body.dark .adaptive-control-capsule::after {
   transition: opacity 0.2s ease, transform 0.2s ease, height 0.3s ease;
 }
 
-.adaptive-control-capsule.is-floating:hover {
+.adaptive-control-capsule.is-collapsed:hover {
   border-color: var(--teal);
-  box-shadow: 0 18px 46px rgba(13, 148, 136, 0.32), 0 0 24px rgba(56, 189, 248, 0.25);
+  box-shadow: 0 16px 42px rgba(13, 148, 136, 0.28), 0 0 22px rgba(56, 189, 248, 0.22);
   transform: translate3d(-50%, 0, 0) scale(1.015);
 }
 
-/* ═════ 3. IN-PLACE FLOATING HUD MODAL (When Expanded on Scroll) ═════ */
-.adaptive-control-capsule.is-floating.is-hud-open {
-  max-width: 1040px;
-  width: calc(100% - 2rem);
-  max-height: 84vh;
-  border-radius: var(--radius2);
-  padding: 1.15rem 1.45rem;
-  overflow-y: auto;
-  box-shadow: 0 32px 90px rgba(0, 0, 0, 0.55), 0 0 55px rgba(13, 148, 136, 0.4);
-}
-
-body.dark .adaptive-control-capsule.is-floating.is-hud-open {
-  background: rgba(15, 23, 42, 0.97);
-  box-shadow: 0 32px 95px rgba(0, 0, 0, 0.8), 0 0 60px rgba(56, 189, 248, 0.28);
-}
-
-.adaptive-control-capsule.is-floating.is-hud-open .capsule-pill-bar {
-  opacity: 0;
-  pointer-events: none;
-  height: 0;
-  overflow: hidden;
-  display: none;
-}
-
-.adaptive-control-capsule.is-floating.is-hud-open .capsule-body-card {
-  opacity: 1;
-  pointer-events: auto;
-  height: auto;
-  overflow: visible;
-  transform: translateY(0) scale(1);
-  transition: opacity 0.3s ease 0.08s, transform 0.35s cubic-bezier(0.16, 1, 0.3, 1) 0.08s;
-}
-
-.adaptive-control-capsule.is-floating.is-hud-open .btn-close-hud {
-  display: inline-flex;
-}
-
-/* Header & Sub-elements */
+/* Header & Action Buttons */
 .capsule-header {
   display: flex;
   justify-content: space-between;
@@ -727,24 +675,24 @@ body.dark .adaptive-control-capsule.is-floating.is-hud-open {
   gap: 0.5rem;
 }
 
-.btn-close-hud {
+.btn-collapse-capsule {
   display: inline-flex;
   align-items: center;
   gap: 0.35rem;
-  padding: 0.35rem 0.95rem;
-  border-radius: 99px;
+  padding: 0.32rem 0.85rem;
+  border-radius: 9999px;
   background: linear-gradient(135deg, var(--teal), var(--accent-title));
   border: none;
   color: #ffffff;
   font-family: var(--body);
-  font-size: 0.76rem;
+  font-size: 0.75rem;
   font-weight: 700;
   cursor: pointer;
   box-shadow: 0 4px 14px rgba(13, 148, 136, 0.35);
   transition: all 0.2s ease;
 }
 
-.btn-close-hud:hover {
+.btn-collapse-capsule:hover {
   transform: translateY(-1px) scale(1.03);
   box-shadow: 0 6px 18px rgba(13, 148, 136, 0.45);
 }
@@ -829,7 +777,7 @@ body.dark .pill-sku-title {
   align-items: center;
   gap: 0.35rem;
   padding: 0.25rem 0.75rem;
-  border-radius: 99px;
+  border-radius: 9999px;
   background: rgba(13, 148, 136, 0.12);
   border: 1px solid rgba(13, 148, 136, 0.3);
   color: var(--teal);

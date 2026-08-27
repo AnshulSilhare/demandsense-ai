@@ -710,22 +710,31 @@ let _forecastRetryCount = 0;
     }
 
     const capsule = el('controlCapsule');
-    const backdrop = el('capsuleBackdrop');
     const placeholder = el('capsulePlaceholder');
-    let isFloatingMode = false;
+    let isUserExpanded = true;
+    let isScrolledPast = false;
+
+    function applyCapsuleState(expanded) {
+      if (!capsule) return;
+      isUserExpanded = expanded;
+      capsule.classList.toggle('is-expanded', expanded);
+      capsule.classList.toggle('is-collapsed', !expanded);
+      // Placeholder reserves layout height only when expanded at page top
+      const atTop = window.scrollY <= 45;
+      placeholder?.classList.toggle('is-collapsed', !expanded || !atTop);
+    }
 
     function updateCapsuleScroll(y) {
       if (!capsule) return;
-      const shouldFloat = y > 45;
-      if (shouldFloat !== isFloatingMode) {
-        isFloatingMode = shouldFloat;
-        capsule.classList.toggle('is-floating', shouldFloat);
-        capsule.classList.toggle('is-docked', !shouldFloat);
-        placeholder?.classList.toggle('is-collapsed', shouldFloat);
-
-        if (!shouldFloat) {
-          capsule.classList.remove('is-hud-open');
-          backdrop?.classList.remove('is-active');
+      const past = y > 45;
+      if (past !== isScrolledPast) {
+        isScrolledPast = past;
+        if (past) {
+          // Auto-collapse when scrolling down
+          applyCapsuleState(false);
+        } else {
+          // Auto-expand when returning to top
+          applyCapsuleState(true);
         }
       }
     }
@@ -761,11 +770,11 @@ let _forecastRetryCount = 0;
 
     initCanvas();
     measureMetrics();
-    updateCapsuleScroll(window.scrollY);
+    applyCapsuleState(window.scrollY <= 45);
     renderKpiConveyor(window.scrollY);
   }
 
-  // ═══ FILTERS & ADAPTIVE CONTROL CAPSULE (Dynamic Island & In-Place HUD) ═══
+  // ═══ FILTERS & DYNAMIC ISLAND MORPHING CONTROLLER ═══
   function updateCollapsedSummary() {
     const skuObj = state.config?.products?.find(p => p.sku_id === state.sku);
     const skuFullLabel = skuObj ? `${skuObj.sku_id} — ${skuObj.name}` : state.sku;
@@ -791,46 +800,43 @@ let _forecastRetryCount = 0;
   function setupCollapsibleFilterPanel() {
     const capsule = el('controlCapsule');
     const pillBar = el('capsulePillBar');
-    const backdrop = el('capsuleBackdrop');
-    const closeBtn = el('capsuleCloseBtn');
+    const collapseBtn = el('capsuleCollapseBtn');
     const editBtn = el('pillEditBtn');
 
-    function openHud() {
+    function expandCapsule() {
       if (!capsule) return;
-      capsule.classList.add('is-hud-open');
-      backdrop?.classList.add('is-active');
+      capsule.classList.remove('is-collapsed');
+      capsule.classList.add('is-expanded');
       setTimeout(() => el('skuSelect')?.focus(), 140);
     }
 
-    function closeHud() {
-      if (!capsule || !capsule.classList.contains('is-hud-open')) return;
-      capsule.classList.remove('is-hud-open');
-      backdrop?.classList.remove('is-active');
+    function collapseCapsule() {
+      if (!capsule) return;
+      capsule.classList.remove('is-expanded');
+      capsule.classList.add('is-collapsed');
     }
 
-    // Toggle HUD in-place with pure shared container spring morphing
-    pillBar?.addEventListener('click', (e) => {
-      if (capsule?.classList.contains('is-floating')) {
-        openHud();
+    // Toggle Dynamic Island in-place with zero modal backdrops
+    pillBar?.addEventListener('click', () => {
+      if (capsule?.classList.contains('is-collapsed')) {
+        expandCapsule();
       }
     });
 
     editBtn?.addEventListener('click', (e) => {
       e.stopPropagation();
-      openHud();
+      expandCapsule();
     });
 
-    closeBtn?.addEventListener('click', (e) => {
+    collapseBtn?.addEventListener('click', (e) => {
       e.stopPropagation();
-      closeHud();
+      collapseCapsule();
     });
 
-    backdrop?.addEventListener('click', closeHud);
-
-    // Escape key closes floating HUD with morph back to pill
+    // Escape key collapses island back to pill
     document.addEventListener('keydown', (e) => {
-      if (e.key === 'Escape' && capsule?.classList.contains('is-hud-open')) {
-        closeHud();
+      if (e.key === 'Escape' && capsule?.classList.contains('is-expanded') && window.scrollY > 45) {
+        collapseCapsule();
       }
     });
   }
