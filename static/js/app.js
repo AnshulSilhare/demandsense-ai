@@ -710,32 +710,36 @@ let _forecastRetryCount = 0;
     }
 
     const capsule = el('controlCapsule');
-    const placeholder = el('capsulePlaceholder');
     let isUserExpanded = true;
     let isScrolledPast = false;
 
+    // Dynamically calculate and set height so CSS transition is perfectly smooth
+    // between collapsed (48px) and expanded (actual content height)
     function applyCapsuleState(expanded) {
       if (!capsule) return;
       isUserExpanded = expanded;
-      capsule.classList.toggle('is-expanded', expanded);
-      capsule.classList.toggle('is-collapsed', !expanded);
-      // Placeholder reserves layout height only when expanded at page top
-      const atTop = window.scrollY <= 45;
-      placeholder?.classList.toggle('is-collapsed', !expanded || !atTop);
+      
+      if (expanded) {
+        capsule.classList.remove('is-collapsed');
+        capsule.classList.add('is-expanded');
+        // Let CSS media queries or default height rule take over
+        capsule.style.height = ''; 
+      } else {
+        capsule.classList.remove('is-expanded');
+        capsule.classList.add('is-collapsed');
+        capsule.style.height = '48px';
+      }
     }
 
     function updateCapsuleScroll(y) {
       if (!capsule) return;
-      const past = y > 45;
-      if (past !== isScrolledPast) {
-        isScrolledPast = past;
-        if (past) {
-          // Auto-collapse when scrolling down
-          applyCapsuleState(false);
-        } else {
-          // Auto-expand when returning to top
-          applyCapsuleState(true);
-        }
+      // Auto-collapse when scrolling down past 60px IF currently expanded
+      if (y > 60 && isUserExpanded) {
+        applyCapsuleState(false);
+      }
+      // Auto-expand when returned exactly to top
+      if (y <= 10 && !isUserExpanded) {
+        applyCapsuleState(true);
       }
     }
 
@@ -770,7 +774,7 @@ let _forecastRetryCount = 0;
 
     initCanvas();
     measureMetrics();
-    applyCapsuleState(window.scrollY <= 45);
+    applyCapsuleState(window.scrollY <= 10);
     renderKpiConveyor(window.scrollY);
   }
 
@@ -807,6 +811,8 @@ let _forecastRetryCount = 0;
       if (!capsule) return;
       capsule.classList.remove('is-collapsed');
       capsule.classList.add('is-expanded');
+      capsule.style.height = ''; 
+      isUserExpanded = true;
       setTimeout(() => el('skuSelect')?.focus(), 140);
     }
 
@@ -814,11 +820,14 @@ let _forecastRetryCount = 0;
       if (!capsule) return;
       capsule.classList.remove('is-expanded');
       capsule.classList.add('is-collapsed');
+      capsule.style.height = '48px';
+      isUserExpanded = false;
     }
 
-    // Toggle Dynamic Island in-place with zero modal backdrops
-    pillBar?.addEventListener('click', () => {
-      if (capsule?.classList.contains('is-collapsed')) {
+    // Toggle Dynamic Island in-place
+    capsule?.addEventListener('click', (e) => {
+      // If user clicks anywhere on the collapsed pill, expand it
+      if (capsule.classList.contains('is-collapsed')) {
         expandCapsule();
       }
     });
@@ -835,7 +844,7 @@ let _forecastRetryCount = 0;
 
     // Escape key collapses island back to pill
     document.addEventListener('keydown', (e) => {
-      if (e.key === 'Escape' && capsule?.classList.contains('is-expanded') && window.scrollY > 45) {
+      if (e.key === 'Escape' && capsule?.classList.contains('is-expanded')) {
         collapseCapsule();
       }
     });

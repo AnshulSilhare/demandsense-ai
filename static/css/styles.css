@@ -480,41 +480,24 @@ body.kpi-dock-right .top-left-brand-icon {
 }
 
 /* ═══ PURE APPLE DYNAMIC ISLAND MORPHING PHYSICS (NO GLOBAL BACKDROP) ═══ */
-/* Document flow placeholder to reserve vertical height at page top */
-.capsule-placeholder {
-  width: 100%;
-  height: 250px;
-  margin-bottom: 1.25rem;
-  pointer-events: none;
-  transition: height 0.38s cubic-bezier(0.34, 1.35, 0.64, 1), margin-bottom 0.38s ease;
-}
-
-.capsule-placeholder.is-collapsed {
-  height: 0px;
-  margin-bottom: 0px;
-}
-
-/* ─── THE UNIFIED DYNAMIC ISLAND MASTER CONTAINER (Always Fixed & Centered) ─── */
+/* ─── THE UNIFIED DYNAMIC ISLAND MASTER CONTAINER (Sticky Layout Morphing) ─── */
 .adaptive-control-capsule {
-  position: fixed;
-  top: 72px;
-  left: 50%;
-  transform: translate3d(-50%, 0, 0);
-  z-index: 1000;
+  position: sticky;
+  top: 72px; /* Clears top navigation perfectly */
+  z-index: 100;
+  margin: 0 auto 1.5rem auto;
   background: var(--nav-bg);
   backdrop-filter: blur(28px) saturate(190%);
   -webkit-backdrop-filter: blur(28px) saturate(190%);
   border: 1px solid var(--glass-border);
-  box-shadow: 0 16px 40px rgba(15, 23, 42, 0.16), inset 0 1px 1.5px rgba(255, 255, 255, 0.65), var(--glow);
+  box-shadow: 0 12px 32px rgba(15, 23, 42, 0.12), inset 0 1px 1.5px rgba(255, 255, 255, 0.65), var(--glow);
   overflow: hidden;
-  will-change: width, max-width, height, max-height, border-radius, box-shadow, padding;
-  /* Pure Apple Spring Physics: stiffness: 380, damping: 30, mass: 0.8 */
+  
+  /* Smooth Layout Interpolation (Framer Motion Equivalent) */
   transition: 
-    width 0.38s cubic-bezier(0.34, 1.35, 0.64, 1),
-    max-width 0.38s cubic-bezier(0.34, 1.35, 0.64, 1),
-    max-height 0.38s cubic-bezier(0.34, 1.35, 0.64, 1),
-    border-radius 0.38s cubic-bezier(0.34, 1.35, 0.64, 1),
-    padding 0.38s cubic-bezier(0.34, 1.35, 0.64, 1),
+    max-width 0.4s cubic-bezier(0.34, 1.35, 0.64, 1),
+    height 0.4s cubic-bezier(0.34, 1.35, 0.64, 1),
+    border-radius 0.4s cubic-bezier(0.34, 1.35, 0.64, 1),
     box-shadow 0.35s ease,
     background-color 0.3s ease;
 }
@@ -552,7 +535,7 @@ body.kpi-dock-right .top-left-brand-icon {
 body.dark .adaptive-control-capsule {
   background: rgba(15, 23, 42, 0.92);
   border-color: rgba(255, 255, 255, 0.16);
-  box-shadow: 0 16px 45px rgba(0, 0, 0, 0.6), inset 0 1px 1.5px rgba(255, 255, 255, 0.2), 0 0 28px rgba(56, 189, 248, 0.15);
+  box-shadow: 0 12px 36px rgba(0, 0, 0, 0.4), inset 0 1px 1.5px rgba(255, 255, 255, 0.2), 0 0 20px rgba(56, 189, 248, 0.12);
 }
 
 body.dark .adaptive-control-capsule::after {
@@ -563,92 +546,78 @@ body.dark .adaptive-control-capsule::after {
 .adaptive-control-capsule.is-expanded {
   max-width: 1160px;
   width: calc(100% - 2.5rem);
-  max-height: 500px;
+  height: 440px; /* Specific height for perfect spring transition, adjusts based on content naturally if we let it, but fixed height makes pure CSS spring perfect */
   border-radius: 1.25rem;
-  padding: 0.85rem 1.25rem;
-  box-shadow: 0 20px 50px rgba(15, 23, 42, 0.22), 0 0 35px rgba(13, 148, 136, 0.25);
+  box-shadow: 0 20px 50px rgba(15, 23, 42, 0.18), 0 0 35px rgba(13, 148, 136, 0.2);
+}
+
+@media (max-width: 1024px) {
+  .adaptive-control-capsule.is-expanded { height: 600px; } /* taller on small screens where grid wraps */
 }
 
 body.dark .adaptive-control-capsule.is-expanded {
-  box-shadow: 0 24px 60px rgba(0, 0, 0, 0.7), 0 0 40px rgba(56, 189, 248, 0.2);
-}
-
-.adaptive-control-capsule.is-expanded .capsule-pill-bar {
-  opacity: 0;
-  pointer-events: none;
-  height: 0;
-  padding: 0;
-  overflow: hidden;
-  transform: translateY(-8px) scale(0.95);
-  transition: opacity 0.2s ease, transform 0.2s ease, height 0.3s ease;
-}
-
-.adaptive-control-capsule.is-expanded .capsule-body-card {
-  opacity: 1;
-  pointer-events: auto;
-  height: auto;
-  overflow: visible;
-  transform: translateY(0) scale(1);
-  transition: opacity 0.32s ease 0.08s, transform 0.35s cubic-bezier(0.16, 1, 0.3, 1) 0.08s;
-}
-
-.adaptive-control-capsule.is-expanded .control-cluster {
-  animation: islandClusterCascade 0.38s cubic-bezier(0.16, 1, 0.3, 1) backwards;
-}
-.adaptive-control-capsule.is-expanded .cluster-scope { animation-delay: 0.04s; }
-.adaptive-control-capsule.is-expanded .cluster-dynamics { animation-delay: 0.08s; }
-.adaptive-control-capsule.is-expanded .cluster-stock { animation-delay: 0.12s; }
-.adaptive-control-capsule.is-expanded .cluster-datasource { animation-delay: 0.16s; }
-
-@keyframes islandClusterCascade {
-  0% {
-    opacity: 0;
-    transform: translateY(-8px) scale(0.98);
-  }
-  100% {
-    opacity: 1;
-    transform: translateY(0) scale(1);
-  }
+  box-shadow: 0 24px 60px rgba(0, 0, 0, 0.6), 0 0 40px rgba(56, 189, 248, 0.2);
 }
 
 /* ═════ 2. COLLAPSED STATE (Compact Floating Sticky Pill) ═════ */
 .adaptive-control-capsule.is-collapsed {
   max-width: 900px;
   width: calc(100% - 2.5rem);
-  max-height: 44px;
+  height: 48px;
   border-radius: 9999px;
-  padding: 0 0.65rem 0 1rem;
-  box-shadow: 0 12px 32px rgba(15, 23, 42, 0.14), inset 0 1px 1.5px rgba(255, 255, 255, 0.6), var(--glow);
-}
-
-body.dark .adaptive-control-capsule.is-collapsed {
-  box-shadow: 0 12px 36px rgba(0, 0, 0, 0.5), inset 0 1px 1.5px rgba(255, 255, 255, 0.2), 0 0 20px rgba(56, 189, 248, 0.12);
-}
-
-.adaptive-control-capsule.is-collapsed .capsule-pill-bar {
-  opacity: 1;
-  pointer-events: auto;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  height: 42px;
-  transform: translateY(0) scale(1);
-  transition: opacity 0.28s ease 0.1s, transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.2) 0.1s;
-}
-
-.adaptive-control-capsule.is-collapsed .capsule-body-card {
-  opacity: 0;
-  pointer-events: none;
-  height: 0;
-  overflow: hidden;
-  transform: translateY(8px) scale(0.96);
-  transition: opacity 0.2s ease, transform 0.2s ease, height 0.3s ease;
+  cursor: pointer;
 }
 
 .adaptive-control-capsule.is-collapsed:hover {
   border-color: var(--teal);
   box-shadow: 0 16px 42px rgba(13, 148, 136, 0.28), 0 0 22px rgba(56, 189, 248, 0.22);
-  transform: translate3d(-50%, 0, 0) scale(1.015);
+}
+
+/* ═════ CONTENT CROSS-FADE LOGIC (AnimatePresence mode="wait" equivalent) ═════ */
+/* 1. Pill Bar (Shows only in collapsed state) */
+.capsule-pill-bar {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 48px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 0.65rem 0 1rem;
+  opacity: 0;
+  visibility: hidden;
+  pointer-events: none;
+  transition: opacity 0.15s ease, visibility 0s 0.15s;
+}
+
+.adaptive-control-capsule.is-collapsed .capsule-pill-bar {
+  opacity: 1;
+  visibility: visible;
+  pointer-events: auto;
+  transition: opacity 0.25s ease 0.2s, visibility 0s; /* Delays fade-in until suite shrinks */
+}
+
+/* 2. Suite Card (Shows only in expanded state) */
+.capsule-body-card {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  padding: 0.85rem 1.25rem;
+  opacity: 0;
+  visibility: hidden;
+  pointer-events: none;
+  transform: translateY(12px);
+  transition: opacity 0.15s ease, transform 0.15s ease, visibility 0s 0.15s;
+}
+
+.adaptive-control-capsule.is-expanded .capsule-body-card {
+  opacity: 1;
+  visibility: visible;
+  pointer-events: auto;
+  transform: translateY(0);
+  transition: opacity 0.3s ease 0.15s, transform 0.35s cubic-bezier(0.34, 1.35, 0.64, 1) 0.15s, visibility 0s;
 }
 
 /* Header & Action Buttons */
