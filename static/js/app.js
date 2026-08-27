@@ -51,6 +51,7 @@
           }
           throw new Error(`API ${path}: ${res.status}`);
         } catch (err) {
+          if (err.name === 'AbortError') throw err;
           if (attempt < retries) {
             await new Promise(r => setTimeout(r, delay));
             delay *= 1.5;
@@ -77,6 +78,7 @@
           }
           throw new Error(`API ${path}: ${res.status}`);
         } catch (err) {
+          if (err.name === 'AbortError') throw err;
           if (attempt < retries) {
             await new Promise(r => setTimeout(r, delay));
             delay *= 1.5;
