@@ -202,6 +202,7 @@ def _compute_kpi_bar(filtered_df, forecast_df, impact_data, sku_info):
     avg_prev = float(filtered_df.tail(60).head(30)["units_sold"].mean())
     prev_dos = float(stock / max(1.0, avg_prev))
     prev_compliance = compliance
+    dos_delta = float(((dos - prev_dos) / max(1.0, prev_dos)) * 100.0) if prev_dos > 0 else 0.0
     compliance_delta = 0.0
 
     # KPI 4: Revenue at Risk
