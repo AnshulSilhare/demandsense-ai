@@ -516,11 +516,12 @@ let _forecastRetryCount = 0;
         }
       });
 
-      const cardH = 112; // Compact calibrated actual card height
+      const maxCardH = Math.max(...cards.map(c => c ? c.offsetHeight : 112));
+      const cardH = maxCardH; // Dynamic based on actual content
       const cardW = colWidth;
       const gap = 19.2;
       const startY = 88; // Top rail baseline below nav
-      const slotSpacing = 126; // Tight, crisp 14px visual gap between cards (126 - 112 = 14px)
+      const slotSpacing = cardH + 14; // Tight, crisp 14px visual gap between cards
 
       // Bounding span of all 4 cards in the resting horizontal row
       const spanLeft = wrapperLeft;
