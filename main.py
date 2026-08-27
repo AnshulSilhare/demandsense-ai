@@ -193,14 +193,16 @@ def _compute_kpi_bar(filtered_df, forecast_df, impact_data, sku_info):
     proj_revenue = float(forecast_units * unit_price)
     rev_delta = float(demand_delta)  # Same ratio (flat price assumption)
 
-    # KPI 3: Safety Stock Compliance %
+    # KPI 3: True Safety Stock Compliance %
     dos = float(impact_data.get("days_of_supply", 0.0))
-    compliance = float(min(1.0, dos / 30.0) * 100.0)
     stock = float(impact_data.get("current_stock_units", 0.0))
+    req_ss = float(impact_data.get("safety_stock_units", 1.0))
+    compliance = float(min(100.0, max(0.0, (stock / req_ss) * 100))) if req_ss > 0 else 100.0
+    
     avg_prev = float(filtered_df.tail(60).head(30)["units_sold"].mean())
     prev_dos = float(stock / max(1.0, avg_prev))
-    prev_compliance = float(min(1.0, prev_dos / 30.0) * 100.0)
-    compliance_delta = float(compliance - prev_compliance)
+    prev_compliance = compliance
+    compliance_delta = 0.0
 
     # KPI 4: Revenue at Risk
     rev_risk = float(impact_data.get("revenue_at_risk_inr", 0.0))
@@ -220,6 +222,16 @@ def _compute_kpi_bar(filtered_df, forecast_df, impact_data, sku_info):
                 "delta_pct": round(demand_delta, 1),
                 "favorable": bool(is_delta_favorable("demand", demand_delta)),
                 "chip": "D", "chip_color": "indigo",
+                "sparkline": spark_values
+            },
+            {
+                "label": "Days of Supply",
+                "value": dos,
+                "value_fmt": f"{dos:.1f}",
+                "unit": "days",
+                "delta_pct": round(compliance_delta, 1),
+                "favorable": bool(dos >= 30),
+                "chip": "DoS", "chip_color": "teal",
                 "sparkline": spark_values
             },
             {
