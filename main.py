@@ -587,72 +587,65 @@ async def get_forecast(
     service_level: str = Query(default="A"),
     stock: int = Query(default=25000)
 ):
-    """Main endpoint: returns forecast, impact, LLM report, and KPI bar data.
-    Base ML forecast is served from RAM (<0.1ms). Impact/KPI are recomputed per-parameter."""
-    response.headers["Cache-Control"] = "no-store, no-cache, must-revalidate, max-age=0"
-    norm_sku = sku.replace("-", "").upper() if sku else "SKU001"
-    sid = request.cookies.get("ds_session_id")
-    abc_class = _parse_service_level(service_level)
-
-    # 1. Check full result cache (same SKU + same params = exact hit)
-    include_llm_flag = request.query_params.get("include_llm", "false").lower() == "true"
-    ck = _cache_key(sid, norm_sku, region, lead_time, abc_class, stock, include_llm_flag)
-    cached = _get_cached_forecast(ck)
-    if cached:
-        return cached
-
-    # 2. Get base ML forecast from RAM (instant for all 20 default SKUs)
     try:
+        response.headers["Cache-Control"] = "no-store, no-cache, must-revalidate, max-age=0"
+        norm_sku = sku.replace("-", "").upper() if sku else "SKU001"
+        sid = request.cookies.get("ds_session_id")
+        abc_class = _parse_service_level(service_level)
+
+        include_llm_flag = request.query_params.get("include_llm", "false").lower() == "true"
+        ck = _cache_key(sid, norm_sku, region, lead_time, abc_class, stock, include_llm_flag)
+        cached = _get_cached_forecast(ck)
+        if cached:
+            return cached
+
         base = await asyncio.to_thread(_get_or_compute_base_forecast, request, norm_sku, region, sid)
-    except HTTPException:
-        raise
+
+        calc = OperationsImpactCalculator(lead_time_days=lead_time)
+        p_info = base["sku_info"]
+        impact_raw = calc.calculate_sku_impact(
+            product_info=p_info,
+            historical_df=base["filtered"],
+            forecast_df=base["forecast_df"],
+            current_stock=stock,
+            abc_class=abc_class
+        )
+        impact_data = _serialize_impact(impact_raw)
+
+        agent = LLMPrescriptiveAgent()
+        llm_report = {}
+        
+        if include_llm_flag:
+            try:
+                llm_report = agent.generate_prescriptive_report(
+                    impact_data, base["forecast_res"]["winning_model_name"],
+                    float(base["forecast_res"]["winning_metrics"]["mape"])
+                )
+            except Exception as e:
+                logger.warning(f"LLM Prescriptive Agent fallback: {e}")
+                llm_report = agent._generate_rule_based_report(
+                    impact_data, base["forecast_res"]["winning_model_name"],
+                    float(base["forecast_res"]["winning_metrics"]["mape"])
+                )
+
+        kpi_bar = _compute_kpi_bar(base["filtered"], base["forecast_df"], impact_data, p_info)
+
+        result = {
+            "forecast_res": base["forecast_res"],
+            "impact_data": impact_data,
+            "llm_report": llm_report,
+            "kpi_bar": kpi_bar,
+            "chart_history": base["chart_history"],
+            "sku_info": p_info,
+            "data_summary": base["data_summary"]
+        }
+
+        _set_cached_forecast(ck, result)
+        return result
     except Exception as e:
-        logger.error(f"Base forecast failed for {norm_sku}/{region}: {e}")
-        raise HTTPException(status_code=500, detail=f"Forecast computation failed: {e}")
-
-    # 3. Recompute Operations Impact with user's ACTUAL lead_time, stock, service_level
-    calc = OperationsImpactCalculator(lead_time_days=lead_time)
-    p_info = base["sku_info"]
-    impact_data = calc.calculate_sku_impact(
-        product_info=p_info,
-        historical_df=base["filtered"],
-        forecast_df=base["forecast_df"],
-        current_stock=stock,
-        abc_class=abc_class
-    )
-
-    agent = LLMPrescriptiveAgent()
-    include_llm_flag = request.query_params.get("include_llm", "false").lower() == "true"
-    llm_report = {}
-    
-    if include_llm_flag:
-        try:
-            llm_report = agent.generate_prescriptive_report(
-                impact_data, base["forecast_res"]["winning_model_name"],
-                float(base["forecast_res"]["winning_metrics"]["mape"])
-            )
-        except Exception as e:
-            logger.warning(f"LLM Prescriptive Agent fallback: {e}")
-            llm_report = agent._generate_rule_based_report(
-                impact_data, base["forecast_res"]["winning_model_name"],
-                float(base["forecast_res"]["winning_metrics"]["mape"])
-            )
-
-    kpi_bar = _compute_kpi_bar(base["filtered"], base["forecast_df"], impact_data, p_info)
-
-    result = {
-        "forecast_res": base["forecast_res"],
-        "impact_data": _serialize_impact(impact_data),
-        "llm_report": llm_report,
-        "kpi_bar": kpi_bar,
-        "chart_history": base["chart_history"],
-        "sku_info": p_info,
-        "data_summary": base["data_summary"]
-    }
-
-    _set_cached_forecast(ck, result)
-    return result
-
+        import traceback
+        tb = traceback.format_exc()
+        raise HTTPException(status_code=500, detail=f"DEBUG TRACEBACK: {tb}")
 
 @app.get("/api/decomposition")
 def get_decomposition(
