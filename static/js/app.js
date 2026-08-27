@@ -235,6 +235,7 @@
   }
 
   let activeForecastPromise = null;
+let _forecastRetryCount = 0;
 
   function switchTab(target) {
     if (!target || target === state.activeTab) return;
