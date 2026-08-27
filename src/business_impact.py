@@ -111,8 +111,16 @@ class OperationsImpactCalculator:
                 po_trigger_date_str = pd.to_datetime(po_trigger_date).strftime("%d %b %Y")
 
         # 8. Financial Risk Quantification
-        # Revenue at risk = stockout units × selling price
-        revenue_at_risk_inr = round(stockout_units * unit_price, 2)
+        # Stockouts during the 30-day simulation
+        sim_stockout_risk = stockout_units
+        
+        # Immediate risk: if current stock is below reorder point, we are at risk of a stockout DURING the lead time.
+        lead_time_stockout_risk = max(0, reorder_point - stock)
+        
+        total_risk_units = max(sim_stockout_risk, lead_time_stockout_risk)
+        
+        # Revenue at risk = risk units x selling price
+        revenue_at_risk_inr = round(total_risk_units * unit_price, 2)
 
         # Overstock holding cost if current stock > (ROP + 30-day forecast)
         max_recommended_stock = reorder_point + total_30d_forecast

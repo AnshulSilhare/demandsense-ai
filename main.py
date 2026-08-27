@@ -229,7 +229,7 @@ def _compute_kpi_bar(filtered_df, forecast_df, impact_data, sku_info):
                 "value": dos,
                 "value_fmt": f"{dos:.1f}",
                 "unit": "days",
-                "delta_pct": round(compliance_delta, 1),
+                "delta_pct": round(dos_delta, 1),
                 "favorable": bool(dos >= 30),
                 "chip": "DoS", "chip_color": "teal",
                 "sparkline": spark_values
@@ -380,9 +380,21 @@ def _get_or_compute_base_forecast(request: Request, sku: str, region: str, sid: 
                         r_chart = filtered[["date", "units_sold"]].copy()
                         r_chart["date"] = r_chart["date"].dt.strftime("%Y-%m-%d")
                         r_chart["rolling_7d"] = filtered["units_sold"].rolling(7, min_periods=1).mean().round(1)
+                        
+                        all_hist_sum = all_filtered["units_sold"].sum()
+                        reg_hist_sum = filtered["units_sold"].sum()
+                        scale_factor = reg_hist_sum / all_hist_sum if all_hist_sum > 0 else 1.0
+                        
+                        scaled_forecast_df = forecast_df.copy()
+                        scaled_forecast_df["predicted_units"] = (scaled_forecast_df["predicted_units"] * scale_factor).round(1)
+                        
+                        scaled_res = {**forecast_res}
+                        if "winning_forecast" in scaled_res:
+                            scaled_res["winning_forecast"] = [round(v * scale_factor, 1) for v in scaled_res["winning_forecast"]]
+                        
                         entry = {
-                            "forecast_res": forecast_res,
-                            "forecast_df": forecast_df,
+                            "forecast_res": scaled_res,
+                            "forecast_df": scaled_forecast_df,
                             "chart_history": r_chart.to_dict(orient="records"),
                             "data_summary": data_summary,
                             "sku_info": sku_info,
