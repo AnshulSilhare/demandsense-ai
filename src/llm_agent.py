@@ -29,8 +29,10 @@ class LLMPrescriptiveAgent:
             try:
                 import google.generativeai as genai
                 genai.configure(api_key=self.api_key)
-                self.model = genai.GenerativeModel("gemini-1.5-flash")
+                model_name = os.environ.get("GEMINI_MODEL", "gemini-1.5-flash")
+                self.model = genai.GenerativeModel(model_name)
                 self.use_gemini = True
+                print(f"[LLM Agent] Live Google Gemini model initialized ({model_name}).")
             except Exception as e:
                 print(f"[LLM Agent] Gemini API initialization failed: {e}. Falling back to Rule Engine.")
 
