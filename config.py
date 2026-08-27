@@ -18,7 +18,7 @@ from datetime import date
 # ═══════════════════════════════════════════════════════════════
 PROJECT_NAME = "DemandSense AI"
 PROJECT_TAGLINE = "Intelligent Demand Forecasting Engine for Indian FMCG"
-VERSION = "1.0.5"
+VERSION = "1.0.6"
 
 # ═══════════════════════════════════════════════════════════════
 # DATA GENERATION PARAMETERS
