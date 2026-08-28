@@ -735,25 +735,35 @@ let _forecastRetryCount = 0;
       }
     }
 
+        let lastScrollYForMorph = 0;
+    let autoCollapsedOnScroll = false;
+
     function updateCapsuleScroll(y) {
-      if (!capsule) return;
-      
-      const anchor = el('capsuleAnchor');
-      
-      // 1. Auto-collapse when scrolling down from top (to prevent large layout jumps)
-      if (y > 15 && y < 60 && isUserExpanded && !capsule.classList.contains('is-floating')) {
-        applyCapsuleState(false);
-      }
-      
-      // 2. Detach to floating pill mode when scrolled past threshold
-      const threshold = 45;
-      const past = y > threshold;
-      
-      if (past !== isScrolledPast) {
-        isScrolledPast = past;
-        capsule.classList.toggle('is-floating', isScrolledPast);
-        if (anchor) anchor.classList.toggle('is-active', isScrolledPast);
-      }
+        if (!capsule) return;
+        
+        const anchor = el('capsuleAnchor');
+        const threshold = 45;
+        const past = y > threshold;
+        const scrollingDown = y > lastScrollYForMorph;
+        lastScrollYForMorph = y;
+        
+        if (past !== isScrolledPast) {
+          isScrolledPast = past;
+          capsule.classList.toggle('is-floating', isScrolledPast);
+          if (anchor) anchor.classList.toggle('is-active', isScrolledPast);
+        }
+        
+        // 1. Auto-collapse when scrolling down past threshold
+        if (scrollingDown && y > threshold && isUserExpanded) {
+          autoCollapsedOnScroll = true;
+          applyCapsuleState(false);
+        }
+        
+        // 2. Auto-expand when scrolling back to absolute top
+        if (!scrollingDown && y <= 10 && !isUserExpanded && autoCollapsedOnScroll) {
+          autoCollapsedOnScroll = false;
+          applyCapsuleState(true);
+        }
     }
 
     window.renderKpiConveyorGlobal = renderKpiConveyor;
