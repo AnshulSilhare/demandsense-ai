@@ -508,8 +508,7 @@ body.kpi-dock-right .top-left-brand-icon {
     height 0.45s cubic-bezier(0.34, 1.35, 0.64, 1),
     border-radius 0.4s cubic-bezier(0.34, 1.35, 0.64, 1),
     box-shadow 0.35s ease,
-    background-color 0.3s ease,
-    transform 0.4s cubic-bezier(0.34, 1.35, 0.64, 1);
+    background-color 0.3s ease;
   transform-origin: top center;
 }
 
