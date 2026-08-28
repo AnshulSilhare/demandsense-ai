@@ -562,7 +562,6 @@ body.dark .adaptive-control-capsule {
 .adaptive-control-capsule.is-expanded {
   max-width: 1160px;
   width: calc(100% - 2.5rem);
-  height: 440px; 
   border-radius: 20px;
   box-shadow: 0 20px 50px rgba(15, 23, 42, 0.18), 0 0 35px rgba(13, 148, 136, 0.2);
 }

@@ -718,12 +718,15 @@ let _forecastRetryCount = 0;
     function applyCapsuleState(expanded) {
       if (!capsule) return;
       isUserExpanded = expanded;
+      const bodyCard = document.getElementById('capsuleBodyCard');
       
       if (expanded) {
         capsule.classList.remove('is-collapsed');
         capsule.classList.add('is-expanded');
-        // Let CSS media queries or default height rule take over
-        capsule.style.height = ''; 
+        // Explicitly set exact pixel height of the inner content so it wraps perfectly without dead space
+        if (bodyCard) {
+            capsule.style.height = bodyCard.offsetHeight + 'px';
+        }
       } else {
         capsule.classList.remove('is-expanded');
         capsule.classList.add('is-collapsed');
@@ -779,6 +782,7 @@ let _forecastRetryCount = 0;
       cachedMetrics = null;
       isCompactClean = false;
       handleScroll();
+      if (isUserExpanded) applyCapsuleState(true);
     }, { passive: true });
 
     initCanvas();
