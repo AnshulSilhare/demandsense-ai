@@ -727,6 +727,7 @@ let _forecastRetryCount = 0;
         if (bodyCard) {
             capsule.style.height = bodyCard.offsetHeight + 'px';
         }
+        setTimeout(() => document.getElementById('skuSelect')?.focus(), 140);
       } else {
         capsule.classList.remove('is-expanded');
         capsule.classList.add('is-collapsed');
@@ -815,55 +816,44 @@ let _forecastRetryCount = 0;
   }
 
   function setupCollapsibleFilterPanel() {
-    const capsule = el('controlCapsule');
-    const pillBar = el('capsulePillBar');
-    const collapseBtn = el('capsuleCollapseBtn');
-    const editBtn = el('pillEditBtn');
-
-    function expandCapsule() {
-      if (!capsule) return;
-      capsule.classList.remove('is-collapsed');
-      capsule.classList.add('is-expanded');
-      capsule.style.height = ''; 
-      isUserExpanded = true;
-      setTimeout(() => el('skuSelect')?.focus(), 140);
+      const capsule = el('controlCapsule');
+      const collapseBtn = el('capsuleCollapseBtn');
+      const editBtn = el('pillEditBtn');
+  
+      // Toggle Dynamic Island in-place
+      capsule?.addEventListener('click', (e) => {
+        // If user clicks anywhere on the collapsed pill, expand it
+        if (capsule.classList.contains('is-collapsed')) {
+          applyCapsuleState(true);
+        }
+      });
+  
+      editBtn?.addEventListener('click', (e) => {
+        e.stopPropagation();
+        applyCapsuleState(true);
+      });
+  
+      collapseBtn?.addEventListener('click', (e) => {
+        e.stopPropagation();
+        applyCapsuleState(false);
+      });
+      
+      // Click outside to collapse IF floating overlay
+      document.addEventListener('click', (e) => {
+        if (isUserExpanded && capsule && capsule.classList.contains('is-floating') && !capsule.contains(e.target)) {
+          applyCapsuleState(false);
+        }
+      });
+  
+      // Escape key collapses island back to pill
+      document.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape' && capsule?.classList.contains('is-expanded')) {
+          applyCapsuleState(false);
+        }
+      });
     }
 
-    function collapseCapsule() {
-      if (!capsule) return;
-      capsule.classList.remove('is-expanded');
-      capsule.classList.add('is-collapsed');
-      capsule.style.height = '48px';
-      isUserExpanded = false;
-    }
-
-    // Toggle Dynamic Island in-place
-    capsule?.addEventListener('click', (e) => {
-      // If user clicks anywhere on the collapsed pill, expand it
-      if (capsule.classList.contains('is-collapsed')) {
-        expandCapsule();
-      }
-    });
-
-    editBtn?.addEventListener('click', (e) => {
-      e.stopPropagation();
-      expandCapsule();
-    });
-
-    collapseBtn?.addEventListener('click', (e) => {
-      e.stopPropagation();
-      collapseCapsule();
-    });
-
-    // Escape key collapses island back to pill
-    document.addEventListener('keydown', (e) => {
-      if (e.key === 'Escape' && capsule?.classList.contains('is-expanded')) {
-        collapseCapsule();
-      }
-    });
-  }
-
-  function populateFilters(config) {
+    function populateFilters(config) {
     if (!config) return;
 
     // SKU
