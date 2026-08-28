@@ -758,6 +758,7 @@ let _forecastRetryCount = 0;
 
     window.renderKpiConveyorGlobal = renderKpiConveyor;
     window.updateStickyPillGlobal = updateCapsuleScroll;
+      window.applyCapsuleStateGlobal = applyCapsuleState;
 
     let isRafScheduled = false;
 
@@ -824,31 +825,31 @@ let _forecastRetryCount = 0;
       capsule?.addEventListener('click', (e) => {
         // If user clicks anywhere on the collapsed pill, expand it
         if (capsule.classList.contains('is-collapsed')) {
-          applyCapsuleState(true);
+          window.applyCapsuleStateGlobal(true);
         }
       });
   
       editBtn?.addEventListener('click', (e) => {
         e.stopPropagation();
-        applyCapsuleState(true);
+        window.applyCapsuleStateGlobal(true);
       });
   
       collapseBtn?.addEventListener('click', (e) => {
         e.stopPropagation();
-        applyCapsuleState(false);
+        window.applyCapsuleStateGlobal(false);
       });
       
       // Click outside to collapse IF floating overlay
       document.addEventListener('click', (e) => {
         if (isUserExpanded && capsule && capsule.classList.contains('is-floating') && !capsule.contains(e.target)) {
-          applyCapsuleState(false);
+          window.applyCapsuleStateGlobal(false);
         }
       });
   
       // Escape key collapses island back to pill
       document.addEventListener('keydown', (e) => {
         if (e.key === 'Escape' && capsule?.classList.contains('is-expanded')) {
-          applyCapsuleState(false);
+          window.applyCapsuleStateGlobal(false);
         }
       });
     }
