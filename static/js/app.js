@@ -736,32 +736,27 @@ let _forecastRetryCount = 0;
       }
     }
 
-        let lastScrollYForMorph = 0;
     let autoCollapsedOnScroll = false;
 
     function updateCapsuleScroll(y) {
         if (!capsule) return;
         
-        const anchor = el('capsuleAnchor');
-        const threshold = 45;
+        const threshold = 30;
         const past = y > threshold;
-        const scrollingDown = y > lastScrollYForMorph;
-        lastScrollYForMorph = y;
         
         if (past !== isScrolledPast) {
           isScrolledPast = past;
           capsule.classList.toggle('is-floating', isScrolledPast);
-          if (anchor) anchor.classList.toggle('is-active', isScrolledPast);
         }
         
-        // 1. Auto-collapse when scrolling down past threshold
-        if (scrollingDown && y > threshold && window.isUserExpanded) {
+        // 1. Smoothly collapse into floating pill on scroll down
+        if (y > threshold && window.isUserExpanded) {
           autoCollapsedOnScroll = true;
           applyCapsuleState(false);
         }
         
-        // 2. Auto-expand when scrolling back to absolute top
-        if (!scrollingDown && y <= 10 && !window.isUserExpanded && autoCollapsedOnScroll) {
+        // 2. Smoothly expand back to full controls when reaching top
+        if (y <= 10 && !window.isUserExpanded && autoCollapsedOnScroll) {
           autoCollapsedOnScroll = false;
           applyCapsuleState(true);
         }
