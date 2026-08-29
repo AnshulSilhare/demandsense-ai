@@ -732,7 +732,7 @@ let _forecastRetryCount = 0;
         capsule.classList.remove('is-expanded');
         capsule.classList.add('is-collapsed');
         const isMob = window.innerWidth <= 767;
-        capsule.style.height = isMob ? '68px' : '48px';
+        capsule.style.height = isMob ? '72px' : '48px';
       }
     }
 
