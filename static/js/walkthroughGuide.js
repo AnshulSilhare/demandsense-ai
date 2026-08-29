@@ -43,7 +43,7 @@
           badge: 'Market Multipliers'
         }
       ],
-      proTip: '💡 <strong>Pro Tip:</strong> Watch for sudden spikes in the <em>Residual Noise</em> plot — they often indicate unmodeled local promotional bursts or regional competitor outages.'
+      proTip: '💡 <strong>Timeline Architecture:</strong> AI models train on 3 full years of historical FMCG actuals (Jan 2023 – Dec 2025) and generate an out-of-sample 30-day forward prediction for <strong>January 2026</strong>. When you upload custom data, the forward window automatically anchors to the days following your dataset latest date.'
     },
 
     tab2: {
@@ -163,7 +163,7 @@
           badge: 'Financial Impact'
         }
       ],
-      proTip: '💡 <strong>Pro Tip:</strong> If the simulated trajectory line dips below the Safety Stock dashed line before Day 30, your current stock is insufficient to survive the shock scenario.'
+      proTip: '💡 <strong>Simulation Horizon:</strong> The What-If Simulator stress-tests inventory burn-down and reorder points across the next 30 operational days (January 2026). If the simulated trajectory line dips below the Safety Stock line before Day 30, trigger a PO before that date.'
     },
 
     tab5: {

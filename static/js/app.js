@@ -731,7 +731,8 @@ let _forecastRetryCount = 0;
       } else {
         capsule.classList.remove('is-expanded');
         capsule.classList.add('is-collapsed');
-        capsule.style.height = '48px';
+        const isMob = window.innerWidth <= 767;
+        capsule.style.height = isMob ? '68px' : '48px';
       }
     }
 
@@ -1277,7 +1278,7 @@ let _forecastRetryCount = 0;
     const ds = state.forecastData?.data_summary;
     if (ds) {
       if (el('dataFreshness')) {
-        el('dataFreshness').innerHTML = `📅 Active Range: <strong>${ds.data_start}</strong> → <strong>${ds.data_end}</strong> · ${ds.total_days} total series points · ${ds.total_skus} SKUs in enterprise database`;
+        el('dataFreshness').innerHTML = `📅 Historical Baseline: <strong>${ds.data_start}</strong> → <strong>${ds.data_end}</strong> (1,095 days) · <strong>30-Day Forecast Window: Jan 01 → Jan 30, 2026</strong> · ${ds.total_skus} SKUs`;
       }
       if (el('datasetNameText')) {
         el('datasetNameText').textContent = `Enterprise FMCG · ${ds.total_skus} SKUs · ${ds.total_days}d`;
@@ -1312,7 +1313,7 @@ let _forecastRetryCount = 0;
     // Dynamic subtitle
     const subtitle = el('tab1Subtitle');
     if (d.forecast_res?.winning_model_name) {
-      subtitle.textContent = `${d.forecast_res.winning_model_name} forecast · MAPE ${d.forecast_res.winning_metrics.mape.toFixed(2)}% · ${d.forecast_res.winning_forecast.length}-day horizon`;
+      subtitle.textContent = `${d.forecast_res.winning_model_name} Winning Model · 30-Day Forward Forecast: Jan 01 → Jan 30, 2026 · MAPE ${d.forecast_res.winning_metrics.mape.toFixed(2)}%`;
     }
   }
 
