@@ -2939,12 +2939,24 @@ body.dark .guide-modal-title {
   transform: translateY(-2px);
 }
 
+.tab-label-mob {
+  display: none;
+}
+
 .guide-step-header {
   display: flex;
   align-items: center;
-  gap: 6px;
+  justify-content: space-between;
+  gap: 8px;
   margin-bottom: .6rem;
-  flex-wrap: wrap;
+}
+
+.guide-step-title-row {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
+  flex: 1;
 }
 
 .guide-step-num {
@@ -3029,6 +3041,17 @@ body.dark .guide-protip-box {
   padding: 1rem 1.8rem;
   border-top: 1px solid var(--border);
   background: var(--surface);
+}
+
+.guide-dots-row {
+  display: flex;
+  align-items: center;
+}
+
+.guide-buttons-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
 }
 
 .guide-nav-btn {
@@ -3878,11 +3901,12 @@ body.dark .guide-protip-box {
     -webkit-overflow-scrolling: touch !important;
   }
 
-  /* ══════════ GUIDE MODAL MOBILE ADAPTATION ══════════ */
+  /* ══════════ GUIDE MODAL MOBILE BOTTOM SHEET ADAPTATION ══════════ */
   .guide-modal-overlay {
-    padding: 0.5rem !important;
-    align-items: center !important;
+    padding: 0 !important;
+    align-items: flex-end !important;
     justify-content: center !important;
+    z-index: 2000 !important;
   }
 
   .guide-modal-container {
@@ -3890,49 +3914,62 @@ body.dark .guide-protip-box {
     max-width: 100% !important;
     height: 90vh !important;
     max-height: 90vh !important;
-    border-radius: 16px !important;
+    border-radius: 20px 20px 0 0 !important;
+    border-bottom: none !important;
     margin: 0 !important;
+    box-shadow: 0 -10px 40px rgba(0, 0, 0, 0.45) !important;
     display: flex !important;
     flex-direction: column !important;
   }
 
+  .tab-label-full {
+    display: none !important;
+  }
+
+  .tab-label-mob {
+    display: inline !important;
+  }
+
   .guide-modal-header {
-    padding: 0.85rem 1rem 0.65rem !important;
+    padding: 0.75rem 1rem 0.6rem !important;
     gap: 0.5rem !important;
   }
 
   .guide-header-badge {
-    font-size: 0.62rem !important;
-    padding: 2px 7px !important;
-    margin-bottom: 0.25rem !important;
-  }
-
-  .guide-modal-title {
-    font-size: 1.05rem !important;
-    line-height: 1.25 !important;
+    font-size: 0.6rem !important;
+    padding: 1px 7px !important;
     margin-bottom: 0.2rem !important;
   }
 
+  .guide-modal-title {
+    font-size: 0.96rem !important;
+    line-height: 1.25 !important;
+    margin-bottom: 0.15rem !important;
+  }
+
   .guide-modal-sub {
-    font-size: 0.76rem !important;
+    font-size: 0.74rem !important;
     line-height: 1.35 !important;
+    color: var(--text2) !important;
   }
 
   .guide-modal-close {
-    width: 32px !important;
-    height: 32px !important;
-    min-width: 32px !important;
-    font-size: 0.9rem !important;
+    width: 30px !important;
+    height: 30px !important;
+    min-width: 30px !important;
+    font-size: 0.85rem !important;
     margin-left: 0.4rem !important;
   }
 
   .guide-tab-switcher {
-    padding: 0.4rem 0.65rem !important;
+    padding: 0.35rem 0.65rem !important;
     gap: 4px !important;
     overflow-x: auto !important;
     -webkit-overflow-scrolling: touch !important;
     scrollbar-width: none !important;
     display: flex !important;
+    background: var(--bg3) !important;
+    border-bottom: 1px solid var(--border) !important;
   }
 
   .guide-tab-switcher::-webkit-scrollbar {
@@ -3940,123 +3977,146 @@ body.dark .guide-protip-box {
   }
 
   .guide-tab-btn {
-    padding: 5px 9px !important;
+    padding: 4px 9px !important;
     font-size: 0.72rem !important;
     flex-shrink: 0 !important;
     border-radius: 6px !important;
   }
 
   .guide-modal-body {
-    padding: 0.85rem 1rem !important;
-    gap: 0.75rem !important;
+    padding: 0.75rem 0.9rem !important;
+    gap: 0.65rem !important;
     flex: 1 1 auto !important;
     overflow-y: auto !important;
     -webkit-overflow-scrolling: touch !important;
   }
 
   .guide-overview-box {
-    padding: 0.75rem 0.85rem !important;
-    gap: 0.65rem !important;
+    padding: 0.6rem 0.8rem !important;
+    gap: 0.6rem !important;
     border-radius: 10px !important;
   }
 
   .guide-overview-icon {
-    font-size: 1.35rem !important;
+    font-size: 1.2rem !important;
   }
 
   .guide-overview-text {
-    font-size: 0.78rem !important;
-    line-height: 1.45 !important;
+    font-size: 0.75rem !important;
+    line-height: 1.4 !important;
   }
 
   .guide-steps-grid {
     grid-template-columns: 1fr !important;
-    gap: 0.65rem !important;
+    gap: 0.55rem !important;
   }
 
   .guide-step-card {
-    padding: 0.75rem 0.85rem !important;
+    padding: 0.65rem 0.8rem !important;
     border-radius: 10px !important;
   }
 
   .guide-step-header {
+    display: flex !important;
+    align-items: center !important;
+    justify-content: space-between !important;
     gap: 6px !important;
-    margin-bottom: 0.4rem !important;
+    margin-bottom: 0.35rem !important;
+  }
+
+  .guide-step-title-row {
+    display: inline-flex !important;
+    align-items: center !important;
+    gap: 5px !important;
+    min-width: 0 !important;
+    flex: 1 !important;
   }
 
   .guide-step-num {
-    width: 20px !important;
-    height: 20px !important;
-    font-size: 0.68rem !important;
+    width: 18px !important;
+    height: 18px !important;
+    font-size: 0.65rem !important;
   }
 
   .guide-step-icon {
-    font-size: 0.95rem !important;
+    font-size: 0.9rem !important;
   }
 
   .guide-step-title {
-    font-size: 0.82rem !important;
+    font-size: 0.8rem !important;
+    font-weight: 700 !important;
+    white-space: nowrap !important;
+    overflow: hidden !important;
+    text-overflow: ellipsis !important;
   }
 
   .guide-step-badge {
-    font-size: 0.62rem !important;
+    font-size: 0.6rem !important;
     padding: 1px 5px !important;
+    flex-shrink: 0 !important;
   }
 
   .guide-step-text {
-    font-size: 0.76rem !important;
+    font-size: 0.75rem !important;
     line-height: 1.45 !important;
   }
 
   .guide-protip-box {
-    padding: 0.75rem 0.85rem !important;
-    font-size: 0.76rem !important;
-    line-height: 1.45 !important;
+    padding: 0.65rem 0.8rem !important;
+    font-size: 0.74rem !important;
+    line-height: 1.4 !important;
     border-radius: 10px !important;
   }
 
   .guide-modal-footer {
-    padding: 0.65rem 0.85rem !important;
-    flex-wrap: wrap !important;
-    gap: 0.5rem !important;
-    justify-content: space-between !important;
+    padding: 0.5rem 0.85rem calc(0.6rem + env(safe-area-inset-bottom, 0px)) !important;
+    display: flex !important;
+    flex-direction: column !important;
+    gap: 0.45rem !important;
+  }
+
+  .guide-dots-row {
+    display: flex !important;
+    justify-content: center !important;
+    width: 100% !important;
   }
 
   .guide-dots {
-    order: 1 !important;
-    width: 100% !important;
+    display: flex !important;
     justify-content: center !important;
-    margin-bottom: 0.2rem !important;
     gap: 5px !important;
   }
 
-  .guide-nav-btn.prev {
-    order: 2 !important;
-    flex: 1 1 0 !important;
-    padding: 6px 10px !important;
-    font-size: 0.72rem !important;
-    text-align: center !important;
+  .guide-buttons-row {
+    display: flex !important;
+    width: 100% !important;
+    gap: 0.4rem !important;
+    align-items: center !important;
   }
 
-  .guide-footer-right {
-    order: 3 !important;
-    flex: 2 1 0 !important;
-    display: flex !important;
-    gap: 4px !important;
-    width: auto !important;
+  .guide-nav-btn.prev {
+    flex: 1 !important;
+    padding: 7px 8px !important;
+    font-size: 0.72rem !important;
+    text-align: center !important;
+    justify-content: center !important;
   }
 
   .guide-action-btn {
-    flex: 1 1 auto !important;
-    padding: 6px 8px !important;
-    font-size: 0.7rem !important;
+    flex: 1.6 !important;
+    padding: 7px 8px !important;
+    font-size: 0.74rem !important;
     white-space: nowrap !important;
+    text-align: center !important;
+    justify-content: center !important;
   }
 
   .guide-nav-btn.next {
-    padding: 6px 10px !important;
+    flex: 1 !important;
+    padding: 7px 8px !important;
     font-size: 0.72rem !important;
-    white-space: nowrap !important;
+    text-align: center !important;
+    justify-content: center !important;
   }
 }
 

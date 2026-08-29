@@ -315,9 +315,11 @@
           html += `
             <div class="guide-step-card">
               <div class="guide-step-header">
-                <div class="guide-step-num">${step.num}</div>
-                <div class="guide-step-icon">${step.icon}</div>
-                <div class="guide-step-title">${step.title}</div>
+                <div class="guide-step-title-row">
+                  <span class="guide-step-num">${step.num}</span>
+                  <span class="guide-step-icon">${step.icon}</span>
+                  <span class="guide-step-title">${step.title}</span>
+                </div>
                 <span class="guide-step-badge">${step.badge}</span>
               </div>
               <div class="guide-step-text">${step.text}</div>

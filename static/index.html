@@ -723,11 +723,11 @@ if(localStorage.getItem('ds-theme')==='dark'||(!localStorage.getItem('ds-theme')
 
     <!-- Tab Quick Switcher inside Guide -->
     <div class="guide-tab-switcher" id="guideTabSwitcher">
-      <button class="guide-tab-btn active" data-tab="tab1">1. Demand Intelligence</button>
-      <button class="guide-tab-btn" data-tab="tab2">2. Auto-ML Model Selection</button>
-      <button class="guide-tab-btn" data-tab="tab3">3. Inventory Control</button>
-      <button class="guide-tab-btn" data-tab="tab4">4. What-If Simulator</button>
-      <button class="guide-tab-btn" data-tab="tab5">5. AI Insights</button>
+      <button class="guide-tab-btn active" data-tab="tab1"><span class="tab-label-full">1. Demand Intelligence</span><span class="tab-label-mob">1. Demand</span></button>
+      <button class="guide-tab-btn" data-tab="tab2"><span class="tab-label-full">2. Auto-ML Model Selection</span><span class="tab-label-mob">2. Auto-ML</span></button>
+      <button class="guide-tab-btn" data-tab="tab3"><span class="tab-label-full">3. Inventory Control</span><span class="tab-label-mob">3. Inventory</span></button>
+      <button class="guide-tab-btn" data-tab="tab4"><span class="tab-label-full">4. What-If Simulator</span><span class="tab-label-mob">4. What-If</span></button>
+      <button class="guide-tab-btn" data-tab="tab5"><span class="tab-label-full">5. AI Insights</span><span class="tab-label-mob">5. Insights</span></button>
     </div>
 
     <!-- Dynamic Body -->
@@ -735,11 +735,13 @@ if(localStorage.getItem('ds-theme')==='dark'||(!localStorage.getItem('ds-theme')
 
     <!-- Footer -->
     <div class="guide-modal-footer">
-      <button class="guide-nav-btn prev" id="guidePrevBtn">← Previous Tab</button>
-      <div class="guide-dots" id="guideDots"></div>
-      <div class="guide-footer-right">
-        <button class="guide-action-btn" id="guideGotItBtn">Got It, Let's Try! 🚀</button>
-        <button class="guide-nav-btn next" id="guideNextBtn">Next Tab →</button>
+      <div class="guide-dots-row">
+        <div class="guide-dots" id="guideDots"></div>
+      </div>
+      <div class="guide-buttons-row">
+        <button class="guide-nav-btn prev" id="guidePrevBtn">← Prev</button>
+        <button class="guide-action-btn" id="guideGotItBtn">Got It! 🚀</button>
+        <button class="guide-nav-btn next" id="guideNextBtn">Next →</button>
       </div>
     </div>
   </div>
