@@ -49,7 +49,7 @@ if(localStorage.getItem('ds-theme')==='dark'||(!localStorage.getItem('ds-theme')
         <rect x="32" y="24" width="11.31" height="11.31" rx="2.5" transform="rotate(45 32 24)" fill="var(--teal)"/>
       </svg>
       <span class="brand-title">DemandSense AI</span>
-      <span class="brand-version" id="appVersion">v1.0.29</span>
+      <span class="brand-version" id="appVersion">v1.0.30</span>
     </div>
 
     <!-- Center: Desktop Navigation Tabs Capsule (Hidden on Tablet & Mobile) -->
@@ -511,54 +511,73 @@ if(localStorage.getItem('ds-theme')==='dark'||(!localStorage.getItem('ds-theme')
       </button>
     </div>
 
-    <!-- Preset Scenario Buttons -->
-    <div class="preset-row" id="presetRow" style="display:flex;gap:.6rem;flex-wrap:wrap;margin-bottom:1.2rem">
-      <button class="preset-btn" data-preset="monsoon">🌧 Monsoon Disruption</button>
-      <button class="preset-btn" data-preset="diwali">🪔 Diwali Rush</button>
-      <button class="preset-btn" data-preset="pricewar">💥 Price War</button>
-      <button class="preset-btn" data-preset="reset">↺ Reset Baseline</button>
-    </div>
-
-    <!-- Parameter Sliders -->
-    <div class="simulator-card">
-        <div class="card-header">
-          <div class="card-title">Scenario Parameters & Elasticity Modifiers</div>
+          <!-- Unified Scenario Simulator Desk -->
+      <div class="simulator-card split-control-desk">
+        <div class="desk-left">
+          <div class="card-title" style="margin-bottom: 1rem;">1-Click Scenarios</div>
+          <div class="preset-grid" id="presetRow">
+            <button class="preset-btn modern-preset" data-preset="monsoon">
+              <span class="preset-icon">⛈️</span>
+              <span class="preset-text">Monsoon</span>
+            </button>
+            <button class="preset-btn modern-preset" data-preset="diwali">
+              <span class="preset-icon">🪔</span>
+              <span class="preset-text">Diwali Rush</span>
+            </button>
+            <button class="preset-btn modern-preset" data-preset="pricewar">
+              <span class="preset-icon">💥</span>
+              <span class="preset-text">Price War</span>
+            </button>
+            <button class="preset-btn modern-preset outline" data-preset="reset">
+              <span class="preset-icon">↺</span>
+              <span class="preset-text">Reset Default</span>
+            </button>
+          </div>
         </div>
-        <div class="sim-grid" id="simSliders">
-          <div class="modern-slider-group">
-            <div class="modern-slider-header">
-              <span class="modern-slider-label">Lead Time Delay</span>
-              <span class="modern-slider-value" id="simLtVal">+0 days</span>
+        
+        <div class="desk-right">
+          <div class="card-title" style="margin-bottom: 1rem;">Manual Overrides</div>
+          <div class="sim-list-dense" id="simSliders">
+            <!-- Lead Time -->
+            <div class="dense-slider-group">
+              <div class="dense-slider-info">
+                <span class="dense-label">Lead Time Delay</span>
+                <span class="dense-value badge-teal" id="simLtVal">+0 days</span>
+              </div>
+              <input type="range" class="dense-range" id="simLt" min="-5" max="15" value="0" step="1">
             </div>
-            <input type="range" class="modern-range" id="simLt" min="-5" max="15" value="0" step="1">
-          </div>
-          <div class="modern-slider-group">
-            <div class="modern-slider-header">
-              <span class="modern-slider-label">Demand Surge</span>
-              <span class="modern-slider-value" id="simDemVal">0%</span>
+            <!-- Demand Surge -->
+            <div class="dense-slider-group">
+              <div class="dense-slider-info">
+                <span class="dense-label">Demand Surge</span>
+                <span class="dense-value badge-teal" id="simDemVal">0%</span>
+              </div>
+              <input type="range" class="dense-range" id="simDem" min="-50" max="100" value="0" step="5">
             </div>
-            <input type="range" class="modern-range" id="simDem" min="-50" max="100" value="0" step="5">
-          </div>
-          <div class="modern-slider-group">
-            <div class="modern-slider-header">
-              <span class="modern-slider-label">Price Adjustment</span>
-              <span class="modern-slider-value" id="simPrcVal">0%</span>
+            <!-- Price Adjustment -->
+            <div class="dense-slider-group">
+              <div class="dense-slider-info">
+                <span class="dense-label">Price Adjustment</span>
+                <span class="dense-value badge-teal" id="simPrcVal">0%</span>
+              </div>
+              <input type="range" class="dense-range" id="simPrc" min="-30" max="50" value="0" step="5">
             </div>
-            <input type="range" class="modern-range" id="simPrc" min="-30" max="50" value="0" step="5">
-          </div>
-          <div class="modern-slider-group">
-            <div class="modern-slider-header">
-              <span class="modern-slider-label">Price Elasticity</span>
-              <span class="modern-slider-value" id="simElastVal">-1.2</span>
+            <!-- Price Elasticity -->
+            <div class="dense-slider-group">
+              <div class="dense-slider-info">
+                <span class="dense-label">Price Elasticity</span>
+                <span class="dense-value badge-teal" id="simElastVal">-1.2</span>
+              </div>
+              <input type="range" class="dense-range" id="simElast" min="-30" max="0" value="-12" step="1">
             </div>
-            <input type="range" class="modern-range" id="simElast" min="-30" max="0" value="-12" step="1">
-          </div>
-          <div class="modern-slider-group">
-            <div class="modern-slider-header">
-              <span class="modern-slider-label">Promo Boost</span>
-              <span class="modern-slider-value" id="simPromoVal">0%</span>
+            <!-- Promo Boost -->
+            <div class="dense-slider-group">
+              <div class="dense-slider-info">
+                <span class="dense-label">Promo Boost</span>
+                <span class="dense-value badge-teal" id="simPromoVal">0%</span>
+              </div>
+              <input type="range" class="dense-range" id="simPromo" min="0" max="50" value="0" step="5">
             </div>
-            <input type="range" class="modern-range" id="simPromo" min="0" max="50" value="0" step="5">
           </div>
         </div>
       </div>
@@ -733,11 +752,11 @@ if(localStorage.getItem('ds-theme')==='dark'||(!localStorage.getItem('ds-theme')
 </nav>
 
 <!-- App Scripts (load order: theme → drawer → guide → chart builders → app controller) -->
-<script src="/static/js/chartTheme.js?v=2.9.15"></script>
-<script src="/static/js/detailDrawer.js?v=2.9.15"></script>
-<script src="/static/js/walkthroughGuide.js?v=2.9.15"></script>
-<script src="/static/js/charts.js?v=2.9.15"></script>
-<script src="/static/js/app.js?v=2.9.15"></script>
+<script src="/static/js/chartTheme.js?v=2.9.14"></script>
+<script src="/static/js/detailDrawer.js?v=2.9.14"></script>
+<script src="/static/js/walkthroughGuide.js?v=2.9.14"></script>
+<script src="/static/js/charts.js?v=2.9.14"></script>
+<script src="/static/js/app.js?v=2.9.14"></script>
 
 </div>
 </body>
