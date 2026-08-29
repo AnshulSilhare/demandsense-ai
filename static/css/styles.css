@@ -4878,11 +4878,14 @@ body.dark .sim-metric-card .kpi-value {
     line-height: 1.15 !important;
   }
 
-  /* ─── Global Forecast Controls Capsule Mobile Adaptation ─── */
+  /* ─── Global Controls Capsule Mobile Adaptation ─── */
   .adaptive-control-capsule {
+    top: 60px !important;
     width: 100% !important;
     max-width: 100% !important;
     margin: 0 auto 1rem auto !important;
+    left: auto !important;
+    transform: none !important;
     box-sizing: border-box !important;
   }
 
@@ -4890,15 +4893,17 @@ body.dark .sim-metric-card .kpi-value {
     width: 100% !important;
     max-width: 100% !important;
     border-radius: 14px !important;
+    left: auto !important;
+    transform: none !important;
   }
 
   .adaptive-control-capsule.is-floating {
     width: calc(100% - 1rem) !important;
     max-width: calc(100% - 1rem) !important;
-    left: 50% !important;
-    transform: translateX(-50%) !important;
-    top: 54px !important;
-    margin: 0 !important;
+    top: 60px !important;
+    margin: 0 auto !important;
+    left: auto !important;
+    transform: none !important;
   }
 
   .adaptive-control-capsule.is-floating.is-expanded {
@@ -4908,6 +4913,8 @@ body.dark .sim-metric-card .kpi-value {
     overflow-y: auto !important;
     -webkit-overflow-scrolling: touch !important;
     border-radius: 14px !important;
+    left: auto !important;
+    transform: none !important;
   }
 
   .capsule-body-card {

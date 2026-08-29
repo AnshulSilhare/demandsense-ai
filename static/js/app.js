@@ -741,22 +741,23 @@ let _forecastRetryCount = 0;
     function updateCapsuleScroll(y) {
         if (!capsule) return;
         
-        const threshold = 30;
-        const past = y > threshold;
+        const collapseThreshold = 120;
+        const expandThreshold = 15;
+        const past = y > collapseThreshold;
         
         if (past !== isScrolledPast) {
           isScrolledPast = past;
           capsule.classList.toggle('is-floating', isScrolledPast);
         }
         
-        // 1. Smoothly collapse into floating pill on scroll down
-        if (y > threshold && window.isUserExpanded) {
+        // 1. Smoothly collapse into floating pill on scroll down past controls
+        if (y > collapseThreshold && window.isUserExpanded && !autoCollapsedOnScroll) {
           autoCollapsedOnScroll = true;
           applyCapsuleState(false);
         }
         
-        // 2. Smoothly expand back to full controls when reaching top
-        if (y <= 10 && !window.isUserExpanded && autoCollapsedOnScroll) {
+        // 2. Smoothly expand back to full controls when reaching the very top
+        if (y <= expandThreshold && !window.isUserExpanded && autoCollapsedOnScroll) {
           autoCollapsedOnScroll = false;
           applyCapsuleState(true);
         }
