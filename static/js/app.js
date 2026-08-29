@@ -794,7 +794,7 @@ let _forecastRetryCount = 0;
       cachedMetrics = null;
       isCompactClean = false;
       handleScroll();
-      if (window.window.isUserExpanded) applyCapsuleState(true);
+      if (window.isUserExpanded) applyCapsuleState(true);
     }, { passive: true });
 
     initCanvas();
