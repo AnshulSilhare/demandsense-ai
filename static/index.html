@@ -19,7 +19,7 @@
 <script src="https://cdn.jsdelivr.net/npm/echarts@5/dist/echarts.min.js"></script>
 
 <!-- App CSS -->
-<link rel="stylesheet" href="/static/css/styles.css?v=2.9.15">
+<link rel="stylesheet" href="/static/css/styles.css?v=2.9.13">
 
 <!-- FOUC prevention: apply saved theme before paint -->
 <script>
@@ -49,7 +49,7 @@ if(localStorage.getItem('ds-theme')==='dark'||(!localStorage.getItem('ds-theme')
         <rect x="32" y="24" width="11.31" height="11.31" rx="2.5" transform="rotate(45 32 24)" fill="var(--teal)"/>
       </svg>
       <span class="brand-title">DemandSense AI</span>
-      <span class="brand-version" id="appVersion">v1.0.30</span>
+      <span class="brand-version" id="appVersion">v1.0.29</span>
     </div>
 
     <!-- Center: Desktop Navigation Tabs Capsule (Hidden on Tablet & Mobile) -->
@@ -511,74 +511,70 @@ if(localStorage.getItem('ds-theme')==='dark'||(!localStorage.getItem('ds-theme')
       </button>
     </div>
 
-          <!-- Unified Scenario Simulator Desk -->
-      <div class="simulator-card split-control-desk">
-        <div class="desk-left">
-          <div class="card-title" style="margin-bottom: 1rem;">1-Click Scenarios</div>
-          <div class="preset-grid" id="presetRow">
-            <button class="preset-btn modern-preset" data-preset="monsoon">
-              <span class="preset-icon">⛈️</span>
-              <span class="preset-text">Monsoon</span>
-            </button>
-            <button class="preset-btn modern-preset" data-preset="diwali">
-              <span class="preset-icon">🪔</span>
-              <span class="preset-text">Diwali Rush</span>
-            </button>
-            <button class="preset-btn modern-preset" data-preset="pricewar">
-              <span class="preset-icon">💥</span>
-              <span class="preset-text">Price War</span>
-            </button>
-            <button class="preset-btn modern-preset outline" data-preset="reset">
-              <span class="preset-icon">↺</span>
-              <span class="preset-text">Reset Default</span>
-            </button>
+                <!-- Unified Scenario Simulator Desk (Redesigned Ribbon) -->
+      <div class="card glass-panel scenario-ribbon">
+        <!-- 1. Header Toolbar -->
+        <div class="scenario-header">
+          <div class="scenario-title-area">
+            <div class="card-title" style="margin-bottom:0;">Scenario Parameters & Elasticity Modifiers</div>
+            <span class="badge healthy" style="font-size:0.7rem; padding:0.2rem 0.5rem;">Live What-If</span>
+          </div>
+          <div class="scenario-presets">
+            <button class="preset-btn" data-preset="monsoon">🌧 Monsoon Disruption</button>
+            <button class="preset-btn" data-preset="diwali">🪔 Diwali Rush</button>
+            <button class="preset-btn" data-preset="pricewar">⚔️ Price War</button>
+            <button class="preset-btn outline" data-preset="reset">↺ Reset Baseline</button>
           </div>
         </div>
         
-        <div class="desk-right">
-          <div class="card-title" style="margin-bottom: 1rem;">Manual Overrides</div>
-          <div class="sim-list-dense" id="simSliders">
-            <!-- Lead Time -->
-            <div class="dense-slider-group">
-              <div class="dense-slider-info">
-                <span class="dense-label">Lead Time Delay</span>
-                <span class="dense-value badge-teal" id="simLtVal">+0 days</span>
-              </div>
-              <input type="range" class="dense-range" id="simLt" min="-5" max="15" value="0" step="1">
+        <!-- 2. Compact Equalizer Grid -->
+        <div class="scenario-grid">
+          
+          <!-- Lead Time -->
+          <div class="micro-slider-group">
+            <div class="micro-slider-header">
+              <label>Lead Time Delay</label>
+              <span class="mono-value" id="simLtVal">+0 days</span>
             </div>
-            <!-- Demand Surge -->
-            <div class="dense-slider-group">
-              <div class="dense-slider-info">
-                <span class="dense-label">Demand Surge</span>
-                <span class="dense-value badge-teal" id="simDemVal">0%</span>
-              </div>
-              <input type="range" class="dense-range" id="simDem" min="-50" max="100" value="0" step="5">
-            </div>
-            <!-- Price Adjustment -->
-            <div class="dense-slider-group">
-              <div class="dense-slider-info">
-                <span class="dense-label">Price Adjustment</span>
-                <span class="dense-value badge-teal" id="simPrcVal">0%</span>
-              </div>
-              <input type="range" class="dense-range" id="simPrc" min="-30" max="50" value="0" step="5">
-            </div>
-            <!-- Price Elasticity -->
-            <div class="dense-slider-group">
-              <div class="dense-slider-info">
-                <span class="dense-label">Price Elasticity</span>
-                <span class="dense-value badge-teal" id="simElastVal">-1.2</span>
-              </div>
-              <input type="range" class="dense-range" id="simElast" min="-30" max="0" value="-12" step="1">
-            </div>
-            <!-- Promo Boost -->
-            <div class="dense-slider-group">
-              <div class="dense-slider-info">
-                <span class="dense-label">Promo Boost</span>
-                <span class="dense-value badge-teal" id="simPromoVal">0%</span>
-              </div>
-              <input type="range" class="dense-range" id="simPromo" min="0" max="50" value="0" step="5">
-            </div>
+            <input type="range" class="teal-slider" id="simLt" min="0" max="30" value="0" step="1">
           </div>
+          
+          <!-- Demand Surge -->
+          <div class="micro-slider-group">
+            <div class="micro-slider-header">
+              <label>Demand Surge</label>
+              <span class="mono-value" id="simDemVal">0%</span>
+            </div>
+            <input type="range" class="teal-slider" id="simDem" min="-50" max="100" value="0" step="5">
+          </div>
+          
+          <!-- Price Adjustment -->
+          <div class="micro-slider-group">
+            <div class="micro-slider-header">
+              <label>Price Adjustment</label>
+              <span class="mono-value" id="simPrcVal">0%</span>
+            </div>
+            <input type="range" class="teal-slider" id="simPrc" min="-30" max="30" value="0" step="5">
+          </div>
+          
+          <!-- Price Elasticity -->
+          <div class="micro-slider-group">
+            <div class="micro-slider-header">
+              <label>Price Elasticity</label>
+              <span class="mono-value" id="simElastVal">-1.2</span>
+            </div>
+            <input type="range" class="teal-slider" id="simElast" min="-30" max="0" value="-12" step="1">
+          </div>
+          
+          <!-- Promo Boost -->
+          <div class="micro-slider-group">
+            <div class="micro-slider-header">
+              <label>Promo Boost</label>
+              <span class="mono-value" id="simPromoVal">0%</span>
+            </div>
+            <input type="range" class="teal-slider" id="simPromo" min="0" max="50" value="0" step="5">
+          </div>
+          
         </div>
       </div>
       <div class="chart-container" id="simChart" style="margin-top: 1.5rem;"></div>
@@ -752,11 +748,11 @@ if(localStorage.getItem('ds-theme')==='dark'||(!localStorage.getItem('ds-theme')
 </nav>
 
 <!-- App Scripts (load order: theme → drawer → guide → chart builders → app controller) -->
-<script src="/static/js/chartTheme.js?v=2.9.14"></script>
-<script src="/static/js/detailDrawer.js?v=2.9.14"></script>
-<script src="/static/js/walkthroughGuide.js?v=2.9.14"></script>
-<script src="/static/js/charts.js?v=2.9.14"></script>
-<script src="/static/js/app.js?v=2.9.14"></script>
+<script src="/static/js/chartTheme.js?v=2.9.13"></script>
+<script src="/static/js/detailDrawer.js?v=2.9.13"></script>
+<script src="/static/js/walkthroughGuide.js?v=2.9.13"></script>
+<script src="/static/js/charts.js?v=2.9.13"></script>
+<script src="/static/js/app.js?v=2.9.13"></script>
 
 </div>
 </body>
