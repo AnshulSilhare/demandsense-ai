@@ -3907,16 +3907,15 @@ body.dark .guide-protip-box {
     -webkit-overflow-scrolling: touch !important;
   }
 
-  /* ══════════ GUIDE MODAL MOBILE BOTTOM SHEET ADAPTATION ══════════ */
+  /* ══════════ GUIDE MODAL MOBILE BOTTOM SHEET (ZERO CLIPPING & NATURAL HEIGHT) ══════════ */
   .guide-modal-overlay {
     padding: 0 !important;
     align-items: flex-end !important;
     justify-content: center !important;
     z-index: 100000 !important;
-    overflow-x: hidden !important;
     width: 100vw !important;
     max-width: 100vw !important;
-    box-sizing: border-box !important;
+    overflow-x: hidden !important;
   }
 
   .guide-modal-container {
@@ -3924,6 +3923,7 @@ body.dark .guide-protip-box {
     max-width: 100% !important;
     height: 92vh !important;
     max-height: 92vh !important;
+    min-height: 0 !important;
     border-radius: 20px 20px 0 0 !important;
     border-bottom: none !important;
     margin: 0 !important;
@@ -3932,7 +3932,7 @@ body.dark .guide-protip-box {
     flex-direction: column !important;
     position: relative !important;
     z-index: 100001 !important;
-    overflow-x: hidden !important;
+    overflow: hidden !important;
     box-sizing: border-box !important;
   }
 
@@ -3951,6 +3951,8 @@ body.dark .guide-protip-box {
     width: 100% !important;
     box-sizing: border-box !important;
     overflow: hidden !important;
+    background: var(--surface) !important;
+    border-bottom: 1px solid var(--border) !important;
   }
 
   .guide-header-badge {
@@ -3964,6 +3966,8 @@ body.dark .guide-protip-box {
     line-height: 1.25 !important;
     margin-bottom: 0.15rem !important;
     word-break: break-word !important;
+    overflow-wrap: break-word !important;
+    white-space: normal !important;
   }
 
   .guide-modal-sub {
@@ -3971,6 +3975,8 @@ body.dark .guide-protip-box {
     line-height: 1.35 !important;
     color: var(--text2) !important;
     word-break: break-word !important;
+    overflow-wrap: break-word !important;
+    white-space: normal !important;
   }
 
   .guide-modal-close {
@@ -3982,15 +3988,16 @@ body.dark .guide-protip-box {
     flex-shrink: 0 !important;
   }
 
+  /* 5-Column Segmented Tab Bar: Fixed Header Area */
   .guide-tab-switcher {
     padding: 0.35rem 0.45rem !important;
     display: grid !important;
-    grid-template-columns: repeat(5, 1fr) !important;
+    grid-template-columns: repeat(5, minmax(0, 1fr)) !important;
     gap: 3px !important;
     background: var(--bg3) !important;
     border-bottom: 1px solid var(--border) !important;
     flex-shrink: 0 !important;
-    overflow-x: hidden !important;
+    overflow: hidden !important;
     width: 100% !important;
     box-sizing: border-box !important;
   }
@@ -4000,10 +4007,10 @@ body.dark .guide-protip-box {
   }
 
   .guide-tab-btn {
-    padding: 6px 2px !important;
+    padding: 6px 1px !important;
     font-size: 0.68rem !important;
     font-weight: 600 !important;
-    border-radius: 8px !important;
+    border-radius: 7px !important;
     white-space: nowrap !important;
     display: flex !important;
     align-items: center !important;
@@ -4012,9 +4019,10 @@ body.dark .guide-protip-box {
     line-height: 1.2 !important;
     box-sizing: border-box !important;
     width: 100% !important;
-    text-align: center !important;
     min-width: 0 !important;
+    text-align: center !important;
     overflow: hidden !important;
+    text-overflow: ellipsis !important;
     transition: all 0.15s ease !important;
   }
 
@@ -4026,129 +4034,165 @@ body.dark .guide-protip-box {
     box-shadow: 0 2px 8px rgba(13, 148, 136, 0.18) !important;
   }
 
+  /* ═══ DEDICATED SCROLLABLE BODY (Full Natural Height, ZERO CLIPPING) ═══ */
   .guide-modal-body {
-    padding: 0.75rem 0.85rem !important;
-    gap: 0.65rem !important;
+    padding: 0.85rem 0.95rem !important;
+    gap: 0.75rem !important;
     flex: 1 1 auto !important;
+    min-height: 0 !important;
+    max-height: none !important;
     overflow-y: auto !important;
     overflow-x: hidden !important;
+    overscroll-behavior-y: contain !important;
     -webkit-overflow-scrolling: touch !important;
     width: 100% !important;
     max-width: 100% !important;
     box-sizing: border-box !important;
+    display: flex !important;
+    flex-direction: column !important;
   }
 
+  /* Overview Box: Natural Height, Never Shrink */
   .guide-overview-box {
-    padding: 0.6rem 0.8rem !important;
-    gap: 0.6rem !important;
-    border-radius: 10px !important;
+    flex-shrink: 0 !important;
+    height: auto !important;
+    min-height: fit-content !important;
+    padding: 0.75rem 0.95rem !important;
+    gap: 0.75rem !important;
+    border-radius: 12px !important;
     width: 100% !important;
     max-width: 100% !important;
     box-sizing: border-box !important;
-    overflow: hidden !important;
+    overflow: visible !important;
     word-break: break-word !important;
+    overflow-wrap: break-word !important;
+    display: flex !important;
+    align-items: center !important;
   }
 
   .guide-overview-icon {
-    font-size: 1.2rem !important;
+    font-size: 1.35rem !important;
     flex-shrink: 0 !important;
   }
 
   .guide-overview-text {
-    font-size: 0.75rem !important;
-    line-height: 1.4 !important;
+    font-size: 0.78rem !important;
+    line-height: 1.5 !important;
     word-break: break-word !important;
+    overflow-wrap: break-word !important;
+    min-width: 0 !important;
+    flex: 1 !important;
+    height: auto !important;
   }
 
+  /* Steps Stack: Natural Heights */
   .guide-steps-grid {
     display: flex !important;
     flex-direction: column !important;
     width: 100% !important;
     max-width: 100% !important;
-    gap: 0.55rem !important;
+    gap: 0.7rem !important;
     box-sizing: border-box !important;
-    overflow: hidden !important;
+    flex-shrink: 0 !important;
+    height: auto !important;
+    min-height: fit-content !important;
   }
 
+  /* Step Card: Full Natural Height, No Clipping, No Line-Clamp */
   .guide-step-card {
-    padding: 0.65rem 0.8rem !important;
-    border-radius: 10px !important;
+    flex-shrink: 0 !important;
+    height: auto !important;
+    min-height: fit-content !important;
+    padding: 0.8rem 0.95rem !important;
+    border-radius: 12px !important;
     width: 100% !important;
     max-width: 100% !important;
     box-sizing: border-box !important;
-    overflow: hidden !important;
+    overflow: visible !important;
+    display: flex !important;
+    flex-direction: column !important;
   }
 
   .guide-step-header {
     display: flex !important;
     align-items: flex-start !important;
     justify-content: space-between !important;
-    gap: 6px !important;
-    margin-bottom: 0.35rem !important;
+    gap: 8px !important;
+    margin-bottom: 0.45rem !important;
     width: 100% !important;
     box-sizing: border-box !important;
+    flex-shrink: 0 !important;
   }
 
   .guide-step-title-row {
     display: flex !important;
-    align-items: flex-start !important;
-    gap: 5px !important;
+    align-items: center !important;
+    gap: 6px !important;
     min-width: 0 !important;
     flex: 1 1 auto !important;
   }
 
   .guide-step-num {
-    width: 18px !important;
-    height: 18px !important;
-    font-size: 0.65rem !important;
+    width: 20px !important;
+    height: 20px !important;
+    font-size: 0.68rem !important;
     flex-shrink: 0 !important;
-    margin-top: 1px !important;
   }
 
   .guide-step-icon {
-    font-size: 0.9rem !important;
+    font-size: 0.95rem !important;
     flex-shrink: 0 !important;
-    margin-top: 1px !important;
   }
 
   .guide-step-title {
-    font-size: 0.82rem !important;
+    font-size: 0.84rem !important;
     font-weight: 700 !important;
+    color: var(--text) !important;
     white-space: normal !important;
     word-break: break-word !important;
-    line-height: 1.25 !important;
+    overflow-wrap: break-word !important;
+    line-height: 1.3 !important;
     min-width: 0 !important;
-    flex: 1 !important;
+    flex: 1 1 auto !important;
   }
 
   .guide-step-badge {
     font-size: 0.62rem !important;
-    padding: 2px 6px !important;
+    padding: 2px 7px !important;
+    border-radius: 4px !important;
     flex-shrink: 0 !important;
     white-space: nowrap !important;
     margin-top: 1px !important;
   }
 
   .guide-step-text {
-    font-size: 0.75rem !important;
-    line-height: 1.45 !important;
+    font-size: 0.78rem !important;
+    line-height: 1.55 !important;
     width: 100% !important;
     box-sizing: border-box !important;
     word-break: break-word !important;
     overflow-wrap: break-word !important;
+    white-space: normal !important;
+    height: auto !important;
+    overflow: visible !important;
   }
 
+  /* Pro-Tip Box: Full Natural Height */
   .guide-protip-box {
-    padding: 0.65rem 0.8rem !important;
-    font-size: 0.74rem !important;
-    line-height: 1.4 !important;
-    border-radius: 10px !important;
+    flex-shrink: 0 !important;
+    height: auto !important;
+    min-height: fit-content !important;
+    padding: 0.8rem 0.95rem !important;
+    font-size: 0.76rem !important;
+    line-height: 1.55 !important;
+    border-radius: 12px !important;
     width: 100% !important;
     max-width: 100% !important;
     box-sizing: border-box !important;
-    overflow: hidden !important;
+    overflow: visible !important;
     word-break: break-word !important;
     overflow-wrap: break-word !important;
+    white-space: normal !important;
   }
 
   .guide-modal-footer {
