@@ -3965,16 +3965,16 @@ body.dark .guide-protip-box {
   }
 
   .guide-tab-switcher {
-    padding: 0.55rem 0.85rem !important;
-    gap: 8px !important;
-    overflow-x: auto !important;
-    -webkit-overflow-scrolling: touch !important;
-    scrollbar-width: none !important;
-    display: flex !important;
+    padding: 0.35rem 0.45rem !important;
+    display: grid !important;
+    grid-template-columns: repeat(5, 1fr) !important;
+    gap: 3px !important;
     background: var(--bg3) !important;
     border-bottom: 1px solid var(--border) !important;
     flex-shrink: 0 !important;
-    scroll-padding: 0 0.85rem !important;
+    overflow-x: hidden !important;
+    width: 100% !important;
+    box-sizing: border-box !important;
   }
 
   .guide-tab-switcher::-webkit-scrollbar {
@@ -3982,19 +3982,22 @@ body.dark .guide-protip-box {
   }
 
   .guide-tab-btn {
-    padding: 6px 14px !important;
-    font-size: 0.76rem !important;
+    padding: 6px 2px !important;
+    font-size: 0.68rem !important;
     font-weight: 600 !important;
-    flex-shrink: 0 !important;
-    border-radius: 999px !important;
+    border-radius: 8px !important;
     white-space: nowrap !important;
-    display: inline-flex !important;
+    display: flex !important;
     align-items: center !important;
     justify-content: center !important;
-    border: 1.5px solid transparent !important;
+    border: 1px solid transparent !important;
     line-height: 1.2 !important;
     box-sizing: border-box !important;
-    transition: all 0.2s ease !important;
+    width: 100% !important;
+    text-align: center !important;
+    min-width: 0 !important;
+    overflow: hidden !important;
+    transition: all 0.15s ease !important;
   }
 
   .guide-tab-btn.active {
@@ -4002,7 +4005,7 @@ body.dark .guide-protip-box {
     color: var(--teal) !important;
     border-color: var(--teal) !important;
     font-weight: 700 !important;
-    box-shadow: 0 2px 10px rgba(13, 148, 136, 0.22) !important;
+    box-shadow: 0 2px 8px rgba(13, 148, 136, 0.18) !important;
   }
 
   .guide-modal-body {
