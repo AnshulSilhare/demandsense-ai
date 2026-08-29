@@ -3901,12 +3901,186 @@ body.dark .guide-protip-box {
     -webkit-overflow-scrolling: touch !important;
   }
 
-  .guide-steps-grid { grid-template-columns: 1fr !important; }
-  .guide-tab-switcher { padding: 0.5rem 0.8rem !important; }
-  .guide-modal-header { padding: 0.85rem 1rem !important; }
-  .guide-modal-body { padding: 0.85rem 1rem !important; }
-  .guide-modal-footer { padding: 0.75rem 1rem !important; flex-wrap: wrap !important; gap: 0.5rem !important; }
-  .guide-footer-right { width: 100% !important; justify-content: flex-end !important; }
+  /* ══════════ GUIDE MODAL MOBILE ADAPTATION ══════════ */
+  .guide-modal-overlay {
+    padding: 0.5rem !important;
+    align-items: center !important;
+    justify-content: center !important;
+  }
+
+  .guide-modal-container {
+    width: 100% !important;
+    max-width: 100% !important;
+    height: 90vh !important;
+    max-height: 90vh !important;
+    border-radius: 16px !important;
+    margin: 0 !important;
+    display: flex !important;
+    flex-direction: column !important;
+  }
+
+  .guide-modal-header {
+    padding: 0.85rem 1rem 0.65rem !important;
+    gap: 0.5rem !important;
+  }
+
+  .guide-header-badge {
+    font-size: 0.62rem !important;
+    padding: 2px 7px !important;
+    margin-bottom: 0.25rem !important;
+  }
+
+  .guide-modal-title {
+    font-size: 1.05rem !important;
+    line-height: 1.25 !important;
+    margin-bottom: 0.2rem !important;
+  }
+
+  .guide-modal-sub {
+    font-size: 0.76rem !important;
+    line-height: 1.35 !important;
+  }
+
+  .guide-modal-close {
+    width: 32px !important;
+    height: 32px !important;
+    min-width: 32px !important;
+    font-size: 0.9rem !important;
+    margin-left: 0.4rem !important;
+  }
+
+  .guide-tab-switcher {
+    padding: 0.4rem 0.65rem !important;
+    gap: 4px !important;
+    overflow-x: auto !important;
+    -webkit-overflow-scrolling: touch !important;
+    scrollbar-width: none !important;
+    display: flex !important;
+  }
+
+  .guide-tab-switcher::-webkit-scrollbar {
+    display: none !important;
+  }
+
+  .guide-tab-btn {
+    padding: 5px 9px !important;
+    font-size: 0.72rem !important;
+    flex-shrink: 0 !important;
+    border-radius: 6px !important;
+  }
+
+  .guide-modal-body {
+    padding: 0.85rem 1rem !important;
+    gap: 0.75rem !important;
+    flex: 1 1 auto !important;
+    overflow-y: auto !important;
+    -webkit-overflow-scrolling: touch !important;
+  }
+
+  .guide-overview-box {
+    padding: 0.75rem 0.85rem !important;
+    gap: 0.65rem !important;
+    border-radius: 10px !important;
+  }
+
+  .guide-overview-icon {
+    font-size: 1.35rem !important;
+  }
+
+  .guide-overview-text {
+    font-size: 0.78rem !important;
+    line-height: 1.45 !important;
+  }
+
+  .guide-steps-grid {
+    grid-template-columns: 1fr !important;
+    gap: 0.65rem !important;
+  }
+
+  .guide-step-card {
+    padding: 0.75rem 0.85rem !important;
+    border-radius: 10px !important;
+  }
+
+  .guide-step-header {
+    gap: 6px !important;
+    margin-bottom: 0.4rem !important;
+  }
+
+  .guide-step-num {
+    width: 20px !important;
+    height: 20px !important;
+    font-size: 0.68rem !important;
+  }
+
+  .guide-step-icon {
+    font-size: 0.95rem !important;
+  }
+
+  .guide-step-title {
+    font-size: 0.82rem !important;
+  }
+
+  .guide-step-badge {
+    font-size: 0.62rem !important;
+    padding: 1px 5px !important;
+  }
+
+  .guide-step-text {
+    font-size: 0.76rem !important;
+    line-height: 1.45 !important;
+  }
+
+  .guide-protip-box {
+    padding: 0.75rem 0.85rem !important;
+    font-size: 0.76rem !important;
+    line-height: 1.45 !important;
+    border-radius: 10px !important;
+  }
+
+  .guide-modal-footer {
+    padding: 0.65rem 0.85rem !important;
+    flex-wrap: wrap !important;
+    gap: 0.5rem !important;
+    justify-content: space-between !important;
+  }
+
+  .guide-dots {
+    order: 1 !important;
+    width: 100% !important;
+    justify-content: center !important;
+    margin-bottom: 0.2rem !important;
+    gap: 5px !important;
+  }
+
+  .guide-nav-btn.prev {
+    order: 2 !important;
+    flex: 1 1 0 !important;
+    padding: 6px 10px !important;
+    font-size: 0.72rem !important;
+    text-align: center !important;
+  }
+
+  .guide-footer-right {
+    order: 3 !important;
+    flex: 2 1 0 !important;
+    display: flex !important;
+    gap: 4px !important;
+    width: auto !important;
+  }
+
+  .guide-action-btn {
+    flex: 1 1 auto !important;
+    padding: 6px 8px !important;
+    font-size: 0.7rem !important;
+    white-space: nowrap !important;
+  }
+
+  .guide-nav-btn.next {
+    padding: 6px 10px !important;
+    font-size: 0.72rem !important;
+    white-space: nowrap !important;
+  }
 }
 
 /* ── 3. SMALL PHONES (≤480px) ── */
