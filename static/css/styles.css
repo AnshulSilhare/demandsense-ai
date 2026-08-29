@@ -2888,10 +2888,15 @@ body.dark .guide-modal-title {
 .guide-modal-body {
   padding: 1.5rem 1.8rem;
   overflow-y: auto;
+  overflow-x: hidden;
+  overscroll-behavior-x: none;
+  touch-action: pan-y;
   flex: 1;
   display: flex;
   flex-direction: column;
   gap: 1.2rem;
+  width: 100%;
+  box-sizing: border-box;
 }
 
 .guide-overview-box {
