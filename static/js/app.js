@@ -725,7 +725,7 @@ let _forecastRetryCount = 0;
         capsule.classList.add('is-expanded');
         // Explicitly set exact pixel height of the inner content so it wraps perfectly without dead space
         if (bodyCard) {
-            capsule.style.height = bodyCard.offsetHeight + 'px';
+            capsule.style.height = (bodyCard.scrollHeight + 8) + 'px';
         }
         setTimeout(() => document.getElementById('skuSelect')?.focus(), 140);
       } else {
@@ -811,12 +811,12 @@ let _forecastRetryCount = 0;
     const regionShort = state.region === 'ALL' ? 'National' : (regionObj ? regionObj.name.split(' ')[0] : state.region);
 
     // Preset mapping
-    const presetNames = { 3: '3d Air', 7: '7d Std', 14: '14d Rail', 21: '21d Sea' };
-    const ltLabel = presetNames[state.leadTime] || `${state.leadTime}d Lead Time`;
+    const presetNames = { 3: '3 Days (Air)', 7: '7 Days (Std)', 14: '14 Days (Rail)', 21: '21 Days (Sea)' };
+    const ltLabel = presetNames[state.leadTime] || `${state.leadTime} Days`;
 
     const slPcts = { 'C': '90%', 'B': '95%', 'A': '98%' };
     const slShort = `${slPcts[state.serviceLevel] || '98%'} SLA`;
-    const stockLabel = `${(state.stock || 0).toLocaleString()} units`;
+    const stockLabel = `${(state.stock || 0).toLocaleString()} Units`;
 
     // Smart Floating Dynamic Island Pill (on scroll)
     if (el('pillSku')) el('pillSku').textContent = skuFullLabel;
@@ -902,7 +902,7 @@ let _forecastRetryCount = 0;
     if (config.default_lead_time !== undefined) {
       if (el('leadTimeSlider')) el('leadTimeSlider').value = config.default_lead_time;
       state.leadTime = config.default_lead_time;
-      if (el('leadTimeValue')) el('leadTimeValue').textContent = `${state.leadTime}d`;
+      if (el('leadTimeValue')) el('leadTimeValue').textContent = `${state.leadTime} Days`;
     }
 
     // Initialize summary
@@ -948,7 +948,7 @@ let _forecastRetryCount = 0;
     function updateLeadTimeUI(days) {
       state.leadTime = days;
       if (slider) slider.value = days;
-      if (valPill) valPill.textContent = `${days}d`;
+      if (valPill) valPill.textContent = `${days} Days`;
       presetBtns.forEach(btn => {
         const isMatch = parseInt(btn.dataset.val) === days;
         btn.classList.toggle('is-selected', isMatch);
@@ -1544,12 +1544,13 @@ let _forecastRetryCount = 0;
     if (!d?.sim_impact || !base) return;
 
     const s = d.sim_impact;
-    el('simMetricLt').textContent = `${d.eff_lt}d`;
-    el('simMetricSs').textContent = `${(s.safety_stock_units || 0).toLocaleString()} u`;
-    el('simMetricRop').textContent = `${(s.reorder_point_units || 0).toLocaleString()} u`;
-    el('simMetricRar').textContent = `₹${((s.revenue_at_risk_inr || 0) / 100000).toFixed(1)}L`;
-    el('simMetricPo').textContent = `${(s.recommended_po_qty_units || 0).toLocaleString()} u`;
-    el('simMetricScale').textContent = `${d.eff_dem_scale?.toFixed(2)}×`;
+    if (el('simMetricLt')) el('simMetricLt').textContent = `${d.eff_lt} Days`;
+    if (el('simMetricSs')) el('simMetricSs').textContent = `${(s.safety_stock_units || 0).toLocaleString()} Units`;
+    if (el('simMetricRop')) el('simMetricRop').textContent = `${(s.reorder_point_units || 0).toLocaleString()} Units`;
+    const rarLakhs = ((s.revenue_at_risk_inr || 0) / 100000);
+    if (el('simMetricRar')) el('simMetricRar').textContent = `₹${rarLakhs >= 0.01 ? rarLakhs.toFixed(2) : '0.00'} Lakhs`;
+    if (el('simMetricPo')) el('simMetricPo').textContent = `${(s.recommended_po_qty_units || 0).toLocaleString()} Units`;
+    if (el('simMetricScale')) el('simMetricScale').textContent = `${d.eff_dem_scale?.toFixed(2)}× Multiplier`;
   }
 
   // ═══ TAB 5: AI PRESCRIPTIVE CONTROL ROOM ═══

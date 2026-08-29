@@ -100,7 +100,7 @@ if(localStorage.getItem('ds-theme')==='dark'||(!localStorage.getItem('ds-theme')
       <div class="pill-metrics" id="pillMetrics">
         <span class="pill-metric-item" title="Territory Scope"><span class="pill-icon">📍</span><span id="pillRegion">National</span></span>
         <span class="pill-sep">·</span>
-        <span class="pill-metric-item" title="Supplier Lead Time"><span class="pill-icon">⏱️</span><span id="pillLeadTime">7d Std</span></span>
+        <span class="pill-metric-item" title="Supplier Lead Time"><span class="pill-icon">⏱️</span><span id="pillLeadTime">7 Days (Std)</span></span>
         <span class="pill-sep">·</span>
         <span class="pill-metric-item" title="Service Level SLA"><span class="pill-icon">🎯</span><span id="pillSla">98% SLA</span></span>
         <span class="pill-sep">·</span>
@@ -169,7 +169,7 @@ if(localStorage.getItem('ds-theme')==='dark'||(!localStorage.getItem('ds-theme')
             <div class="control-field lead-time-field">
               <div class="field-label-row">
                 <label class="field-label" for="leadTimeSlider">Supplier Lead Time</label>
-                <span class="val-pill" id="leadTimeValue">7d</span>
+                <span class="val-pill" id="leadTimeValue">7 Days</span>
               </div>
               <div class="slider-container">
                 <div class="slider-track-wrap">
@@ -579,30 +579,30 @@ if(localStorage.getItem('ds-theme')==='dark'||(!localStorage.getItem('ds-theme')
       </div>
       
       <!-- Recalculated Metric Insets -->
-      <div class="grid-3" id="simMetrics" style="margin-bottom: 1.5rem;">
-        <div class="kpi-card" style="text-align:center">
+      <div class="grid-3 sim-metrics-grid" id="simMetrics" style="margin-bottom: 1.5rem;">
+        <div class="kpi-card sim-metric-card">
           <div class="kpi-label">Effective Lead Time</div>
-          <div class="kpi-value" id="simMetricLt" style="font-size:1.3rem">—</div>
+          <div class="kpi-value" id="simMetricLt">7 Days</div>
         </div>
-        <div class="kpi-card" style="text-align:center">
+        <div class="kpi-card sim-metric-card">
           <div class="kpi-label">Simulated Safety Stock</div>
-          <div class="kpi-value" id="simMetricSs" style="font-size:1.3rem">—</div>
+          <div class="kpi-value" id="simMetricSs">— Units</div>
         </div>
-        <div class="kpi-card" style="text-align:center">
+        <div class="kpi-card sim-metric-card">
           <div class="kpi-label">Simulated Reorder Point</div>
-          <div class="kpi-value" id="simMetricRop" style="font-size:1.3rem">—</div>
+          <div class="kpi-value" id="simMetricRop">— Units</div>
         </div>
-        <div class="kpi-card" style="text-align:center">
+        <div class="kpi-card sim-metric-card">
           <div class="kpi-label">Simulated Rev. at Risk</div>
-          <div class="kpi-value" id="simMetricRar" style="font-size:1.3rem">—</div>
+          <div class="kpi-value" id="simMetricRar">₹0.00 Lakhs</div>
         </div>
-        <div class="kpi-card" style="text-align:center">
+        <div class="kpi-card sim-metric-card">
           <div class="kpi-label">Recommended PO Qty</div>
-          <div class="kpi-value" id="simMetricPo" style="font-size:1.3rem">—</div>
+          <div class="kpi-value" id="simMetricPo">— Units</div>
         </div>
-        <div class="kpi-card" style="text-align:center">
+        <div class="kpi-card sim-metric-card">
           <div class="kpi-label">Effective Demand Scale</div>
-          <div class="kpi-value" id="simMetricScale" style="font-size:1.3rem">—</div>
+          <div class="kpi-value" id="simMetricScale">1.00× Multiplier</div>
         </div>
       </div>
       <div class="chart-container" id="simChart" style="margin-top: 1.5rem;"></div>

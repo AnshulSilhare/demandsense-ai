@@ -4442,3 +4442,341 @@ body.dark .guide-protip-box {
   background: var(--glass-border);
   border-radius: 3px;
 }
+
+
+/* ═══════════════════════════════════════════════════════════════
+   RESPONSIVE DESIGN & MOBILE OPTIMIZATION ENHANCEMENTS
+   - Ultra-compact 2-column simulation & primary KPI cards on mobile
+   - 100% adaptable screen fitting for Global Controls Capsule & Pill
+   ═══════════════════════════════════════════════════════════════ */
+
+/* ─── Simulation Metric Insets (What-If Tab) ─── */
+.sim-metrics-grid {
+  display: grid;
+  grid-template-columns: repeat(6, 1fr);
+  gap: 0.75rem;
+  width: 100%;
+}
+
+.sim-metric-card {
+  padding: 0.75rem 0.85rem !important;
+  text-align: center !important;
+  border-top: 3px solid var(--teal) !important;
+  background: var(--glass-bg);
+  backdrop-filter: var(--glass-blur);
+  -webkit-backdrop-filter: var(--glass-blur);
+  border-radius: var(--radius);
+  border: 1px solid var(--glass-border);
+  box-shadow: var(--glass-shadow);
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+}
+
+.sim-metric-card .kpi-label {
+  font-family: var(--body);
+  font-size: 0.68rem;
+  color: var(--text3);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  margin-bottom: 0.25rem;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 100%;
+}
+
+.sim-metric-card .kpi-value {
+  font-family: var(--display);
+  font-size: 1.15rem;
+  font-weight: 700;
+  color: var(--text);
+  line-height: 1.2;
+}
+
+body.dark .sim-metric-card .kpi-value {
+  background: linear-gradient(135deg, #f8fafc 0%, var(--accent-title) 75%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+@media (max-width: 1100px) {
+  .sim-metrics-grid {
+    grid-template-columns: repeat(3, 1fr) !important;
+    gap: 0.65rem !important;
+  }
+}
+
+@media (max-width: 767px) {
+  /* Prevent full-stacking of sim metrics into 1 tall column */
+  .sim-metrics-grid,
+  #simMetrics {
+    display: grid !important;
+    grid-template-columns: repeat(2, 1fr) !important;
+    gap: 0.45rem !important;
+    margin-bottom: 0.85rem !important;
+  }
+
+  .sim-metric-card,
+  #simMetrics .kpi-card {
+    padding: 0.5rem 0.55rem !important;
+    min-height: 0 !important;
+    border-radius: 8px !important;
+  }
+
+  .sim-metric-card .kpi-label,
+  #simMetrics .kpi-label {
+    font-size: 0.58rem !important;
+    letter-spacing: 0.03em !important;
+    margin-bottom: 0.1rem !important;
+  }
+
+  .sim-metric-card .kpi-value,
+  #simMetrics .kpi-value {
+    font-size: 0.98rem !important;
+    line-height: 1.15 !important;
+  }
+
+  /* ─── Global Forecast Controls Capsule Mobile Adaptation ─── */
+  .adaptive-control-capsule {
+    width: 100% !important;
+    max-width: 100% !important;
+    margin: 0 auto 1rem auto !important;
+    box-sizing: border-box !important;
+  }
+
+  .adaptive-control-capsule.is-expanded {
+    width: 100% !important;
+    max-width: 100% !important;
+    border-radius: 14px !important;
+  }
+
+  .adaptive-control-capsule.is-floating {
+    width: calc(100% - 1rem) !important;
+    max-width: calc(100% - 1rem) !important;
+    left: 50% !important;
+    transform: translateX(-50%) !important;
+    top: 54px !important;
+    margin: 0 !important;
+  }
+
+  .adaptive-control-capsule.is-floating.is-expanded {
+    width: calc(100% - 1rem) !important;
+    max-width: calc(100% - 1rem) !important;
+    max-height: 85vh !important;
+    overflow-y: auto !important;
+    -webkit-overflow-scrolling: touch !important;
+    border-radius: 14px !important;
+  }
+
+  .capsule-body-card {
+    padding: 0.65rem 0.75rem !important;
+    box-sizing: border-box !important;
+  }
+
+  .capsule-header {
+    display: flex !important;
+    flex-wrap: wrap !important;
+    justify-content: space-between !important;
+    align-items: center !important;
+    gap: 0.4rem !important;
+    margin-bottom: 0.5rem !important;
+    padding-bottom: 0.45rem !important;
+  }
+
+  .capsule-header-left {
+    gap: 0.45rem !important;
+  }
+
+  .console-title {
+    font-size: 0.88rem !important;
+  }
+
+  .console-badge {
+    font-size: 0.58rem !important;
+    padding: 0.15rem 0.45rem !important;
+  }
+
+  .btn-ghost-sm {
+    padding: 0.25rem 0.55rem !important;
+    font-size: 0.68rem !important;
+  }
+
+  .btn-collapse-capsule {
+    padding: 0.25rem 0.75rem !important;
+    font-size: 0.72rem !important;
+  }
+
+  /* Control Clusters Stack Cleanly on Phones to Avoid Cut-Off */
+  .control-clusters {
+    display: flex !important;
+    flex-direction: column !important;
+    gap: 0.45rem !important;
+    width: 100% !important;
+    box-sizing: border-box !important;
+  }
+
+  .control-cluster {
+    width: 100% !important;
+    box-sizing: border-box !important;
+    padding: 0.5rem 0.65rem !important;
+    border-radius: 8px !important;
+    grid-column: auto !important;
+  }
+
+  .control-cluster.cluster-scope .cluster-inputs {
+    display: flex !important;
+    flex-direction: column !important;
+    gap: 0.35rem !important;
+    width: 100% !important;
+  }
+
+  .select-wrapper {
+    width: 100% !important;
+    max-width: 100% !important;
+    box-sizing: border-box !important;
+  }
+
+  .custom-select {
+    width: 100% !important;
+    max-width: 100% !important;
+    box-sizing: border-box !important;
+    font-size: 0.76rem !important;
+    height: 30px !important;
+    padding-right: 1.8rem !important;
+  }
+
+  .segmented-group {
+    display: flex !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    box-sizing: border-box !important;
+    gap: 2px !important;
+  }
+
+  .segmented-btn {
+    flex: 1 1 0 !important;
+    min-width: 0 !important;
+    padding: 0.2rem 0.12rem !important;
+    font-size: 0.64rem !important;
+    white-space: nowrap !important;
+    overflow: hidden !important;
+    text-overflow: ellipsis !important;
+  }
+
+  .dataset-meta-badge {
+    width: 100% !important;
+    max-width: 100% !important;
+    box-sizing: border-box !important;
+    overflow: hidden !important;
+  }
+
+  .dataset-meta-badge .dataset-name {
+    overflow: hidden !important;
+    text-overflow: ellipsis !important;
+    white-space: nowrap !important;
+    max-width: calc(100% - 20px) !important;
+  }
+
+  .upload-caution-caption {
+    font-size: 0.62rem !important;
+    line-height: 1.3 !important;
+    white-space: normal !important;
+    word-break: break-word !important;
+  }
+
+  /* Collapsed Pill Bar on Mobile */
+  .capsule-pill-bar {
+    padding: 0 0.5rem 0 0.75rem !important;
+    gap: 0.35rem !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: space-between !important;
+  }
+
+  .pill-top-row {
+    flex: 0 1 auto !important;
+    min-width: 0 !important;
+    gap: 0.35rem !important;
+  }
+
+  .pill-sku-title {
+    max-width: 110px !important;
+    font-size: 0.72rem !important;
+    overflow: hidden !important;
+    text-overflow: ellipsis !important;
+    white-space: nowrap !important;
+  }
+
+  .pill-divider {
+    height: 14px !important;
+    margin: 0 2px !important;
+    flex-shrink: 0 !important;
+  }
+
+  .pill-metrics {
+    flex: 1 1 auto !important;
+    min-width: 0 !important;
+    font-size: 0.65rem !important;
+    gap: 0.25rem !important;
+    overflow-x: auto !important;
+    scrollbar-width: none !important;
+    -webkit-overflow-scrolling: touch !important;
+  }
+
+  .pill-metrics::-webkit-scrollbar {
+    display: none !important;
+  }
+
+  .pill-edit-btn {
+    padding: 0.2rem 0.5rem !important;
+    font-size: 0.65rem !important;
+    flex-shrink: 0 !important;
+  }
+}
+
+@media (max-width: 480px) {
+  .pill-sku-title {
+    max-width: 90px !important;
+  }
+
+  .kpi-bar {
+    grid-template-columns: repeat(2, 1fr) !important;
+    gap: 0.4rem !important;
+  }
+
+  .kpi-card {
+    padding: 0.45rem 0.55rem !important;
+  }
+
+  .kpi-label {
+    font-size: 0.56rem !important;
+  }
+
+  .kpi-value {
+    font-size: 1.05rem !important;
+  }
+
+  .sim-metrics-grid,
+  #simMetrics {
+    grid-template-columns: repeat(2, 1fr) !important;
+    gap: 0.35rem !important;
+  }
+
+  .sim-metric-card,
+  #simMetrics .kpi-card {
+    padding: 0.4rem 0.45rem !important;
+  }
+
+  .sim-metric-card .kpi-label,
+  #simMetrics .kpi-label {
+    font-size: 0.54rem !important;
+  }
+
+  .sim-metric-card .kpi-value,
+  #simMetrics .kpi-value {
+    font-size: 0.92rem !important;
+  }
+}
