@@ -710,14 +710,14 @@ let _forecastRetryCount = 0;
     }
 
     const capsule = el('controlCapsule');
-    let isUserExpanded = true;
+    
     let isScrolledPast = false;
 
     // Dynamically calculate and set height so CSS transition is perfectly smooth
     // between collapsed (48px) and expanded (actual content height)
     function applyCapsuleState(expanded) {
       if (!capsule) return;
-      isUserExpanded = expanded;
+      window.isUserExpanded = expanded;
       const bodyCard = document.getElementById('capsuleBodyCard');
       
       if (expanded) {
@@ -754,13 +754,13 @@ let _forecastRetryCount = 0;
         }
         
         // 1. Auto-collapse when scrolling down past threshold
-        if (scrollingDown && y > threshold && isUserExpanded) {
+        if (scrollingDown && y > threshold && window.isUserExpanded) {
           autoCollapsedOnScroll = true;
           applyCapsuleState(false);
         }
         
         // 2. Auto-expand when scrolling back to absolute top
-        if (!scrollingDown && y <= 10 && !isUserExpanded && autoCollapsedOnScroll) {
+        if (!scrollingDown && y <= 10 && !window.isUserExpanded && autoCollapsedOnScroll) {
           autoCollapsedOnScroll = false;
           applyCapsuleState(true);
         }
@@ -794,7 +794,7 @@ let _forecastRetryCount = 0;
       cachedMetrics = null;
       isCompactClean = false;
       handleScroll();
-      if (isUserExpanded) applyCapsuleState(true);
+      if (window.window.isUserExpanded) applyCapsuleState(true);
     }, { passive: true });
 
     initCanvas();
@@ -826,6 +826,7 @@ let _forecastRetryCount = 0;
     if (el('pillStock')) el('pillStock').textContent = stockLabel;
   }
 
+  window.isUserExpanded = true;
   function setupCollapsibleFilterPanel() {
       const capsule = el('controlCapsule');
       const collapseBtn = el('capsuleCollapseBtn');
@@ -851,7 +852,7 @@ let _forecastRetryCount = 0;
       
       // Click outside to collapse IF floating overlay
       document.addEventListener('click', (e) => {
-        if (isUserExpanded && capsule && capsule.classList.contains('is-floating') && !capsule.contains(e.target)) {
+        if (window.isUserExpanded && capsule && capsule.classList.contains('is-floating') && !capsule.contains(e.target)) {
           window.applyCapsuleStateGlobal(false);
         }
       });
