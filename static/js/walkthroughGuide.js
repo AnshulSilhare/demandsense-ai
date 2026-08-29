@@ -296,7 +296,11 @@
       // Update tab switcher buttons
       $$('.guide-tab-btn').forEach(btn => {
         const t = btn.getAttribute('data-tab');
-        btn.classList.toggle('active', t === activeGuideTab);
+        const isActive = t === activeGuideTab;
+        btn.classList.toggle('active', isActive);
+        if (isActive) {
+          btn.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' });
+        }
       });
 
       // Build body HTML
