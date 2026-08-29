@@ -689,19 +689,13 @@ body.dark .adaptive-control-capsule.is-floating.is-expanded {
 }
 
 /* Pill Internal Elements */
-.pill-top-row {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.65rem;
-  min-width: 0;
-  flex-shrink: 0;
-}
-
 .pill-badge {
   display: inline-flex;
   align-items: center;
   gap: 0.4rem;
   flex-shrink: 0;
+  max-width: 220px;
+  min-width: 0;
 }
 
 .pill-dot {
@@ -4687,23 +4681,28 @@ body.dark .sim-metric-card .kpi-value {
     word-break: break-word !important;
   }
 
-  /* Collapsed Pill Bar on Mobile */
+  /* Collapsed Pill Bar on Mobile — Strict Non-Colliding Flex Layout */
   .capsule-pill-bar {
-    padding: 0 0.5rem 0 0.75rem !important;
+    padding: 0 0.5rem 0 0.65rem !important;
     gap: 0.35rem !important;
     display: flex !important;
     align-items: center !important;
-    justify-content: space-between !important;
+    justify-content: flex-start !important;
+    width: 100% !important;
+    box-sizing: border-box !important;
   }
 
-  .pill-top-row {
-    flex: 0 1 auto !important;
+  .pill-badge {
+    display: inline-flex !important;
+    align-items: center !important;
+    gap: 0.3rem !important;
+    flex: 0 0 auto !important;
+    max-width: 115px !important;
     min-width: 0 !important;
-    gap: 0.35rem !important;
   }
 
   .pill-sku-title {
-    max-width: 110px !important;
+    max-width: 95px !important;
     font-size: 0.72rem !important;
     overflow: hidden !important;
     text-overflow: ellipsis !important;
@@ -4713,17 +4712,23 @@ body.dark .sim-metric-card .kpi-value {
   .pill-divider {
     height: 14px !important;
     margin: 0 2px !important;
-    flex-shrink: 0 !important;
+    flex: 0 0 auto !important;
   }
 
   .pill-metrics {
     flex: 1 1 auto !important;
     min-width: 0 !important;
     font-size: 0.65rem !important;
-    gap: 0.25rem !important;
+    gap: 0.3rem !important;
     overflow-x: auto !important;
     scrollbar-width: none !important;
     -webkit-overflow-scrolling: touch !important;
+    display: flex !important;
+    align-items: center !important;
+  }
+
+  .pill-metric-item {
+    flex-shrink: 0 !important;
   }
 
   .pill-metrics::-webkit-scrollbar {
@@ -4731,9 +4736,10 @@ body.dark .sim-metric-card .kpi-value {
   }
 
   .pill-edit-btn {
-    padding: 0.2rem 0.5rem !important;
+    padding: 0.2rem 0.55rem !important;
     font-size: 0.65rem !important;
-    flex-shrink: 0 !important;
+    flex: 0 0 auto !important;
+    margin-left: auto !important;
   }
 }
 
