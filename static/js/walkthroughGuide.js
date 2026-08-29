@@ -49,7 +49,7 @@
     tab2: {
       id: 'tab2',
       badge: 'Tab 2 of 5',
-      title: '🏆 Auto-ML Arena & Model Comparison',
+      title: '🏆 Auto-ML Model Selection & Model Comparison',
       subtitle: 'Evaluate 5 competing statistical and ML algorithms to understand why the winning model was selected.',
       heroIcon: '🏆',
       overview: 'DemandSense automatically runs a continuous model tournament across 5 distinct architectures to select the model with the lowest prediction error on your specific SKU.',
@@ -169,7 +169,7 @@
     tab5: {
       id: 'tab5',
       badge: 'Tab 5 of 5',
-      title: '🚨 AI Control Room & Executive Briefing',
+      title: '🚨 AI Prescriptive Insights & Executive Briefing',
       subtitle: 'Automated purchase orders, diagnostic alert banners, and 1-click executive decision downloads.',
       heroIcon: '🚨',
       overview: 'The executive command center synthesizes all forecasting, inventory, and simulation data into clear action items and ready-to-execute purchase orders.',
@@ -203,7 +203,7 @@
           badge: '1-Click Export'
         }
       ],
-      proTip: '💡 <strong>Pro Tip:</strong> Review the AI Control Room first thing every morning to identify any SKU crossing the reorder threshold before morning supplier dispatch windows close.'
+      proTip: '💡 <strong>Pro Tip:</strong> Review the AI Prescriptive Insights first thing every morning to identify any SKU crossing the reorder threshold before morning supplier dispatch windows close.'
     }
   };
 
