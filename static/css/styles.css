@@ -4773,6 +4773,7 @@ body.dark .sim-metric-card .kpi-value {
     -webkit-overflow-scrolling: touch !important;
     white-space: nowrap !important;
     padding-top: 3px !important;
+    padding-right: 0.75rem !important;
     border-top: 1px solid var(--border) !important;
   }
 
@@ -4790,7 +4791,8 @@ body.dark .sim-metric-card .kpi-value {
 
 @media (max-width: 480px) {
   .pill-sku-title {
-    max-width: 90px !important;
+    max-width: 100% !important;
+    font-size: 0.76rem !important;
   }
 
   .kpi-bar {
