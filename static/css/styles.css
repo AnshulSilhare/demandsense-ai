@@ -3236,9 +3236,9 @@ body.dark .guide-protip-box {
     z-index: 9999 !important;
     height: 56px !important;
     padding: 4px 8px !important;
-    background: rgba(255, 255, 255, 0.78) !important;
-    backdrop-filter: blur(28px) saturate(200%) !important;
-    -webkit-backdrop-filter: blur(28px) saturate(200%) !important;
+    background: rgba(255, 255, 255, 0.05) !important;
+    backdrop-filter: blur(12px) saturate(180%) !important;
+    -webkit-backdrop-filter: blur(12px) saturate(180%) !important;
     border: 1px solid rgba(255, 255, 255, 0.85) !important;
     border-radius: 99px !important;
     box-shadow: 0 16px 40px rgba(15, 23, 42, 0.18), inset 0 1px 1.5px rgba(255, 255, 255, 0.85) !important;
@@ -3248,7 +3248,7 @@ body.dark .guide-protip-box {
   }
 
   body.dark .bottom-tab-bar {
-    background: rgba(15, 23, 42, 0.82) !important;
+    background: rgba(15, 23, 42, 0.08) !important;
     border: 1px solid rgba(255, 255, 255, 0.22) !important;
     box-shadow: 0 20px 48px rgba(0, 0, 0, 0.65), inset 0 1px 1.5px rgba(255, 255, 255, 0.22), 0 0 24px rgba(56, 189, 248, 0.12) !important;
   }
@@ -3532,8 +3532,8 @@ body.dark .guide-protip-box {
     height: 54px !important;
     padding: 4px 5px !important;
     background: rgba(255, 255, 255, 0.72) !important;
-    backdrop-filter: blur(28px) saturate(200%) !important;
-    -webkit-backdrop-filter: blur(28px) saturate(200%) !important;
+    backdrop-filter: blur(12px) saturate(180%) !important;
+    -webkit-backdrop-filter: blur(12px) saturate(180%) !important;
     border: 1px solid rgba(255, 255, 255, 0.8) !important;
     border-radius: 99px !important;
     box-shadow: 0 16px 40px rgba(15, 23, 42, 0.18), inset 0 1px 1.5px rgba(255, 255, 255, 0.85) !important;
