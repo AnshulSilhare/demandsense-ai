@@ -3166,11 +3166,20 @@ body.dark .guide-protip-box {
     z-index: 9999 !important;
     height: 56px !important;
     padding: 4px 8px !important;
+
+
+    box-shadow:
+      var(--nav-glass-elevation),
+      inset 0 1px 1px 0 var(--nav-glass-rim-top),
+      inset 0 -1px 1px 0 var(--nav-glass-rim-bottom),
+      inset 0 0 14px 1px var(--nav-glass-halo),
+      inset 0 0 18px 0 var(--nav-glass-depth-shadow) !important;
+
     
     background: var(--nav-glass-bg) !important;
     border: 1px solid var(--nav-glass-border) !important;
-    backdrop-filter: blur(3px) saturate(140%) brightness(1.02) !important;
-    -webkit-backdrop-filter: blur(3px) saturate(140%) brightness(1.02) !important;
+    backdrop-filter: blur(6px) saturate(120%) brightness(1.02) !important;
+    -webkit-backdrop-filter: blur(6px) saturate(120%) brightness(1.02) !important;
     backdrop-filter: url(#droplet-lens-refract) var(--nav-glass-blur) !important;
     -webkit-backdrop-filter: url(#droplet-lens-refract) var(--nav-glass-blur) !important;
     box-shadow:
@@ -3295,12 +3304,24 @@ body.dark .guide-protip-box {
     z-index: 9999 !important;
     height: 56px !important;
     padding: 4px 8px !important;
-    background: rgba(255, 255, 255, 0.01) !important;
-    backdrop-filter: blur(12px) saturate(180%) !important;
-    -webkit-backdrop-filter: blur(12px) saturate(180%) !important;
-    border: 1px solid rgba(255, 255, 255, 0.85) !important;
+
+
+    
+    background: var(--nav-glass-bg) !important;
+    border: 1px solid var(--nav-glass-border) !important;
+    backdrop-filter: blur(6px) saturate(120%) brightness(1.02) !important;
+    -webkit-backdrop-filter: blur(6px) saturate(120%) brightness(1.02) !important;
+    backdrop-filter: url(#droplet-lens-refract) var(--nav-glass-blur) !important;
+    -webkit-backdrop-filter: url(#droplet-lens-refract) var(--nav-glass-blur) !important;
+    box-shadow:
+      var(--nav-glass-elevation),
+      inset 0 1px 1px 0 var(--nav-glass-rim-top),
+      inset 0 -1px 1px 0 var(--nav-glass-rim-bottom),
+      inset 0 0 14px 1px var(--nav-glass-halo),
+      inset 0 0 18px 0 var(--nav-glass-depth-shadow) !important;
+
     border-radius: 99px !important;
-    box-shadow: 0 16px 40px rgba(15, 23, 42, 0.18), inset 0 1px 1.5px rgba(255, 255, 255, 0.85) !important;
+
     align-items: center !important;
     justify-content: space-between !important;
     pointer-events: auto !important;
@@ -3586,12 +3607,24 @@ body.dark .guide-protip-box {
     z-index: 9999 !important;
     height: 54px !important;
     padding: 4px 5px !important;
-    background: rgba(255, 255, 255, 0.72) !important;
-    backdrop-filter: blur(12px) saturate(180%) !important;
-    -webkit-backdrop-filter: blur(12px) saturate(180%) !important;
-    border: 1px solid rgba(255, 255, 255, 0.8) !important;
+
+
+    
+    background: var(--nav-glass-bg) !important;
+    border: 1px solid var(--nav-glass-border) !important;
+    backdrop-filter: blur(6px) saturate(120%) brightness(1.02) !important;
+    -webkit-backdrop-filter: blur(6px) saturate(120%) brightness(1.02) !important;
+    backdrop-filter: url(#droplet-lens-refract) var(--nav-glass-blur) !important;
+    -webkit-backdrop-filter: url(#droplet-lens-refract) var(--nav-glass-blur) !important;
+    box-shadow:
+      var(--nav-glass-elevation),
+      inset 0 1px 1px 0 var(--nav-glass-rim-top),
+      inset 0 -1px 1px 0 var(--nav-glass-rim-bottom),
+      inset 0 0 14px 1px var(--nav-glass-halo),
+      inset 0 0 18px 0 var(--nav-glass-depth-shadow) !important;
+
     border-radius: 99px !important;
-    box-shadow: 0 16px 40px rgba(15, 23, 42, 0.18), inset 0 1px 1.5px rgba(255, 255, 255, 0.85) !important;
+
     align-items: center !important;
     justify-content: space-between !important;
     pointer-events: auto !important;
