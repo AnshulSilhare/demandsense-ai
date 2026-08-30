@@ -638,7 +638,7 @@ body.dark .adaptive-control-capsule.is-collapsed {
   top: 0;
   left: 0;
   right: 0;
-  padding: 0.85rem 1.25rem;
+  padding: 0.85rem 1.25rem 0.35rem 1.25rem;
   opacity: 0;
   visibility: hidden;
   pointer-events: none;
@@ -1026,7 +1026,7 @@ body.dark .echarts-tooltip {
   border: 1px solid var(--glass-border);
   border-radius: var(--radius2);
   box-shadow: var(--glass-shadow);
-  padding: 0.85rem 1.25rem;
+  padding: 0.85rem 1.25rem 0.35rem 1.25rem;
   margin-bottom: 1.15rem;
   position: relative;
   overflow: hidden;
@@ -5047,7 +5047,7 @@ body.dark .sim-metric-card .kpi-value {
   }
 
   .capsule-body-card {
-    padding: 0.65rem 0.75rem !important;
+    padding: 0.65rem 0.75rem 0.25rem 0.75rem !important;
     box-sizing: border-box !important;
   }
 
