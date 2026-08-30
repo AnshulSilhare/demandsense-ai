@@ -7,12 +7,12 @@
 :root {
 
   /* Light Mode Specular Glass Tokens */
-  --nav-glass-blur: blur(1.5px) saturate(160%) brightness(1.03);
+  --nav-glass-blur: blur(6px) saturate(120%) brightness(1.03);
   --nav-glass-bg: rgba(255, 255, 255, 0.03);
   --nav-glass-border: rgba(255, 255, 255, 0.25);
-  --nav-glass-rim-top: rgba(255, 255, 255, 0.65);
-  --nav-glass-rim-bottom: rgba(255, 255, 255, 0.15);
-  --nav-glass-halo: rgba(255, 255, 255, 0.12);
+  --nav-glass-rim-top: rgba(255, 255, 255, 0.15);
+  --nav-glass-rim-bottom: rgba(255, 255, 255, 0.05);
+  --nav-glass-halo: rgba(255, 255, 255, 0.02);
   --nav-glass-depth-shadow: rgba(0, 0, 0, 0.04);
   --nav-glass-elevation: 0 16px 38px -4px rgba(15, 23, 42, 0.18), 0 4px 12px rgba(15, 23, 42, 0.06);
 
@@ -66,12 +66,12 @@
 body.dark {
 
   /* Dark Mode Specular Glass Tokens */
-  --nav-glass-blur: blur(1.5px) saturate(160%) brightness(1.03);
+  --nav-glass-blur: blur(6px) saturate(120%) brightness(1.03);
   --nav-glass-bg: rgba(255, 255, 255, 0.02);
-  --nav-glass-border: rgba(255, 255, 255, 0.12);
-  --nav-glass-rim-top: rgba(255, 255, 255, 0.40);
+  --nav-glass-border: rgba(255, 255, 255, 0.06);
+  --nav-glass-rim-top: rgba(255, 255, 255, 0.10);
   --nav-glass-rim-bottom: rgba(255, 255, 255, 0.10);
-  --nav-glass-halo: rgba(255, 255, 255, 0.08);
+  --nav-glass-halo: rgba(255, 255, 255, 0.02);
   --nav-glass-depth-shadow: rgba(0, 0, 0, 0.25);
   --nav-glass-elevation: 0 16px 42px -4px rgba(0, 0, 0, 0.70), 0 4px 16px rgba(0, 0, 0, 0.45);
 
