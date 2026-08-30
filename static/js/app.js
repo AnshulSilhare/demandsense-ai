@@ -190,7 +190,18 @@
     const left = activeBtn.offsetLeft;
     const width = activeBtn.offsetWidth;
 
-    if (!width || width === 0) return;
+    if (!width || width === 0) {
+      // Retry in next animation frame if DOM is still calculating layout
+      requestAnimationFrame(() => {
+        const retryBtn = nav.querySelector(`.bnav-btn[data-tab="${state.activeTab}"]`) || nav.querySelector('.bnav-btn.active');
+        if (retryBtn && retryBtn.offsetWidth > 0) {
+          indicator.style.setProperty('transform', `translate3d(${retryBtn.offsetLeft}px, 0, 0)`, 'important');
+          indicator.style.setProperty('width', `${retryBtn.offsetWidth}px`, 'important');
+          indicator.style.setProperty('opacity', '1', 'important');
+        }
+      });
+      return;
+    }
 
     // Smoothly glide carrier across X-axis using translate3d
     indicator.style.setProperty('transform', `translate3d(${left}px, 0, 0)`, 'important');
