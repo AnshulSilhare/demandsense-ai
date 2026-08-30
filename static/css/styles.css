@@ -5,6 +5,17 @@
 
 /* ─── TOKENS (Identical to ins_index.html) ─────────────────── */
 :root {
+
+  /* Light Mode Specular Glass Tokens */
+  --nav-glass-blur: blur(1.5px) saturate(160%) brightness(1.03);
+  --nav-glass-bg: rgba(255, 255, 255, 0.03);
+  --nav-glass-border: rgba(255, 255, 255, 0.25);
+  --nav-glass-rim-top: rgba(255, 255, 255, 0.65);
+  --nav-glass-rim-bottom: rgba(255, 255, 255, 0.15);
+  --nav-glass-halo: rgba(255, 255, 255, 0.12);
+  --nav-glass-depth-shadow: rgba(0, 0, 0, 0.04);
+  --nav-glass-elevation: 0 16px 38px -4px rgba(15, 23, 42, 0.18), 0 4px 12px rgba(15, 23, 42, 0.06);
+
   --bg:                  #f8fafc;
   --bg2:                 #ffffff;
   --bg3:                 #f1f5f9;
@@ -53,6 +64,17 @@
 }
 
 body.dark {
+
+  /* Dark Mode Specular Glass Tokens */
+  --nav-glass-blur: blur(1.5px) saturate(160%) brightness(1.03);
+  --nav-glass-bg: rgba(255, 255, 255, 0.02);
+  --nav-glass-border: rgba(255, 255, 255, 0.12);
+  --nav-glass-rim-top: rgba(255, 255, 255, 0.40);
+  --nav-glass-rim-bottom: rgba(255, 255, 255, 0.10);
+  --nav-glass-halo: rgba(255, 255, 255, 0.08);
+  --nav-glass-depth-shadow: rgba(0, 0, 0, 0.25);
+  --nav-glass-elevation: 0 16px 42px -4px rgba(0, 0, 0, 0.70), 0 4px 16px rgba(0, 0, 0, 0.45);
+
   --bg:                  #0b0f19;
   --bg2:                 #111827;
   --bg3:                 #161f30;
@@ -3133,9 +3155,46 @@ body.dark .guide-protip-box {
 /* ══════════════════════════════════════════════════════════════
    BOTTOM TAB BAR (Hidden on Desktop by default)
    ════════════════════════════════════════════════════════════ */
-.bottom-tab-bar {
-  display: none;
-}
+  .bottom-tab-bar {
+    display: flex !important;
+    position: fixed !important;
+    bottom: calc(0.75rem + env(safe-area-inset-bottom, 0px)) !important;
+    left: 50% !important;
+    transform: translateX(-50%) !important;
+    width: calc(100% - 1.75rem) !important;
+    max-width: 540px !important;
+    z-index: 9999 !important;
+    height: 56px !important;
+    padding: 4px 8px !important;
+    
+    background: var(--nav-glass-bg) !important;
+    border: 1px solid var(--nav-glass-border) !important;
+    backdrop-filter: blur(3px) saturate(140%) brightness(1.02) !important;
+    -webkit-backdrop-filter: blur(3px) saturate(140%) brightness(1.02) !important;
+    backdrop-filter: url(#droplet-lens-refract) var(--nav-glass-blur) !important;
+    -webkit-backdrop-filter: url(#droplet-lens-refract) var(--nav-glass-blur) !important;
+    box-shadow:
+      var(--nav-glass-elevation),
+      inset 0 1px 1px 0 var(--nav-glass-rim-top),
+      inset 0 -1px 1px 0 var(--nav-glass-rim-bottom),
+      inset 0 0 14px 1px var(--nav-glass-halo),
+      inset 0 0 18px 0 var(--nav-glass-depth-shadow) !important;
+
+    border-radius: 99px !important;
+    align-items: center !important;
+    justify-content: space-between !important;
+    pointer-events: auto !important;
+  }
+  
+  @supports (-moz-appearance: none) {
+    .bottom-tab-bar {
+      backdrop-filter: blur(3px) saturate(140%) brightness(1.02) !important;
+      -webkit-backdrop-filter: blur(3px) saturate(140%) brightness(1.02) !important;
+      background: rgba(255, 255, 255, 0.08) !important;
+    }
+    
+  }
+
 
 /* ══════════════════════════════════════════════════════════════
    BOTTOM TAB BAR (Hidden on Widescreen Desktop by default)
@@ -3247,11 +3306,7 @@ body.dark .guide-protip-box {
     pointer-events: auto !important;
   }
 
-  body.dark .bottom-tab-bar {
-    background: rgba(15, 23, 42, 0.03) !important;
-    border: 1px solid rgba(255, 255, 255, 0.22) !important;
-    box-shadow: 0 20px 48px rgba(0, 0, 0, 0.65), inset 0 1px 1.5px rgba(255, 255, 255, 0.22), 0 0 24px rgba(56, 189, 248, 0.12) !important;
-  }
+  
 
   .btab-indicator {
     position: absolute !important;
@@ -3542,11 +3597,7 @@ body.dark .guide-protip-box {
     pointer-events: auto !important;
   }
 
-  body.dark .bottom-tab-bar {
-    background: rgba(15, 23, 42, 0.78) !important;
-    border: 1px solid rgba(255, 255, 255, 0.22) !important;
-    box-shadow: 0 20px 48px rgba(0, 0, 0, 0.65), inset 0 1px 1.5px rgba(255, 255, 255, 0.22), 0 0 24px rgba(56, 189, 248, 0.12) !important;
-  }
+  
 
   .btab-indicator {
     position: absolute !important;
