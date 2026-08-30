@@ -175,22 +175,36 @@
     indicator.style.width = `${width}px`;
   }
 
-  function updateBottomTabIndicator(target) {
-    const indicator = el('btabIndicator');
-    const tabBar = el('bottomTabBar');
-    if (!indicator || !tabBar) return;
-    const activeBtab = tabBar.querySelector(`.btab[data-tab="${target || state.activeTab}"]`);
-    if (!activeBtab) return;
+  // ═══ Liquid Moving Droplet Indicator Controller ═══
+  function updateBottomNavIndicator(targetBtn) {
+    const nav = document.getElementById('bottomNav') || document.querySelector('.bottom-nav');
+    const indicator = document.getElementById('bnavIndicator');
+    if (!nav || !indicator) return;
 
-    const barRect = tabBar.getBoundingClientRect();
-    const tabRect = activeBtab.getBoundingClientRect();
-    if (tabRect.width === 0) return;
+    let activeBtn = targetBtn;
+    if (!activeBtn) {
+      activeBtn = nav.querySelector(`.bnav-btn[data-tab="${state.activeTab}"]`) || nav.querySelector('.bnav-btn.active') || nav.querySelector('.bnav-btn');
+    }
+    if (!activeBtn) return;
 
-    const left = tabRect.left - barRect.left;
-    const width = tabRect.width;
+    const left = activeBtn.offsetLeft;
+    const width = activeBtn.offsetWidth;
 
-    indicator.style.transform = `translateX(${left}px)`;
-    indicator.style.width = `${width}px`;
+    if (!width || width === 0) return;
+
+    // Smoothly glide carrier across X-axis using translate3d
+    indicator.style.setProperty('transform', `translate3d(${left}px, 0, 0)`, 'important');
+    indicator.style.setProperty('width', `${width}px`, 'important');
+    indicator.style.setProperty('opacity', '1', 'important');
+
+    // Trigger independent fluid squash & stretch animation on the blob membrane
+    const blob = indicator.querySelector('.bnav-liquid-blob');
+    if (blob) {
+      blob.classList.remove('is-squashing');
+      void blob.offsetWidth; // force reflow for instantaneous animation restart
+      blob.classList.add('is-squashing');
+      setTimeout(() => blob.classList.remove('is-squashing'), 400);
+    }
   }
 
   // ═══ CUSTOM CINEMATIC EASED SMOOTH SCROLL CONTROLLER (Graceful & Frictionless) ═══
@@ -246,11 +260,12 @@ let _forecastRetryCount = 0;
     });
     updateTopTabIndicator(target);
 
-    // Sync mobile bottom tab bar & slide indicator chip
-    $$('.bottom-tab-bar .btab').forEach(t => {
+    // Sync mobile bottom nav & slide liquid droplet
+    $$('.bottom-nav .bnav-btn').forEach(t => {
       t.classList.toggle('active', t.dataset.tab === target);
     });
-    updateBottomTabIndicator(target);
+    const activeBnav = document.querySelector(`.bottom-nav .bnav-btn[data-tab="${target}"]`);
+    if (activeBnav) updateBottomNavIndicator(activeBnav);
 
     // Switch tab contents immediately
     $$('.tab-content').forEach(tc => tc.classList.remove('active'));
@@ -342,19 +357,22 @@ let _forecastRetryCount = 0;
       tab.addEventListener('click', () => switchTab(tab.dataset.tab));
     });
 
-    $$('.bottom-tab-bar .btab').forEach(btab => {
-      btab.addEventListener('click', () => switchTab(btab.dataset.tab));
+    $$('.bottom-nav .bnav-btn').forEach(bnav => {
+      bnav.addEventListener('click', () => switchTab(bnav.dataset.tab));
     });
 
     // Initial positioning & resize sync for sliding indicators
     setTimeout(() => {
       updateTopTabIndicator(state.activeTab);
-      updateBottomTabIndicator(state.activeTab);
+      updateBottomNavIndicator();
     }, 150);
+
     window.addEventListener('resize', debounce(() => {
       updateTopTabIndicator(state.activeTab);
-      updateBottomTabIndicator(state.activeTab);
+      updateBottomNavIndicator();
     }, 150), { passive: true });
+
+    window.addEventListener('orientationchange', () => setTimeout(updateBottomNavIndicator, 150));
   }
 
   // ═══ PURE CONTINUOUS SCROLL CONVEYOR & QUANTUM SNAKE ENGINE ═══

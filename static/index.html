@@ -766,27 +766,35 @@ if(localStorage.getItem('ds-theme')==='dark'||(!localStorage.getItem('ds-theme')
 <div class="toast" id="toastMsg" style="position:fixed;bottom:80px;right:24px;padding:12px 20px;border-radius:var(--radius);background:var(--surface);border:1px solid var(--border);box-shadow:var(--glass-shadow-hover);font-family:var(--body);font-size:0.85rem;z-index:300;display:none;transition:all .3s ease"></div>
 
 <!-- ═══ Mobile Bottom Tab Bar (visible only <768px) ═══ -->
-<nav class="bottom-tab-bar" id="bottomTabBar">
-  <div class="btab-indicator" id="btabIndicator"></div>
-  <button class="btab active" data-tab="tab1" aria-label="Demand Intelligence">
-    <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M3 3v18h18"/><path d="M7 16l4-8 4 4 5-6"/></svg>
-    <span>Demand</span>
+<!-- ═══ Ultra-Thin Liquid Glass Floating Bottom Navigation Bar (Mobile / Tablet) ═══ -->
+<nav class="bottom-nav" id="bottomNav" aria-label="Mobile Navigation">
+  <div class="bnav-liquid-indicator" id="bnavIndicator">
+    <div class="bnav-liquid-blob"></div>
+  </div>
+  
+  <button class="bnav-btn active" data-tab="tab1" aria-label="Demand Intelligence">
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"></polyline></svg>
+    <span>Forecast</span>
   </button>
-  <button class="btab" data-tab="tab2" aria-label="Auto-ML Model Selection">
-    <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 15l-2-5h4l-2 5z"/><circle cx="12" cy="12" r="9"/><path d="M8 12h8"/></svg>
-    <span>Models</span>
+  
+  <button class="bnav-btn" data-tab="tab2" aria-label="Auto-ML Selection">
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="3" width="20" height="14" rx="2" ry="2"></rect><line x1="8" y1="21" x2="16" y2="21"></line><line x1="12" y1="17" x2="12" y2="21"></line></svg>
+    <span>Auto-ML</span>
   </button>
-  <button class="btab" data-tab="tab3" aria-label="Inventory Control">
-    <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>
+  
+  <button class="bnav-btn" data-tab="tab3" aria-label="Inventory Control">
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"></path><polyline points="3.27 6.96 12 12.01 20.73 6.96"></polyline><line x1="12" y1="22.08" x2="12" y2="12"></line></svg>
     <span>Inventory</span>
   </button>
-  <button class="btab" data-tab="tab4" aria-label="What-If Simulator">
-    <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M9.5 2A6.5 6.5 0 0116 8.5c0 1.6-.6 3-1.5 4.1l5.4 5.4-1.4 1.4-5.4-5.4A6.5 6.5 0 119.5 2z"/><path d="M7 8.5h5M9.5 6v5"/></svg>
-    <span>What-If</span>
+  
+  <button class="bnav-btn" data-tab="tab4" aria-label="What-If Simulator">
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polygon></svg>
+    <span>Simulator</span>
   </button>
-  <button class="btab" data-tab="tab5" aria-label="AI Prescriptive Insights">
-    <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="4" y="4" width="16" height="16" rx="2"/><circle cx="9" cy="10" r="1.5"/><circle cx="15" cy="10" r="1.5"/><path d="M9 15c0 0 1.5 2 3 2s3-2 3-2"/></svg>
-    <span>AI Insights</span>
+  
+  <button class="bnav-btn" data-tab="tab5" aria-label="Prescriptive Insights">
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18h6"></path><path d="M10 22h4"></path><path d="M15.09 14c.18-.98.65-1.74 1.41-2.5A4.65 4.65 0 0 0 18 8 6 6 0 0 0 6 8c0 1 .23 2.23 1.5 3.5A4.61 4.61 0 0 1 8.91 14"></path></svg>
+    <span>Insights</span>
   </button>
 </nav>
 
