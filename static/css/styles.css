@@ -3152,9 +3152,176 @@ body.dark .guide-protip-box {
   opacity: .95;
 }
 
-/* ═══ ULTRA-THIN LIQUID GLASS BOTTOM NAVIGATION BAR (Hidden on Desktop by default) ═══ */
+
+
+
+/* ═══ ULTRA-THIN LIQUID GLASS FLOATING BOTTOM NAVIGATION BAR ═══ */
 .bottom-nav {
-  display: none;
+  display: flex !important;
+  position: fixed !important;
+  bottom: 0.85rem !important;
+  bottom: calc(0.75rem + env(safe-area-inset-bottom, 0px)) !important;
+  left: 50% !important;
+  transform: translateX(-50%) !important;
+  width: calc(100% - 1.5rem) !important;
+  max-width: 440px !important;
+  height: 48px !important;
+  padding: 3px 4px !important;
+  align-items: center !important;
+  justify-content: space-between !important;
+  
+  /* True Translucent Liquid Glass */
+  background: rgba(255, 255, 255, 0.84) !important;
+  border: 1px solid rgba(255, 255, 255, 0.9) !important;
+  border-radius: 9999px !important;
+  backdrop-filter: blur(20px) saturate(180%) !important;
+  -webkit-backdrop-filter: blur(20px) saturate(180%) !important;
+  box-shadow: 0 10px 32px rgba(15, 23, 42, 0.18), inset 0 1px 1.5px rgba(255, 255, 255, 0.9) !important;
+  
+  z-index: 99999 !important;
+  pointer-events: auto !important;
+  box-sizing: border-box !important;
+  transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1), background 0.25s ease !important;
+}
+
+body.dark .bottom-nav {
+  background: rgba(15, 23, 42, 0.88) !important;
+  border: 1px solid rgba(255, 255, 255, 0.2) !important;
+  box-shadow: 0 12px 36px rgba(0, 0, 0, 0.6), inset 0 1px 1.5px rgba(255, 255, 255, 0.25), 0 0 16px rgba(45, 212, 191, 0.15) !important;
+}
+
+/* ═══ Liquid Moving Droplet Carrier (Translates Smoothly across X-axis) ═══ */
+.bnav-liquid-indicator {
+  position: absolute !important;
+  top: 3px !important;
+  bottom: 3px !important;
+  left: 0 !important;
+  width: 20% !important;
+  border-radius: 9999px !important;
+  pointer-events: none !important;
+  z-index: 1 !important;
+  opacity: 1 !important;
+  will-change: transform, width !important;
+  
+  /* Fluid Organic Gliding Spring Physics */
+  transition: 
+    transform 0.42s cubic-bezier(0.22, 1, 0.36, 1.2),
+    width 0.36s cubic-bezier(0.22, 1, 0.36, 1),
+    opacity 0.2s ease !important;
+}
+
+/* ═══ Liquid Droplet Membrane (Handles Squash & Stretch Independently) ═══ */
+.bnav-liquid-blob {
+  width: 100% !important;
+  height: 100% !important;
+  border-radius: 9999px !important;
+  position: relative !important;
+  
+  /* Liquid Specular Droplet Aesthetic */
+  background: linear-gradient(135deg, rgba(13, 148, 136, 0.25), rgba(29, 78, 216, 0.22)) !important;
+  border: 1px solid rgba(13, 148, 136, 0.45) !important;
+  box-shadow: 
+    0 3px 14px rgba(13, 148, 136, 0.25), 
+    inset 0 1px 1.5px rgba(255, 255, 255, 0.75),
+    inset 0 -1px 1px rgba(13, 148, 136, 0.2) !important;
+  backdrop-filter: blur(8px) saturate(180%) !important;
+  -webkit-backdrop-filter: blur(8px) saturate(180%) !important;
+  transform-origin: center center !important;
+  transition: transform 0.35s cubic-bezier(0.34, 1.56, 0.64, 1) !important;
+}
+
+.bnav-liquid-blob::after {
+  content: '';
+  position: absolute;
+  top: 1px;
+  left: 18%;
+  right: 18%;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.85), transparent);
+  border-radius: 99px;
+}
+
+body.dark .bnav-liquid-blob {
+  background: linear-gradient(135deg, rgba(45, 212, 191, 0.28), rgba(56, 189, 248, 0.28)) !important;
+  border-color: rgba(45, 212, 191, 0.5) !important;
+  box-shadow: 
+    0 4px 16px rgba(45, 212, 191, 0.35), 
+    inset 0 1px 1.5px rgba(255, 255, 255, 0.45),
+    inset 0 0 10px rgba(45, 212, 191, 0.2) !important;
+}
+
+.bnav-liquid-blob.is-squashing {
+  animation: liquidDropletSquash 0.4s cubic-bezier(0.34, 1.56, 0.64, 1) !important;
+}
+
+@keyframes liquidDropletSquash {
+  0% { transform: scale(1, 1); }
+  30% { transform: scale(1.18, 0.84); }
+  65% { transform: scale(0.93, 1.07); }
+  85% { transform: scale(1.03, 0.97); }
+  100% { transform: scale(1, 1); }
+}
+
+/* ═══ Bottom Nav Buttons ═══ */
+.bnav-btn {
+  position: relative !important;
+  z-index: 2 !important;
+  flex: 1 !important;
+  height: 100% !important;
+  background: transparent !important;
+  border: none !important;
+  border-radius: 9999px !important;
+  display: flex !important;
+  flex-direction: column !important;
+  align-items: center !important;
+  justify-content: center !important;
+  gap: 2px !important;
+  padding: 2px 0.1rem !important;
+  color: var(--text2) !important;
+  font-family: var(--body) !important;
+  font-size: 0.62rem !important;
+  font-weight: 600 !important;
+  cursor: pointer !important;
+  transition: color 0.2s ease, transform 0.15s ease !important;
+  -webkit-tap-highlight-color: transparent !important;
+}
+
+.bnav-btn svg {
+  width: 17px !important;
+  height: 17px !important;
+  stroke: currentColor !important;
+  transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1), color 0.2s ease !important;
+}
+
+.bnav-btn.active {
+  color: var(--teal) !important;
+  font-weight: 700 !important;
+}
+
+body.dark .bnav-btn.active {
+  color: var(--accent2) !important;
+}
+
+.bnav-btn.active svg {
+  transform: translateY(-1px) scale(1.12) !important;
+  color: var(--teal) !important;
+  stroke: var(--teal) !important;
+}
+
+body.dark .bnav-btn.active svg {
+  color: var(--accent2) !important;
+  stroke: var(--accent2) !important;
+  filter: drop-shadow(0 0 6px rgba(56, 189, 248, 0.5)) !important;
+}
+
+.bnav-btn span {
+  font-size: 0.6rem !important;
+  letter-spacing: 0.01em !important;
+}
+
+.bnav-btn.active span {
+  font-weight: 700 !important;
+  color: var(--text) !important;
 }
 
 
@@ -3163,8 +3330,9 @@ body.dark .guide-protip-box {
    ════════════════════════════════════════════════════════════ */
 
 /* ── 1. ALL SCREENS UNDER 1360px (Laptops, Popups, Tablets & Mobile) ──
+/* ── 1. ALL SCREENS UNDER 1360px (Laptops, Popups, Tablets & Mobile) ──
    Top header shows Brand (Left) + Actions (Right) with ZERO clipping.
-   Navigation shifts seamlessly to the Liquid Glass Bottom Tab Bar!
+   Navigation shifts seamlessly to the Liquid Glass Bottom Navigation Bar!
 */
 @media (max-width: 1359px) {
   body {
@@ -3238,219 +3406,8 @@ body.dark .guide-protip-box {
     height: 42px !important;
   }
 
-  /* ═══ ULTRA-THIN LIQUID GLASS FLOATING BOTTOM NAVIGATION BAR (Mobile / Tablet) ═══ */
-  .bottom-nav {
-    display: flex !important;
-    position: fixed !important;
-    bottom: max(0.65rem, env(safe-area-inset-bottom, 0.65rem)) !important;
-    left: 50% !important;
-    transform: translateX(-50%) !important;
-    width: calc(100% - 1.25rem) !important;
-    max-width: 440px !important;
-    height: 48px !important;
-    padding: 3px 4px !important;
-    align-items: center !important;
-    justify-content: space-between !important;
-    
-    /* True Translucent Liquid Glass */
-    background: rgba(255, 255, 255, 0.82) !important;
-    border: 1px solid rgba(255, 255, 255, 0.85) !important;
-    border-radius: 9999px !important;
-    backdrop-filter: blur(20px) saturate(180%) !important;
-    -webkit-backdrop-filter: blur(20px) saturate(180%) !important;
-    box-shadow: 0 10px 32px rgba(15, 23, 42, 0.18), inset 0 1px 1.5px rgba(255, 255, 255, 0.9) !important;
-    
-    z-index: 99999 !important;
-    pointer-events: auto !important;
-    box-sizing: border-box !important;
   }
 
-  body.dark .bottom-nav {
-    background: rgba(15, 23, 42, 0.86) !important;
-    border: 1px solid rgba(255, 255, 255, 0.18) !important;
-    box-shadow: 0 12px 36px rgba(0, 0, 0, 0.6), inset 0 1px 1.5px rgba(255, 255, 255, 0.2), 0 0 16px rgba(45, 212, 191, 0.12) !important;
-  }
-
-  /* ═══ Liquid Moving Droplet Carrier (Translates Smoothly across X-axis) ═══ */
-  .bnav-liquid-indicator {
-    position: absolute !important;
-    top: 3px !important;
-    bottom: 3px !important;
-    left: 0 !important;
-    width: 20% !important;
-    border-radius: 9999px !important;
-    pointer-events: none !important;
-    z-index: 1 !important;
-    opacity: 1 !important;
-    will-change: transform, width !important;
-    
-    /* Fluid Organic Gliding Spring Physics */
-    transition: 
-      transform 0.42s cubic-bezier(0.22, 1, 0.36, 1.2),
-      width 0.36s cubic-bezier(0.22, 1, 0.36, 1),
-      opacity 0.2s ease !important;
-  }
-
-  /* ═══ Liquid Droplet Membrane (Handles Squash & Stretch Independently) ═══ */
-  .bnav-liquid-blob {
-    width: 100% !important;
-    height: 100% !important;
-    border-radius: 9999px !important;
-    position: relative !important;
-    
-    /* Liquid Specular Droplet Aesthetic */
-    background: linear-gradient(135deg, rgba(13, 148, 136, 0.25), rgba(29, 78, 216, 0.22)) !important;
-    border: 1px solid rgba(13, 148, 136, 0.45) !important;
-    box-shadow: 
-      0 3px 14px rgba(13, 148, 136, 0.25), 
-      inset 0 1px 1.5px rgba(255, 255, 255, 0.75),
-      inset 0 -1px 1px rgba(13, 148, 136, 0.2) !important;
-    backdrop-filter: blur(8px) saturate(180%) !important;
-    -webkit-backdrop-filter: blur(8px) saturate(180%) !important;
-    transform-origin: center center !important;
-    transition: transform 0.35s cubic-bezier(0.34, 1.56, 0.64, 1) !important;
-  }
-
-  .bnav-liquid-blob::after {
-    content: '';
-    position: absolute;
-    top: 1px;
-    left: 18%;
-    right: 18%;
-    height: 1px;
-    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.85), transparent);
-    border-radius: 99px;
-  }
-
-  body.dark .bnav-liquid-blob {
-    background: linear-gradient(135deg, rgba(45, 212, 191, 0.28), rgba(56, 189, 248, 0.28)) !important;
-    border-color: rgba(45, 212, 191, 0.5) !important;
-    box-shadow: 
-      0 4px 16px rgba(45, 212, 191, 0.35), 
-      inset 0 1px 1.5px rgba(255, 255, 255, 0.45),
-      inset 0 0 10px rgba(45, 212, 191, 0.2) !important;
-  }
-
-  .bnav-liquid-blob.is-squashing {
-    animation: liquidDropletSquash 0.4s cubic-bezier(0.34, 1.56, 0.64, 1) !important;
-  }
-
-  @keyframes liquidDropletSquash {
-    0% { transform: scale(1, 1); }
-    30% { transform: scale(1.18, 0.84); }
-    65% { transform: scale(0.93, 1.07); }
-    85% { transform: scale(1.03, 0.97); }
-    100% { transform: scale(1, 1); }
-  }
-
-  /* ═══ Bottom Nav Buttons ═══ */
-  .bnav-btn {
-    position: relative !important;
-    z-index: 2 !important;
-    flex: 1 !important;
-    height: 100% !important;
-    background: transparent !important;
-    border: none !important;
-    border-radius: 9999px !important;
-    display: flex !important;
-    flex-direction: column !important;
-    align-items: center !important;
-    justify-content: center !important;
-    gap: 2px !important;
-    padding: 2px 0.1rem !important;
-    color: var(--text2) !important;
-    font-family: var(--body) !important;
-    font-size: 0.62rem !important;
-    font-weight: 600 !important;
-    cursor: pointer !important;
-    transition: color 0.2s ease, transform 0.15s ease !important;
-    -webkit-tap-highlight-color: transparent !important;
-  }
-
-  .bnav-btn svg {
-    width: 17px !important;
-    height: 17px !important;
-    stroke: currentColor !important;
-    transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1), color 0.2s ease !important;
-  }
-
-  .bnav-btn.active {
-    color: var(--teal) !important;
-    font-weight: 700 !important;
-  }
-
-  body.dark .bnav-btn.active {
-    color: var(--accent2) !important;
-  }
-
-  .bnav-btn.active svg {
-    transform: translateY(-1px) scale(1.12) !important;
-    color: var(--teal) !important;
-    stroke: var(--teal) !important;
-  }
-
-  body.dark .bnav-btn.active svg {
-    color: var(--accent2) !important;
-    stroke: var(--accent2) !important;
-    filter: drop-shadow(0 0 6px rgba(56, 189, 248, 0.5)) !important;
-  }
-
-  .bnav-btn span {
-    font-size: 0.6rem !important;
-    letter-spacing: 0.01em !important;
-  }
-
-  .bnav-btn.active span {
-    font-weight: 700 !important;
-    color: var(--text) !important;
-  }
-
-    border: none !important;
-    border-radius: 9999px !important;
-    display: flex !important;
-    flex-direction: column !important;
-    align-items: center !important;
-    justify-content: center !important;
-    gap: 1.5px !important;
-    padding: 0 0.15rem !important;
-    color: var(--text3) !important;
-    font-family: var(--body) !important;
-    font-size: 0.54rem !important;
-    font-weight: 500 !important;
-    cursor: pointer !important;
-    transition: color 0.2s ease, transform 0.15s ease !important;
-    -webkit-tap-highlight-color: transparent !important;
-  }
-
-  .bnav-btn svg {
-    width: 15px !important;
-    height: 15px !important;
-    transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1), color 0.2s ease !important;
-  }
-
-  .bnav-btn.active {
-    color: var(--teal) !important;
-  }
-
-  body.dark .bnav-btn.active {
-    color: var(--accent2) !important;
-  }
-
-  .bnav-btn.active svg {
-    transform: translateY(-1px) scale(1.12) !important;
-    color: var(--teal) !important;
-  }
-
-  body.dark .bnav-btn.active svg {
-    color: var(--accent2) !important;
-  }
-
-  .bnav-btn.active span {
-    font-weight: 700 !important;
-    color: var(--text) !important;
-  }
-
-/* ── 1.2 TABLETS, MEDIUM SCREENS & LAPTOPS (768px to 1359px) ── */
 @media (min-width: 768px) and (max-width: 1359px) {
   .control-clusters {
     grid-template-columns: repeat(2, 1fr) !important;
