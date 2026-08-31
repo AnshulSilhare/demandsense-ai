@@ -53,6 +53,7 @@ from src.business_impact import OperationsImpactCalculator
 from src.llm_agent import LLMPrescriptiveAgent
 from src.agent_harness import AgentHarness
 from src.agent_tools import tools
+from src.agent_warroom import MultiAgentWarRoom
 from src.pdf_exporter import generate_executive_pdf_report
 from src.analytics_helpers import (
     decompose_time_series, prepare_radar_data,
@@ -66,6 +67,7 @@ logger = logging.getLogger("demandsense")
 # ═══════════════════════════════════════════════════════════════
 # GLOBAL STATE — loaded once at startup, shared read-only
 agent_instance = AgentHarness(tools=tools)
+warroom_instance = MultiAgentWarRoom(tools=tools)
 # ═══════════════════════════════════════════════════════════════
 DEFAULT_DF: pd.DataFrame = pd.DataFrame()
 SESSION_STORE: dict = {}  # session_id → {"df": DataFrame, "expires": datetime}
@@ -1198,6 +1200,128 @@ async def agent_reset_endpoint():
     """Reset agent conversation memory."""
     agent_instance.reset_memory()
     return JSONResponse(content={"status": "ok", "message": "Agent memory reset successfully."})
+
+
+
+
+# ═══════════════════════════════════════════════════════════════
+# OPTION C — MULTI-AGENT WAR ROOM
+# ═══════════════════════════════════════════════════════════════
+
+@app.post("/api/agent/warroom")
+async def agent_warroom_endpoint(request: Request):
+    """
+    Multi-Agent War Room: Runs query through 3 specialist agents
+    (Demand Planner, Inventory Controller, Risk Analyst) and synthesizes.
+    """
+    try:
+        body = await request.json()
+        query = body.get("query", "").strip()
+        if not query:
+            raise HTTPException(status_code=400, detail="Query is required.")
+
+        session_context = body.get("session_context", {})
+        result = await warroom_instance.analyze(query=query, session_context=session_context)
+        return JSONResponse(content=result)
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"[API WarRoom] Error: {e}")
+        return JSONResponse(status_code=500, content={"error": str(e)})
+
+
+# ═══════════════════════════════════════════════════════════════
+# OPTION E — SCENARIO PLANNING COPILOT
+# ═══════════════════════════════════════════════════════════════
+
+@app.post("/api/agent/scenarios")
+async def agent_scenarios_endpoint(request: Request):
+    """
+    Scenario Planning Copilot: Auto-generates 4 what-if scenarios
+    for a given SKU and compares them side-by-side.
+    """
+    try:
+        body = await request.json()
+        sku_id = body.get("sku_id", "SKU001")
+        current_stock = body.get("current_stock", 1500)
+
+        scenarios = [
+            {
+                "name": "Baseline (No Changes)",
+                "params": {"sku_id": sku_id, "current_stock": current_stock},
+            },
+            {
+                "name": "Aggressive Promotion (-10% price, +15% promo)",
+                "params": {"sku_id": sku_id, "price_change_pct": -10, "promo_lift_pct": 15, "current_stock": current_stock},
+            },
+            {
+                "name": "Supply Disruption (+5 day lead time, +10% demand)",
+                "params": {"sku_id": sku_id, "lead_time_change_days": 5, "demand_change_pct": 10, "current_stock": current_stock},
+            },
+            {
+                "name": "Conservative (Price increase +8%, demand -5%)",
+                "params": {"sku_id": sku_id, "price_change_pct": 8, "demand_change_pct": -5, "current_stock": current_stock},
+            },
+        ]
+
+        results = []
+        for scenario in scenarios:
+            if scenario["name"].startswith("Baseline"):
+                # Run base forecast + inventory check
+                inv_result = tools.call("check_inventory_status", {
+                    "sku_id": sku_id,
+                    "current_stock": current_stock,
+                })
+                inv_data = json.loads(inv_result) if isinstance(inv_result, str) else inv_result
+                results.append({
+                    "scenario_name": scenario["name"],
+                    "params": scenario["params"],
+                    "total_30d_forecast": inv_data.get("total_30d_forecast_units", 0),
+                    "days_of_supply": inv_data.get("days_of_supply", 0),
+                    "revenue_at_risk_inr": inv_data.get("revenue_at_risk_inr", 0),
+                    "stockout_risk_units": inv_data.get("stockout_risk_units", 0),
+                    "recommended_po_qty": inv_data.get("recommended_po_qty_units", 0),
+                    "recommended_po_value_inr": inv_data.get("recommended_po_value_inr", 0),
+                    "po_trigger_status": inv_data.get("po_trigger_status", ""),
+                })
+            else:
+                # Run what-if scenario
+                sim_result = tools.call("run_whatif_scenario", scenario["params"])
+                sim_data = json.loads(sim_result) if isinstance(sim_result, str) else sim_result
+                sim_impact = sim_data.get("simulated_impact", {})
+                results.append({
+                    "scenario_name": scenario["name"],
+                    "params": scenario["params"],
+                    "total_30d_forecast": sim_impact.get("total_30d_forecast_units", 0),
+                    "days_of_supply": sim_impact.get("days_of_supply", 0),
+                    "revenue_at_risk_inr": sim_impact.get("revenue_at_risk_inr", 0),
+                    "stockout_risk_units": sim_impact.get("stockout_risk_units", 0),
+                    "recommended_po_qty": sim_impact.get("recommended_po_qty_units", 0),
+                    "recommended_po_value_inr": sim_impact.get("recommended_po_value_inr", 0),
+                    "po_trigger_status": sim_impact.get("po_trigger_status", ""),
+                })
+
+        # Determine best scenario (lowest risk, highest supply coverage)
+        scored = []
+        for r in results:
+            # Score: lower risk + higher DOS = better
+            risk_score = r.get("revenue_at_risk_inr", 0)
+            dos = r.get("days_of_supply", 0)
+            score = dos * 1000 - risk_score
+            scored.append((score, r["scenario_name"]))
+        scored.sort(reverse=True)
+        best_scenario = scored[0][1] if scored else results[0]["scenario_name"]
+
+        return JSONResponse(content={
+            "sku_id": sku_id,
+            "current_stock": current_stock,
+            "scenarios": results,
+            "recommended_scenario": best_scenario,
+            "recommendation_rationale": f"{best_scenario} provides the optimal balance of demand coverage and risk mitigation for this SKU.",
+        })
+    except Exception as e:
+        logger.error(f"[API Scenarios] Error: {e}")
+        return JSONResponse(status_code=500, content={"error": str(e)})
 
 
 # ═══════════════════════════════════════════════════════════════

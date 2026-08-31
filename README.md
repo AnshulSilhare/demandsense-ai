@@ -66,17 +66,29 @@
 - **Revenue at Risk** quantified in rupees for projected stockouts
 - **ABC-Pareto Classification** across all 20 national SKUs
 
-### 🧠 Autonomous Agentic AI Layer
-- **ReAct Reasoning Architecture:** Autonomous Observe → Think → Act loop powered by Google Gemini Function Calling
-- **Dynamic Tool Registry:** 5 enterprise tools registered for real-time invocation:
-  - `run_demand_forecast`: Auto-ML model selection, MAPE benchmarking, and 30-day forward projections
-  - `check_inventory_status`: Safety stock, reorder point (ROP), days of supply (DOS), and ₹ revenue-at-risk
-  - `get_upcoming_festivals`: Indian festival calendar lookup with demand multiplier windows
-  - `run_whatif_scenario`: Compound price elasticity, promotional lift, and supplier lead-time delay simulations
-  - `list_available_skus`: Real-time product catalog & operational parameter inspection
-- **Proactive Portfolio Monitoring:** Automated background scan across all 20 SKUs on boot; pushes immediate risk notifications with ₹ financial impact
-- **Explainable AI (XAI):** Full collapsible reasoning trace displaying every tool call, argument, and intermediate output
-- **Offline High-Availability Engine:** Rule-based heuristic fallback guaranteeing 100% uptime with zero external API dependencies
+### 🧠 Enterprise Agentic AI Suite (5 Autonomous Modes)
+
+1. **Option A — Autonomous Portfolio Monitoring (`Live Sentinel`)**:
+   - Continuous background polling scanning all 20 SKUs against stock levels & festival multipliers
+   - Live notification badge and instant glass alert banner on stockout risk detection
+2. **Option B — Conversational Decision Support (`ReAct Copilot`)**:
+   - Multi-turn natural language dialogue with dynamic Gemini Function Calling
+   - Dynamic tool orchestration with collapsible step-by-step reasoning trace (XAI)
+3. **Option C — Multi-Agent War Room (`Specialist Collaboration`)**:
+   - 3 domain-specialized agents executing in parallel:
+     - 🔮 **Demand Planner**: Forecast trends, festival spikes, and seasonality
+     - 📦 **Inventory Controller**: Safety stock, ROP, days of supply, and PO quantities
+     - 💰 **Risk Analyst**: Rupee financial risk, holding costs, and stress testing
+   - Executive synthesis engine harmonizing specialist outputs into a single actionable brief
+4. **Option D — Daily Executive Brief (`Automated Intelligence`)**:
+   - One-click holistic portfolio scan quantifying total revenue at risk (₹)
+   - Prioritized procurement directives and upcoming festival multiplier calendar
+5. **Option E — Scenario Planning Copilot (`Automated What-If Analysis`)**:
+   - Auto-generates 4 strategic scenarios (Baseline, Promo, Supply Disruption, Conservative)
+   - Side-by-side comparison matrix with automated scoring and optimal strategy recommendation
+
+- **Dynamic Tool Registry (5 Enterprise Tools):** `run_demand_forecast`, `check_inventory_status`, `get_upcoming_festivals`, `run_whatif_scenario`, `list_available_skus`
+- **Dual-Engine Architecture:** Google Gemini API (Primary) + Offline Rule Engine (100% Uptime Fallback)
 
 ---
 

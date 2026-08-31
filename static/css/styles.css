@@ -5848,3 +5848,112 @@ body.dark .msg-sender {
     height: 46px !important;
   }
 }
+
+
+/* ═══ WAR ROOM — Multi-Agent Specialist Cards ═══ */
+.warroom-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+  margin: 0.6rem 0;
+}
+
+.warroom-specialist-card {
+  background: var(--bg3);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 0.7rem 0.85rem;
+}
+
+.specialist-header {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  font-family: var(--mono);
+  font-size: 0.72rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--accent);
+  margin-bottom: 0.4rem;
+}
+
+.specialist-icon {
+  font-size: 1rem;
+}
+
+.specialist-analysis {
+  font-size: 0.78rem;
+  color: var(--text);
+  line-height: 1.5;
+}
+
+.specialist-analysis p {
+  margin: 0;
+}
+
+.warroom-synthesis {
+  margin-top: 0.6rem;
+  padding-top: 0.6rem;
+  border-top: 1px dashed var(--border2);
+  font-size: 0.76rem;
+  color: var(--text2);
+  font-style: italic;
+}
+
+/* ═══ SCENARIO COPILOT — Comparison Table ═══ */
+.scenario-table-wrap {
+  overflow-x: auto;
+  margin: 0.6rem 0;
+  border-radius: 8px;
+  border: 1px solid var(--border);
+}
+
+.scenario-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-family: var(--mono);
+  font-size: 0.68rem;
+}
+
+.scenario-table th {
+  background: var(--bg3);
+  padding: 0.5rem 0.6rem;
+  text-align: left;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  color: var(--text2);
+  border-bottom: 2px solid var(--border);
+  white-space: nowrap;
+}
+
+.scenario-table td {
+  padding: 0.45rem 0.6rem;
+  border-bottom: 1px solid var(--border);
+  color: var(--text);
+  white-space: nowrap;
+}
+
+.scenario-row.recommended {
+  background: rgba(22, 163, 74, 0.06);
+}
+
+.scenario-row.recommended td {
+  font-weight: 600;
+  color: var(--green);
+}
+
+body.dark .scenario-row.recommended {
+  background: rgba(34, 197, 94, 0.1);
+}
+
+.scenario-recommendation {
+  margin-top: 0.6rem;
+  padding: 0.6rem 0.8rem;
+  border-radius: 8px;
+  background: rgba(22, 163, 74, 0.08);
+  border: 1px solid rgba(22, 163, 74, 0.2);
+  font-size: 0.78rem;
+  color: var(--text);
+}
