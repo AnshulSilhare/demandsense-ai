@@ -15,7 +15,7 @@ scikit-learn>=1.3.0
 # ─── Visualization & LLM ──────────────
 plotly>=5.18.0
 kaleido>=0.2.1                   # Server-side Plotly PNG export engine
-google-generativeai>=0.3.0  # Optional: for Gemini LLM (offline fallback works without it)
+google-generativeai>=0.8.0  # Required for Gemini agent with native function calling (offline fallback works without it)
 
 # ─── Web Backend (FastAPI) ────────────────
 fastapi>=0.104.0

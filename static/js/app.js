@@ -9,7 +9,7 @@
   'use strict';
 
   // ═══ STATE ═══
-  const state = {
+  const state = window.state = {
     sku: 'SKU001',
     region: 'ALL',
     leadTime: 7,
@@ -112,6 +112,7 @@
     }
 
     loadForecast();
+    checkProactiveAgentBrief();
   }
 
   // ═══ DOM HELPERS ═══
@@ -1686,6 +1687,50 @@ ${llm.model_rationale || 'N/A'}`;
       else if (/₹|revenue|cost|margin|profit|lakh|crore/.test(lower)) icon = '💰';
       return `<li><span style="flex-shrink:0">${icon}</span><span>${s.trim()}</span></li>`;
     }).join('');
+  }
+
+
+  // ═══ PROACTIVE AGENT BRIEFING & ALERT BANNER ═══
+  async function checkProactiveAgentBrief() {
+    const banner = el('agentAlertBanner');
+    const alertText = el('agentAlertText');
+    const actionBtn = el('agentAlertAction');
+    const dismissBtn = el('agentAlertDismiss');
+    const fabBadge = el('aiFabBadge');
+    if (!banner || !alertText) return;
+
+    try {
+      const res = await fetch('/api/agent/brief', { method: 'POST' });
+      if (!res.ok) return;
+      const data = await res.json();
+
+      if (data.critical_skus && data.critical_skus.length > 0) {
+        const topSku = data.critical_skus[0];
+        alertText.innerHTML = `<strong>⚠️ AI Agent Alert:</strong> ${data.critical_skus.length} SKU${data.critical_skus.length > 1 ? 's' : ''} at immediate stockout risk (Top: <strong>${topSku.name}</strong>, ${topSku.days_of_supply} DOS). Total Portfolio Risk: <strong>₹${Number(data.total_risk_inr || 0).toLocaleString()}</strong>.`;
+        banner.style.display = 'flex';
+
+        if (fabBadge) {
+          fabBadge.style.display = 'block';
+          fabBadge.textContent = data.critical_skus.length;
+        }
+
+        if (actionBtn) {
+          actionBtn.onclick = () => {
+            if (window.openAgentChat) {
+              window.openAgentChat("Review the critical procurement directives and explain the risks.");
+            }
+          };
+        }
+
+        if (dismissBtn) {
+          dismissBtn.onclick = () => {
+            banner.style.display = 'none';
+          };
+        }
+      }
+    } catch (e) {
+      console.warn('[Agent Brief] Proactive scan failed (offline or cold start):', e);
+    }
   }
 
   // ═══ FOCUS MODAL ═══

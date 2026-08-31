@@ -19,7 +19,7 @@
 <script src="https://cdn.jsdelivr.net/npm/echarts@5/dist/echarts.min.js"></script>
 
 <!-- App CSS -->
-<link rel="stylesheet" href="/static/css/styles.css?v=3.0.1">
+<link rel="stylesheet" href="/static/css/styles.css?v=3.1.0">
 
 <!-- FOUC prevention: apply saved theme before paint -->
 <script>
@@ -91,6 +91,14 @@ if(localStorage.getItem('ds-theme')==='dark'||(!localStorage.getItem('ds-theme')
 
 <!-- ═══ Main App Container ═══ -->
 <div class="app-container">
+
+  <!-- ═══ Autonomous Agent Proactive Alert Banner ═══ -->
+  <div class="agent-alert-banner" id="agentAlertBanner" style="display: none;">
+    <span class="agent-alert-icon">🤖</span>
+    <span class="agent-alert-text" id="agentAlertText">Scanning portfolio...</span>
+    <button class="agent-alert-action" id="agentAlertAction">View Briefing</button>
+    <button class="agent-alert-dismiss" id="agentAlertDismiss" aria-label="Dismiss alert">✕</button>
+  </div>
 
   <!-- ═══ Adaptive Control Capsule (Unified Dynamic Island & Primary Parameter Hub) ═══ -->
   <div id="capsuleAnchor" class="capsule-anchor"></div>
@@ -797,12 +805,59 @@ if(localStorage.getItem('ds-theme')==='dark'||(!localStorage.getItem('ds-theme')
   </button>
 </nav>
 
+
+<!-- ═══ Agentic AI — Floating Action Button (FAB) ═══ -->
+<button class="ai-chat-fab" id="aiChatFab" aria-label="AI Supply Chain Agent" title="Chat with Autonomous Agent">
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M12 2a2 2 0 0 1 2 2v2a2 2 0 0 1-2 2 2 2 0 0 1-2-2V4a2 2 0 0 1 2-2z"/>
+    <path d="M4 11a2 2 0 0 1 2-2h12a2 2 0 0 1 2 2v7a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2v-7z"/>
+    <line x1="9" y1="13" x2="9.01" y2="13"/>
+    <line x1="15" y1="13" x2="15.01" y2="13"/>
+    <path d="M10 17s1 1 2 1 2-1 2-1"/>
+  </svg>
+  <span class="ai-chat-fab-badge" id="aiFabBadge" style="display:none;">!</span>
+</button>
+
+<!-- ═══ Agentic AI — Chat Backdrop Overlay ═══ -->
+<div class="ai-chat-overlay" id="aiChatOverlay"></div>
+
+<!-- ═══ Agentic AI — Autonomous Assistant Drawer ═══ -->
+<aside class="ai-chat-panel" id="aiChatPanel" role="dialog" aria-label="Supply Chain AI Assistant">
+  <div class="ai-chat-header">
+    <div class="ai-chat-header-title">
+      <span class="title-icon">🤖</span>
+      <div>
+        <h3>DemandSense Agent</h3>
+        <span class="online-pill"><span class="online-dot"></span>Autonomous ReAct</span>
+      </div>
+    </div>
+    <div class="ai-chat-header-actions">
+      <button class="ai-chat-hdr-btn" id="aiChatReset" title="Reset Agent Memory" aria-label="Reset memory">🔄</button>
+      <button class="ai-chat-hdr-btn" id="aiChatClose" title="Close Drawer" aria-label="Close">✕</button>
+    </div>
+  </div>
+
+  <div class="ai-chat-messages" id="aiChatMessages">
+    <!-- Rendered dynamically -->
+  </div>
+
+  <div class="ai-chat-chips" id="aiChatChips">
+    <!-- Starter suggestion chips -->
+  </div>
+
+  <div class="ai-chat-input-bar">
+    <input type="text" id="aiChatInput" placeholder="Ask anything about forecasts, inventory, risks..." autocomplete="off" />
+    <button class="ai-chat-send-btn" id="aiChatSend" aria-label="Send Query">➔</button>
+  </div>
+</aside>
+
 <!-- App Scripts (load order: theme → drawer → guide → chart builders → app controller) -->
-<script src="/static/js/chartTheme.js?v=3.0.1"></script>
-<script src="/static/js/detailDrawer.js?v=3.0.1"></script>
-<script src="/static/js/walkthroughGuide.js?v=3.0.1"></script>
-<script src="/static/js/charts.js?v=3.0.1"></script>
-<script src="/static/js/app.js?v=3.0.1"></script>
+<script src="/static/js/chartTheme.js?v=3.1.0"></script>
+<script src="/static/js/detailDrawer.js?v=3.1.0"></script>
+<script src="/static/js/walkthroughGuide.js?v=3.1.0"></script>
+<script src="/static/js/charts.js?v=3.1.0"></script>
+<script src="/static/js/agentChat.js?v=3.1.0"></script>
+<script src="/static/js/app.js?v=3.1.0"></script>
 
 </body>
 </html>

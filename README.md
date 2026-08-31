@@ -66,9 +66,17 @@
 - **Revenue at Risk** quantified in rupees for projected stockouts
 - **ABC-Pareto Classification** across all 20 national SKUs
 
-### LLM Agent
-- Translates structured metrics into executive natural language action plans
-- Dual engine: Google Gemini API (primary) + Offline Rule Engine (guaranteed fallback)
+### 🧠 Autonomous Agentic AI Layer
+- **ReAct Reasoning Architecture:** Autonomous Observe → Think → Act loop powered by Google Gemini Function Calling
+- **Dynamic Tool Registry:** 5 enterprise tools registered for real-time invocation:
+  - `run_demand_forecast`: Auto-ML model selection, MAPE benchmarking, and 30-day forward projections
+  - `check_inventory_status`: Safety stock, reorder point (ROP), days of supply (DOS), and ₹ revenue-at-risk
+  - `get_upcoming_festivals`: Indian festival calendar lookup with demand multiplier windows
+  - `run_whatif_scenario`: Compound price elasticity, promotional lift, and supplier lead-time delay simulations
+  - `list_available_skus`: Real-time product catalog & operational parameter inspection
+- **Proactive Portfolio Monitoring:** Automated background scan across all 20 SKUs on boot; pushes immediate risk notifications with ₹ financial impact
+- **Explainable AI (XAI):** Full collapsible reasoning trace displaying every tool call, argument, and intermediate output
+- **Offline High-Availability Engine:** Rule-based heuristic fallback guaranteeing 100% uptime with zero external API dependencies
 
 ---
 

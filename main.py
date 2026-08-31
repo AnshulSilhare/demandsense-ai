@@ -51,6 +51,8 @@ from config import (
 from src.forecasting.auto_selector import ModelAutoSelector
 from src.business_impact import OperationsImpactCalculator
 from src.llm_agent import LLMPrescriptiveAgent
+from src.agent_harness import AgentHarness
+from src.agent_tools import tools
 from src.pdf_exporter import generate_executive_pdf_report
 from src.analytics_helpers import (
     decompose_time_series, prepare_radar_data,
@@ -63,6 +65,7 @@ logger = logging.getLogger("demandsense")
 
 # ═══════════════════════════════════════════════════════════════
 # GLOBAL STATE — loaded once at startup, shared read-only
+agent_instance = AgentHarness(tools=tools)
 # ═══════════════════════════════════════════════════════════════
 DEFAULT_DF: pd.DataFrame = pd.DataFrame()
 SESSION_STORE: dict = {}  # session_id → {"df": DataFrame, "expires": datetime}
@@ -1052,6 +1055,149 @@ def export_brief_pdf(
         media_type="application/pdf",
         headers={"Content-Disposition": f"attachment; filename={filename}"}
     )
+
+
+
+# ═══════════════════════════════════════════════════════════════
+# AGENTIC AI ENDPOINTS — Conversational Chat, Briefings & Alerts
+# ═══════════════════════════════════════════════════════════════
+
+@app.post("/api/agent/chat")
+async def agent_chat_endpoint(request: Request):
+    """
+    Autonomous multi-turn agent chat endpoint.
+    Executes the ReAct reasoning loop with dynamic tool dispatching.
+    """
+    try:
+        body = await request.json()
+        query = body.get("query", "").strip()
+        if not query:
+            raise HTTPException(status_code=400, detail="Query string is required.")
+
+        session_context = body.get("session_context", {})
+        result = await agent_instance.run(user_query=query, session_context=session_context)
+        return JSONResponse(content=result)
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"[API Agent] Error processing query: {e}")
+        return JSONResponse(
+            status_code=500,
+            content={"error": str(e), "answer": f"Agent encountered an error: {str(e)}", "steps": [], "tools_called": []}
+        )
+
+
+@app.post("/api/agent/brief")
+async def agent_brief_endpoint(request: Request):
+    """
+    Generate proactive daily executive portfolio briefing.
+    Performs autonomous multi-SKU risk analysis across all products & festival windows.
+    """
+    try:
+        # Check upcoming festivals (next 45 days)
+        fest_data = tools.call("get_upcoming_festivals", {"days_ahead": 45})
+        import json
+        fest_json = json.loads(fest_data) if isinstance(fest_data, str) else fest_data
+        festivals = fest_json.get("festivals", [])
+
+        # Scan SKUs for critical risk indicators
+        critical_skus = []
+        watch_skus = []
+        healthy_skus = []
+        total_risk_inr = 0.0
+
+        for p in PRODUCTS:
+            sku_id = p["sku_id"]
+            name = p["name"]
+            price = p["base_price"]
+            base_demand = p["base_demand"]
+            seasonality = p.get("seasonality", {})
+
+            # Check if any upcoming festival has multiplier > 1.3 for this SKU
+            active_fest_spikes = []
+            for fest in festivals:
+                f_id = fest.get("festival_id", "")
+                mult = seasonality.get(f_id, 1.0)
+                if mult >= 1.3:
+                    active_fest_spikes.append(f"{fest['festival_name']} ({mult}x in {fest['days_until']}d)")
+
+            # Estimate default operational risk profile
+            default_stock = 1500
+            daily_burn = base_demand * 1.1
+            dos = round(default_stock / max(1.0, daily_burn), 1)
+
+            if len(active_fest_spikes) > 0 and dos < 20:
+                est_risk = round(base_demand * 15 * price, 2)
+                total_risk_inr += est_risk
+                critical_skus.append({
+                    "sku_id": sku_id,
+                    "name": name,
+                    "category": p["category"],
+                    "days_of_supply": dos,
+                    "risk_reason": f"High demand surge: {', '.join(active_fest_spikes)}",
+                    "revenue_at_risk_inr": est_risk,
+                    "recommended_action": f"Issue PO for {int(base_demand * 25):,} units immediately."
+                })
+            elif dos < 15:
+                watch_skus.append({
+                    "sku_id": sku_id,
+                    "name": name,
+                    "days_of_supply": dos,
+                    "risk_reason": f"Low on-hand coverage ({dos} days remaining)"
+                })
+            else:
+                healthy_skus.append(sku_id)
+
+        # Build natural language briefing narrative
+        brief_lines = [
+            f"### 📋 Autonomous Supply Chain Portfolio Brief",
+            f"**Scan Time:** {datetime.now().strftime('%d %b %Y, %I:%M %p')} | **Portfolio Coverage:** {len(PRODUCTS)} SKUs across 5 Regions",
+            "",
+            f"**Portfolio Health Status:** {'🔴 HIGH RISK' if len(critical_skus) > 0 else '🟢 STABLE'}",
+            f"- **Total Revenue at Risk:** ₹{total_risk_inr:,.2f}",
+            f"- **Critical SKUs Requiring Immediate Action:** {len(critical_skus)}",
+            f"- **Watch List SKUs:** {len(watch_skus)}",
+            f"- **Healthy Active SKUs:** {len(healthy_skus)}",
+            ""
+        ]
+
+        if critical_skus:
+            brief_lines.append("#### 🔴 Urgent Procurement Directives:")
+            for item in critical_skus:
+                brief_lines.append(
+                    f"1. **{item['name']} ({item['sku_id']})**: {item['days_of_supply']} DOS remaining. "
+                    f"*{item['risk_reason']}*. Est. Risk: **₹{item['revenue_at_risk_inr']:,.2f}**. → {item['recommended_action']}"
+                )
+            brief_lines.append("")
+
+        if festivals:
+            brief_lines.append("#### 🎉 Upcoming Demand Multiplier Windows:")
+            for f in festivals[:3]:
+                brief_lines.append(f"- **{f['festival_name']}** ({f['date']}, in {f['days_until']} days): {f['demand_impact']}")
+
+        brief_text = "\n".join(brief_lines)
+
+        return JSONResponse(content={
+            "brief": brief_text,
+            "critical_skus": critical_skus,
+            "watch_skus": watch_skus,
+            "healthy_count": len(healthy_skus),
+            "total_risk_inr": total_risk_inr,
+            "upcoming_festivals_count": len(festivals)
+        })
+    except Exception as e:
+        logger.error(f"[API Agent Brief] Error generating brief: {e}")
+        return JSONResponse(
+            status_code=500,
+            content={"error": str(e), "brief": "Failed to generate brief.", "critical_skus": []}
+        )
+
+
+@app.post("/api/agent/reset")
+async def agent_reset_endpoint():
+    """Reset agent conversation memory."""
+    agent_instance.reset_memory()
+    return JSONResponse(content={"status": "ok", "message": "Agent memory reset successfully."})
 
 
 # ═══════════════════════════════════════════════════════════════
