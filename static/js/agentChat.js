@@ -2,7 +2,7 @@
  * DemandSense AI — Autonomous Agent Chat Controller
  * ====================================================
  * Manages the floating AI assistant drawer, ReAct reasoning trace viewer,
- * proactive portfolio briefs, and multi-turn conversational queries.
+ * Multi-Agent War Room, Scenario Copilot, and Live Sentinel monitoring.
  *
  * Author: Anshul Silhare
  */
@@ -27,6 +27,7 @@
     initChatElements();
     initChatEventListeners();
     renderWelcomeMessage();
+    startAutonomousMonitoring();
   });
 
   function initChatElements() {
@@ -66,7 +67,7 @@
       });
     }
 
-    // Keyboard shortcut: Escape closes chat
+    // Escape closes drawer
     document.addEventListener('keydown', (e) => {
       if (e.key === 'Escape' && chatPanel && chatPanel.classList.contains('open')) {
         toggleChatPanel(false);
@@ -78,8 +79,14 @@
   window.openAgentChat = function (initialQuery = null) {
     toggleChatPanel(true);
     if (initialQuery && typeof initialQuery === 'string') {
-      if (chatInput) chatInput.value = initialQuery;
-      handleSendMessage();
+      if (initialQuery === '__WARROOM__') {
+        window.runWarRoom();
+      } else if (initialQuery === '__SCENARIOS__') {
+        window.runScenarioCopilot();
+      } else {
+        if (chatInput) chatInput.value = initialQuery;
+        handleSendMessage();
+      }
     }
   };
 
@@ -99,7 +106,7 @@
     }
   }
 
-  // ── Welcome Message & Starter Chips ──
+  // ── Welcome Message & Starter Action Chips ──
   function renderWelcomeMessage() {
     if (!chatMessages) return;
     chatMessages.innerHTML = `
@@ -108,7 +115,7 @@
         <div class="msg-content">
           <div class="msg-sender">DemandSense Autonomous Agent</div>
           <p>Hello! I am your <strong>Supply Chain Intelligence Agent</strong>. I can autonomously run forecasts, check warehouse inventory, calculate stockout risks, and simulate what-if scenarios across all 20 FMCG SKUs.</p>
-          <p>What would you like to analyze?</p>
+          <p>Select an action below or ask any question in plain English:</p>
         </div>
       </div>
     `;
@@ -118,16 +125,15 @@
 
   function renderSuggestionChips() {
     if (!chatChipsContainer) return;
-    const currentSku = window.state?.activeSku || 'SKU001';
+    const currentSku = window.state?.activeSku || window.state?.sku || 'SKU001';
     const chips = [
-      { label: '\U0001f3db\ufe0f War Room Analysis', query: '__WARROOM__' },
-      { label: '\U0001f52e Scenario Copilot', query: '__SCENARIOS__' },
-      { label: '\U0001f4cb Morning Portfolio Brief', query: 'Generate an executive portfolio brief for all 20 SKUs.' },
-      { label: '\U0001f4e6 Reorder Check: ' + currentSku, query: 'Should I place a purchase order for ' + currentSku + ' based on current forecast?' },
-      { label: '\U0001f389 Festival Demand Spikes', query: 'What Indian festivals are coming up in the next 60 days and which SKUs will spike?' },
-      { label: '\u26a1 Run What-If Simulation', query: 'Simulate a 15% promotion and 3-day supplier delay for ' + currentSku + '.' },
+      { label: '🏛️ War Room Analysis', query: '__WARROOM__' },
+      { label: '🔮 Scenario Copilot', query: '__SCENARIOS__' },
+      { label: '📋 Morning Portfolio Brief', query: 'Generate an executive portfolio brief for all 20 SKUs.' },
+      { label: `📦 Reorder Check: ${currentSku}`, query: `Should I place a purchase order for ${currentSku} based on current forecast?` },
+      { label: '🎉 Festival Demand Spikes', query: 'What Indian festivals are coming up in the next 60 days and which SKUs will spike?' },
+      { label: '⚡ Run What-If Simulation', query: `Simulate a 15% promotion and 3-day supplier delay for ${currentSku}.` },
     ];
-    // ALREADY_DEFINED
 
     chatChipsContainer.innerHTML = chips
       .map(
@@ -142,13 +148,19 @@
     chatChipsContainer.querySelectorAll('.chat-chip-btn').forEach((btn) => {
       btn.addEventListener('click', () => {
         const q = btn.getAttribute('data-query');
-        if (chatInput) chatInput.value = q;
-        handleSendMessage();
+        if (q === '__WARROOM__') {
+          window.runWarRoom();
+        } else if (q === '__SCENARIOS__') {
+          window.runScenarioCopilot();
+        } else {
+          if (chatInput) chatInput.value = q;
+          handleSendMessage();
+        }
       });
     });
   }
 
-  // ── Send User Message & Execute Agent Query ──
+  // ── Send Message & Agent Execution ──
   async function handleSendMessage() {
     if (isSending) return;
     const query = chatInput ? chatInput.value.trim() : '';
@@ -156,16 +168,27 @@
 
     if (chatInput) chatInput.value = '';
 
+    // Route special keywords if typed directly
+    const lower = query.toLowerCase();
+    if (lower === '__warroom__' || lower === 'war room' || lower === 'warroom') {
+      window.runWarRoom();
+      return;
+    }
+    if (lower === '__scenarios__' || lower === 'scenario copilot' || lower === 'scenarios') {
+      window.runScenarioCopilot();
+      return;
+    }
+
     appendUserMessage(query);
 
-    const typingId = appendTypingIndicator();
+    const typingId = appendTypingIndicator('Reasoning & executing tools...');
     isSending = true;
     if (chatSendBtn) chatSendBtn.disabled = true;
 
     const sessionContext = {
-      sku_id: window.state?.activeSku || 'SKU001',
-      region: window.state?.activeRegion || 'ALL',
-      current_stock: window.state?.currentStock || 1500,
+      sku_id: window.state?.activeSku || window.state?.sku || 'SKU001',
+      region: window.state?.activeRegion || window.state?.region || 'ALL',
+      current_stock: window.state?.currentStock || window.state?.stock || 1500,
       lead_time: window.state?.leadTime || 7,
     };
 
@@ -197,7 +220,205 @@
     }
   }
 
-  // ── Render Message Elements ──
+  // ── Mode C: Multi-Agent War Room ──
+  window.runWarRoom = async function (customQuery) {
+    if (isSending) return;
+    const sku = window.state?.activeSku || window.state?.sku || 'SKU001';
+    const query = customQuery || `Conduct a comprehensive War Room analysis for ${sku} evaluating demand trajectory, inventory coverage, and rupee financial risk.`;
+
+    toggleChatPanel(true);
+    appendUserMessage(`🏛️ War Room Request: ${sku}`);
+
+    const typingId = appendTypingIndicator('War Room: 3 specialists analyzing in parallel...');
+    isSending = true;
+    if (chatSendBtn) chatSendBtn.disabled = true;
+
+    const sessionContext = {
+      sku_id: sku,
+      current_stock: window.state?.currentStock || window.state?.stock || 1500,
+    };
+
+    try {
+      const res = await fetch('/api/agent/warroom', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ query: query, session_context: sessionContext }),
+      });
+
+      const data = await res.json();
+      removeTypingIndicator(typingId);
+
+      if (data.error) {
+        appendAgentMessage(`⚠️ **War Room Error:** ${data.error}`);
+        return;
+      }
+
+      // Render specialist reports
+      let specialistCardsHtml = '';
+      if (data.specialist_reports && data.specialist_reports.length > 0) {
+        data.specialist_reports.forEach((r) => {
+          const icon = r.icon || '🤖';
+          const role = r.role || 'Specialist';
+          const body = formatMarkdown(r.analysis || 'No analysis available.');
+
+          specialistCardsHtml += `
+            <div class="warroom-specialist-card">
+              <div class="specialist-header">
+                <span class="specialist-icon">${icon}</span>
+                <span>${escapeHtml(role)}</span>
+              </div>
+              <div class="specialist-analysis">
+                ${body}
+              </div>
+            </div>
+          `;
+        });
+      }
+
+      const synthesisHtml = formatMarkdown(data.synthesis || '');
+
+      const msgEl = document.createElement('div');
+      msgEl.className = 'ai-msg-bubble agent-msg';
+      msgEl.innerHTML = `
+        <div class="msg-avatar">🏛️</div>
+        <div class="msg-content">
+          <div class="msg-sender">WAR ROOM — SPECIALIST COLLABORATION</div>
+          <div class="warroom-grid">
+            ${specialistCardsHtml}
+          </div>
+          <div class="warroom-synthesis">
+            ${synthesisHtml}
+          </div>
+        </div>
+      `;
+      if (chatMessages) chatMessages.appendChild(msgEl);
+      scrollToBottom();
+    } catch (err) {
+      removeTypingIndicator(typingId);
+      appendAgentMessage(`⚠️ **Connection Error:** Could not reach War Room. (${err.message})`);
+    } finally {
+      isSending = false;
+      if (chatSendBtn) chatSendBtn.disabled = false;
+    }
+  };
+
+  // ── Mode E: Scenario Planning Copilot ──
+  window.runScenarioCopilot = async function (skuId) {
+    if (isSending) return;
+    const targetSku = skuId || window.state?.activeSku || window.state?.sku || 'SKU001';
+    const stock = window.state?.currentStock || window.state?.stock || 1500;
+
+    toggleChatPanel(true);
+    appendUserMessage(`🔮 Scenario Copilot: Benchmark 4 Strategies for ${targetSku}`);
+
+    const typingId = appendTypingIndicator('Simulating 4 strategic scenarios & comparing...');
+    isSending = true;
+    if (chatSendBtn) chatSendBtn.disabled = true;
+
+    try {
+      const res = await fetch('/api/agent/scenarios', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ sku_id: targetSku, current_stock: stock }),
+      });
+
+      const data = await res.json();
+      removeTypingIndicator(typingId);
+
+      if (data.error) {
+        appendAgentMessage(`⚠️ **Scenario Error:** ${data.error}`);
+        return;
+      }
+
+      let tableRows = '';
+      (data.scenarios || []).forEach((s) => {
+        const isRec = s.scenario_name === data.recommended_scenario;
+        const rowClass = isRec ? 'scenario-row recommended' : 'scenario-row';
+        const star = isRec ? ' ⭐' : '';
+        tableRows += `
+          <tr class="${rowClass}">
+            <td><strong>${escapeHtml(s.scenario_name)}${star}</strong></td>
+            <td>${Number(s.total_30d_forecast || 0).toLocaleString()}</td>
+            <td>${s.days_of_supply || 0}d</td>
+            <td>₹${Number(s.revenue_at_risk_inr || 0).toLocaleString()}</td>
+            <td>${Number(s.recommended_po_qty || 0).toLocaleString()}</td>
+            <td>₹${Number(s.recommended_po_value_inr || 0).toLocaleString()}</td>
+          </tr>
+        `;
+      });
+
+      const msgEl = document.createElement('div');
+      msgEl.className = 'ai-msg-bubble agent-msg';
+      msgEl.innerHTML = `
+        <div class="msg-avatar">🔮</div>
+        <div class="msg-content">
+          <div class="msg-sender">SCENARIO PLANNING COPILOT</div>
+          <p>Benchmarked 4 strategic scenarios for <strong>${escapeHtml(data.sku_id)}</strong> with ${stock.toLocaleString()} units on hand:</p>
+          <div class="scenario-table-wrap">
+            <table class="scenario-table">
+              <thead>
+                <tr>
+                  <th>Scenario</th>
+                  <th>30d Demand</th>
+                  <th>Coverage</th>
+                  <th>Rev. at Risk</th>
+                  <th>PO Qty</th>
+                  <th>PO Value</th>
+                </tr>
+              </thead>
+              <tbody>
+                ${tableRows}
+              </tbody>
+            </table>
+          </div>
+          <div class="scenario-recommendation">
+            <strong>🏆 Recommended Path:</strong> ${escapeHtml(data.recommended_scenario || 'N/A')}<br>
+            <span style="font-size:0.76rem;color:var(--text2);margin-top:4px;display:block;">${escapeHtml(data.recommendation_rationale || '')}</span>
+          </div>
+        </div>
+      `;
+      if (chatMessages) chatMessages.appendChild(msgEl);
+      scrollToBottom();
+    } catch (err) {
+      removeTypingIndicator(typingId);
+      appendAgentMessage(`⚠️ **Connection Error:** Could not run scenario copilot. (${err.message})`);
+    } finally {
+      isSending = false;
+      if (chatSendBtn) chatSendBtn.disabled = false;
+    }
+  };
+
+  // ── Mode A: Live Autonomous Sentinel Monitoring ──
+  function startAutonomousMonitoring() {
+    const MONITOR_INTERVAL_MS = 5 * 60 * 1000; // 5 minutes
+
+    async function runScan() {
+      try {
+        const res = await fetch('/api/agent/brief', { method: 'POST' });
+        if (!res.ok) return;
+        const data = await res.json();
+        const critCount = (data.critical_skus || []).length;
+
+        const badge = document.getElementById('aiFabBadge');
+        if (badge) {
+          if (critCount > 0) {
+            badge.style.display = 'block';
+            badge.textContent = critCount;
+          } else {
+            badge.style.display = 'none';
+          }
+        }
+      } catch (e) {
+        console.warn('[Agent Sentinel] Background scan paused:', e);
+      }
+    }
+
+    // Run first scan after 2 seconds, then on interval
+    setTimeout(runScan, 2000);
+    setInterval(runScan, MONITOR_INTERVAL_MS);
+  }
+
+  // ── Message Renderers ──
   function appendUserMessage(text) {
     if (!chatMessages) return;
     const msgEl = document.createElement('div');
@@ -246,7 +467,7 @@
           <details class="agent-reasoning-trace">
             <summary>
               <span class="trace-icon">🔍</span>
-              <span>Autonomous Reasoning Trace (${toolsCalled.length} tool${toolsCalled.length === 1 ? '' : 's'} executed)</span>
+              <span>Autonomous Reasoning Trace (${toolsCalled.length || toolSteps.length} step${toolSteps.length === 1 ? '' : 's'})</span>
             </summary>
             <div class="trace-body">
               ${stepItems}
@@ -270,7 +491,7 @@
     scrollToBottom();
   }
 
-  function appendTypingIndicator() {
+  function appendTypingIndicator(label = 'Reasoning & executing tools...') {
     if (!chatMessages) return null;
     const id = 'typing_' + Date.now();
     const el = document.createElement('div');
@@ -282,7 +503,7 @@
         <div class="typing-indicator">
           <span></span><span></span><span></span>
         </div>
-        <div class="typing-label">Reasoning & calling tools...</div>
+        <div class="typing-label">${escapeHtml(label)}</div>
       </div>
     `;
     chatMessages.appendChild(el);
@@ -296,7 +517,7 @@
     if (el) el.remove();
   }
 
-  // ── Reset Conversation Memory ──
+  // ── Memory Reset ──
   async function handleResetMemory() {
     if (confirm('Reset agent conversation memory for a fresh session?')) {
       try {
@@ -311,7 +532,7 @@
     }
   }
 
-  // ── Helpers ──
+  // ── Formatters & Utilities ──
   function scrollToBottom() {
     if (chatMessages) {
       chatMessages.scrollTop = chatMessages.scrollHeight;
@@ -320,7 +541,7 @@
 
   function escapeHtml(str) {
     if (!str) return '';
-    return str
+    return String(str)
       .replace(/&/g, '&amp;')
       .replace(/</g, '&lt;')
       .replace(/>/g, '&gt;')
@@ -330,7 +551,8 @@
 
   function truncateStr(str, maxLen = 300) {
     if (!str) return '';
-    return str.length > maxLen ? str.slice(0, maxLen) + '...' : str;
+    const s = String(str);
+    return s.length > maxLen ? s.slice(0, maxLen) + '...' : s;
   }
 
   function formatMarkdown(text) {
@@ -338,9 +560,10 @@
     let out = escapeHtml(text);
 
     // Headers
-    out = out.replace(/^### (.*$)/gim, '<h4 class="chat-h4">$1</h4>');
-    out = out.replace(/^## (.*$)/gim, '<h3 class="chat-h3">$1</h3>');
-    out = out.replace(/^# (.*$)/gim, '<h2 class="chat-h2">$1</h2>');
+    out = out.replace(/^#### (.*$)/gim, '<h5 class="chat-h5" style="margin:0.6rem 0 0.2rem 0;font-size:0.8rem;font-weight:700;">$1</h5>');
+    out = out.replace(/^### (.*$)/gim, '<h4 class="chat-h4" style="margin:0.8rem 0 0.3rem 0;font-size:0.88rem;font-weight:700;">$1</h4>');
+    out = out.replace(/^## (.*$)/gim, '<h3 class="chat-h3" style="margin:0.9rem 0 0.4rem 0;font-size:0.95rem;font-weight:700;">$1</h3>');
+    out = out.replace(/^# (.*$)/gim, '<h2 class="chat-h2" style="margin:1rem 0 0.5rem 0;font-size:1.05rem;font-weight:700;">$1</h2>');
 
     // Bold / Italic
     out = out.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
@@ -349,10 +572,13 @@
     // Code
     out = out.replace(/`([^`]+)`/g, '<code class="chat-code">$1</code>');
 
-    // Lists (bullets)
-    out = out.replace(/^\s*[-*]\s+(.*$)/gim, '<li class="chat-li">$1</li>');
+    // Numbered lists
+    out = out.replace(/^(\d+)\.\s+(.*$)/gim, '<li class="chat-li"><strong>$1.</strong> $2</li>');
 
-    // Paragraphs
+    // Bullet lists
+    out = out.replace(/^\s*[-*]\s+(.*$)/gim, '<li class="chat-li">• $1</li>');
+
+    // Wrap in paragraphs
     out = out.replace(/\n\n/g, '</p><p>');
     out = '<p>' + out + '</p>';
     out = out.replace(/<p><\/p>/g, '');
@@ -360,196 +586,3 @@
     return out;
   }
 })();
-
-
-// ═══ OPTION A: AUTONOMOUS MONITORING (Periodic Background Scan) ═══
-(function() {
-  const MONITOR_INTERVAL_MS = 5 * 60 * 1000; // 5 minutes
-  let monitorTimer = null;
-  let lastRiskCount = 0;
-
-  function startAutonomousMonitoring() {
-    if (monitorTimer) return;
-    console.log('[Agent Monitor] Autonomous monitoring started (5-min interval)');
-
-    monitorTimer = setInterval(async () => {
-      try {
-        const res = await fetch('/api/agent/brief', { method: 'POST' });
-        if (!res.ok) return;
-        const data = await res.json();
-        const critCount = (data.critical_skus || []).length;
-
-        // Update FAB badge
-        const badge = document.getElementById('aiFabBadge');
-        if (badge && critCount > 0) {
-          badge.style.display = 'block';
-          badge.textContent = critCount;
-        }
-
-        // If new risks detected since last scan, update banner
-        if (critCount > lastRiskCount && critCount > 0) {
-          const banner = document.getElementById('agentAlertBanner');
-          const alertText = document.getElementById('agentAlertText');
-          if (banner && alertText) {
-            const topSku = data.critical_skus[0];
-            alertText.innerHTML = '<strong>\u26a0\ufe0f Live Monitor Alert:</strong> ' + critCount +
-              ' SKU(s) at risk. Top: <strong>' + topSku.name + '</strong> (' + topSku.days_of_supply +
-              ' DOS). Portfolio Risk: <strong>\u20b9' + Number(data.total_risk_inr || 0).toLocaleString() + '</strong>';
-            banner.style.display = 'flex';
-          }
-        }
-        lastRiskCount = critCount;
-      } catch (e) {
-        console.warn('[Agent Monitor] Scan failed:', e);
-      }
-    }, MONITOR_INTERVAL_MS);
-  }
-
-  // Start monitoring after page load
-  if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', startAutonomousMonitoring);
-  } else {
-    startAutonomousMonitoring();
-  }
-})();
-
-
-// ═══ OPTION C: WAR ROOM MODE ═══
-window.runWarRoom = async function(query) {
-  const chatMessages = document.getElementById('aiChatMessages');
-  const chatPanel = document.getElementById('aiChatPanel');
-  if (chatPanel && !chatPanel.classList.contains('open')) {
-    if (window.openAgentChat) window.openAgentChat();
-  }
-
-  // Show user message
-  const userEl = document.createElement('div');
-  userEl.className = 'ai-msg-bubble user-msg';
-  userEl.innerHTML = '<div class="msg-content"><p>' + query + '</p></div><div class="msg-avatar user-av">\ud83d\udc64</div>';
-  if (chatMessages) chatMessages.appendChild(userEl);
-
-  // Show typing
-  const typingEl = document.createElement('div');
-  typingEl.className = 'ai-msg-bubble agent-msg typing';
-  typingEl.id = 'warroom_typing';
-  typingEl.innerHTML = '<div class="msg-avatar">\U0001f3db\ufe0f</div><div class="msg-content"><div class="typing-indicator"><span></span><span></span><span></span></div><div class="typing-label">War Room: 3 specialists analyzing...</div></div>';
-  if (chatMessages) chatMessages.appendChild(typingEl);
-  if (chatMessages) chatMessages.scrollTop = chatMessages.scrollHeight;
-
-  try {
-    const sessionContext = {
-      sku_id: window.state?.activeSku || window.state?.sku || 'SKU001',
-      current_stock: window.state?.currentStock || window.state?.stock || 1500,
-    };
-
-    const res = await fetch('/api/agent/warroom', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ query: query, session_context: sessionContext }),
-    });
-    const data = await res.json();
-
-    // Remove typing
-    const t = document.getElementById('warroom_typing');
-    if (t) t.remove();
-
-    // Render specialist reports
-    const msgEl = document.createElement('div');
-    msgEl.className = 'ai-msg-bubble agent-msg';
-
-    let specialistHtml = '';
-    if (data.specialist_reports) {
-      data.specialist_reports.forEach(function(r) {
-        specialistHtml += '<div class="warroom-specialist-card">' +
-          '<div class="specialist-header"><span class="specialist-icon">' + (r.icon || '\U0001f916') + '</span>' +
-          '<strong>' + (r.role || 'Specialist') + '</strong></div>' +
-          '<div class="specialist-analysis"><p>' + (r.analysis || 'No analysis.').replace(/\n/g, '<br>') + '</p></div></div>';
-      });
-    }
-
-    const synthesis = (data.synthesis || '').replace(/\n/g, '<br>');
-
-    msgEl.innerHTML = '<div class="msg-avatar">\U0001f3db\ufe0f</div><div class="msg-content">' +
-      '<div class="msg-sender">WAR ROOM — MULTI-AGENT ANALYSIS</div>' +
-      '<div class="warroom-grid">' + specialistHtml + '</div>' +
-      '<div class="warroom-synthesis">' + synthesis + '</div></div>';
-
-    if (chatMessages) chatMessages.appendChild(msgEl);
-    if (chatMessages) chatMessages.scrollTop = chatMessages.scrollHeight;
-  } catch (err) {
-    const t = document.getElementById('warroom_typing');
-    if (t) t.remove();
-    console.error('[WarRoom] Error:', err);
-  }
-};
-
-
-// ═══ OPTION E: SCENARIO COPILOT ═══
-window.runScenarioCopilot = async function(skuId) {
-  const chatMessages = document.getElementById('aiChatMessages');
-  const chatPanel = document.getElementById('aiChatPanel');
-  if (chatPanel && !chatPanel.classList.contains('open')) {
-    if (window.openAgentChat) window.openAgentChat();
-  }
-
-  skuId = skuId || window.state?.activeSku || window.state?.sku || 'SKU001';
-  const stock = window.state?.currentStock || window.state?.stock || 1500;
-
-  // User message
-  const userEl = document.createElement('div');
-  userEl.className = 'ai-msg-bubble user-msg';
-  userEl.innerHTML = '<div class="msg-content"><p>Run scenario comparison for ' + skuId + '</p></div><div class="msg-avatar user-av">\ud83d\udc64</div>';
-  if (chatMessages) chatMessages.appendChild(userEl);
-
-  // Typing
-  const typingEl = document.createElement('div');
-  typingEl.className = 'ai-msg-bubble agent-msg typing';
-  typingEl.id = 'scenario_typing';
-  typingEl.innerHTML = '<div class="msg-avatar">\U0001f52e</div><div class="msg-content"><div class="typing-indicator"><span></span><span></span><span></span></div><div class="typing-label">Generating 4 scenarios & comparing...</div></div>';
-  if (chatMessages) chatMessages.appendChild(typingEl);
-  if (chatMessages) chatMessages.scrollTop = chatMessages.scrollHeight;
-
-  try {
-    const res = await fetch('/api/agent/scenarios', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ sku_id: skuId, current_stock: stock }),
-    });
-    const data = await res.json();
-
-    const t = document.getElementById('scenario_typing');
-    if (t) t.remove();
-
-    // Build comparison table
-    let tableRows = '';
-    (data.scenarios || []).forEach(function(s) {
-      const isRec = s.scenario_name === data.recommended_scenario;
-      const rowClass = isRec ? 'scenario-row recommended' : 'scenario-row';
-      tableRows += '<tr class="' + rowClass + '">' +
-        '<td>' + s.scenario_name + (isRec ? ' \u2b50' : '') + '</td>' +
-        '<td>' + (s.total_30d_forecast || 0).toLocaleString() + '</td>' +
-        '<td>' + (s.days_of_supply || 0) + '</td>' +
-        '<td>\u20b9' + (s.revenue_at_risk_inr || 0).toLocaleString() + '</td>' +
-        '<td>' + (s.recommended_po_qty || 0).toLocaleString() + '</td>' +
-        '<td>\u20b9' + (s.recommended_po_value_inr || 0).toLocaleString() + '</td></tr>';
-    });
-
-    const msgEl = document.createElement('div');
-    msgEl.className = 'ai-msg-bubble agent-msg';
-    msgEl.innerHTML = '<div class="msg-avatar">\U0001f52e</div><div class="msg-content">' +
-      '<div class="msg-sender">SCENARIO PLANNING COPILOT</div>' +
-      '<div class="scenario-table-wrap"><table class="scenario-table">' +
-      '<thead><tr><th>Scenario</th><th>30d Forecast</th><th>DOS</th><th>Rev. at Risk</th><th>PO Qty</th><th>PO Value</th></tr></thead>' +
-      '<tbody>' + tableRows + '</tbody></table></div>' +
-      '<div class="scenario-recommendation"><strong>\U0001f3c6 Recommended:</strong> ' +
-      (data.recommended_scenario || 'N/A') + '<br><em>' +
-      (data.recommendation_rationale || '') + '</em></div></div>';
-
-    if (chatMessages) chatMessages.appendChild(msgEl);
-    if (chatMessages) chatMessages.scrollTop = chatMessages.scrollHeight;
-  } catch (err) {
-    const t = document.getElementById('scenario_typing');
-    if (t) t.remove();
-    console.error('[Scenario Copilot] Error:', err);
-  }
-};
