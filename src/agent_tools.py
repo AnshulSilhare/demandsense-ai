@@ -47,6 +47,7 @@ def _get_featured_sku_data(sku_id: str) -> pd.DataFrame:
         agg_df["region_id"] = "ALL"
         engine = IndianSeasonalityEngine()
         _CACHE["featured_dfs"][sku_id] = engine.engineer_features(agg_df)
+        _CACHE["raw_df"] = None
     return _CACHE["featured_dfs"][sku_id]
 
 def _get_sku_forecast(sku_id: str) -> dict:
