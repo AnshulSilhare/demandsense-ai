@@ -11,6 +11,30 @@
   'use strict';
 
   // ── DOM Elements ──
+  // ── FMCG 20-Product Catalog ──
+  const FMCG_CATALOG = [
+    { id: 'SKU001', name: 'Premium Detergent 1kg', category: 'Home Care', icon: '🧼' },
+    { id: 'SKU002', name: 'Instant Noodles 4-Pack', category: 'Packaged Food', icon: '🍜' },
+    { id: 'SKU003', name: 'Fresh Butter 500g', category: 'Dairy', icon: '🧈' },
+    { id: 'SKU004', name: 'Iodized Salt 1kg', category: 'Staples', icon: '🧂' },
+    { id: 'SKU005', name: 'Glucose Biscuits 800g', category: 'Packaged Food', icon: '🍪' },
+    { id: 'SKU006', name: 'Pure Honey 500g', category: 'Health Foods', icon: '🍯' },
+    { id: 'SKU007', name: 'Traditional Namkeen 400g', category: 'Snacks', icon: '🥨' },
+    { id: 'SKU008', name: 'Mango Juice 1L', category: 'Beverages', icon: '🧃' },
+    { id: 'SKU009', name: 'Coconut Hair Oil 200ml', category: 'Personal Care', icon: '🧴' },
+    { id: 'SKU010', name: 'Dishwash Liquid 500ml', category: 'Home Care', icon: '🍽️' },
+    { id: 'SKU011', name: 'Basmati Rice 5kg', category: 'Staples', icon: '🍚' },
+    { id: 'SKU012', name: 'Sunflower Oil 1L', category: 'Cooking Oils', icon: '🌻' },
+    { id: 'SKU013', name: 'Green Tea 100 Bags', category: 'Beverages', icon: '🍵' },
+    { id: 'SKU014', name: 'Face Wash 100ml', category: 'Personal Care', icon: '🫧' },
+    { id: 'SKU015', name: 'Premium Chips 150g', category: 'Snacks', icon: '🥔' },
+    { id: 'SKU016', name: 'Chyawanprash 500g', category: 'Health Foods', icon: '🌿' },
+    { id: 'SKU017', name: 'Tomato Ketchup 500g', category: 'Packaged Food', icon: '🍅' },
+    { id: 'SKU018', name: 'Floor Cleaner 1L', category: 'Home Care', icon: '🧹' },
+    { id: 'SKU019', name: 'Chocolate Bar 50g', category: 'Confectionery', icon: '🍫' },
+    { id: 'SKU020', name: 'Mosquito Repellent 45ml', category: 'Home Care', icon: '🦟' },
+  ];
+
   let chatFab = null;
   let chatPanel = null;
   let chatOverlay = null;
@@ -242,16 +266,145 @@
     }
   }
 
+  // ── SKU Prompt Helpers ──
+  window.promptWarRoomSku = function () {
+    toggleChatPanel(true);
+    const activeSku = window.state?.activeSku || window.state?.sku || 'SKU001';
+    const ts = Date.now();
+
+    const optionsHtml = FMCG_CATALOG.map(p => 
+      `<option value="${p.id}" ${p.id === activeSku ? 'selected' : ''}>${p.id} — ${escapeHtml(p.name)} (${p.category})</option>`
+    ).join('');
+
+    const quickSkus = ['SKU001', 'SKU002', 'SKU003', 'SKU006', 'SKU007', 'SKU008', 'SKU011', 'SKU015', 'SKU019'];
+    const quickButtons = quickSkus.map(sid => {
+      const prod = FMCG_CATALOG.find(p => p.id === sid) || { id: sid, name: sid, icon: '📦' };
+      return `<button class="sku-quick-btn" onclick="window.runWarRoomForSku('${sid}')">${prod.icon} ${sid} (${prod.name.split(' ')[0]})</button>`;
+    }).join('');
+
+    const promptHtml = `
+      <div class="ai-msg-bubble agent-msg">
+        <div class="msg-avatar">🏛️</div>
+        <div class="msg-content">
+          <div class="msg-sender">WAR ROOM — SELECT SKU</div>
+          <p>Which product would you like the <strong>Demand Planner, Inventory Controller, and Risk Analyst</strong> to collaborate on?</p>
+          
+          <div class="sku-picker-container">
+            <span class="sku-picker-label">⚡ Fast-Moving SKUs:</span>
+            <div class="sku-picker-quick">
+              ${quickButtons}
+            </div>
+
+            <span class="sku-picker-label" style="margin-top:0.3rem;">📋 Or Select Any of 20 SKUs:</span>
+            <div class="sku-picker-select-row">
+              <select class="sku-picker-select" id="warroomSkuSelect_${ts}">
+                ${optionsHtml}
+              </select>
+              <button class="sku-picker-launch-btn" onclick="window.runWarRoomFromSelect('warroomSkuSelect_${ts}')">
+                🚀 Launch War Room
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    `;
+
+    if (chatMessages) {
+      const wrapper = document.createElement('div');
+      wrapper.innerHTML = promptHtml;
+      chatMessages.appendChild(wrapper.firstElementChild);
+      scrollToBottom();
+    }
+  };
+
+  window.runWarRoomFromSelect = function (selectId) {
+    const el = document.getElementById(selectId);
+    const sku = el ? el.value : 'SKU001';
+    window.runWarRoomForSku(sku);
+  };
+
+  window.promptScenarioSku = function () {
+    toggleChatPanel(true);
+    const activeSku = window.state?.activeSku || window.state?.sku || 'SKU001';
+    const ts = Date.now();
+
+    const optionsHtml = FMCG_CATALOG.map(p => 
+      `<option value="${p.id}" ${p.id === activeSku ? 'selected' : ''}>${p.id} — ${escapeHtml(p.name)} (${p.category})</option>`
+    ).join('');
+
+    const quickSkus = ['SKU001', 'SKU002', 'SKU003', 'SKU006', 'SKU007', 'SKU008', 'SKU011', 'SKU015', 'SKU019'];
+    const quickButtons = quickSkus.map(sid => {
+      const prod = FMCG_CATALOG.find(p => p.id === sid) || { id: sid, name: sid, icon: '🔮' };
+      return `<button class="sku-quick-btn" onclick="window.runScenarioCopilot('${sid}')">${prod.icon} ${sid} (${prod.name.split(' ')[0]})</button>`;
+    }).join('');
+
+    const promptHtml = `
+      <div class="ai-msg-bubble agent-msg">
+        <div class="msg-avatar">🔮</div>
+        <div class="msg-content">
+          <div class="msg-sender">SCENARIO COPILOT — SELECT SKU</div>
+          <p>Which product would you like to benchmark across <strong>4 strategic scenarios</strong> (promotional lift, supplier delay, price elasticity)?</p>
+          
+          <div class="sku-picker-container">
+            <span class="sku-picker-label">⚡ Fast-Moving SKUs:</span>
+            <div class="sku-picker-quick">
+              ${quickButtons}
+            </div>
+
+            <span class="sku-picker-label" style="margin-top:0.3rem;">📋 Or Select Any of 20 SKUs:</span>
+            <div class="sku-picker-select-row">
+              <select class="sku-picker-select" id="scenarioSkuSelect_${ts}">
+                ${optionsHtml}
+              </select>
+              <button class="sku-picker-launch-btn" onclick="window.runScenarioFromSelect('scenarioSkuSelect_${ts}')">
+                🚀 Run Scenarios
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    `;
+
+    if (chatMessages) {
+      const wrapper = document.createElement('div');
+      wrapper.innerHTML = promptHtml;
+      chatMessages.appendChild(wrapper.firstElementChild);
+      scrollToBottom();
+    }
+  };
+
+  window.runScenarioFromSelect = function (selectId) {
+    const el = document.getElementById(selectId);
+    const sku = el ? el.value : 'SKU001';
+    window.runScenarioCopilot(sku);
+  };
+
   // ── Mode C: Multi-Agent War Room ──
-  window.runWarRoom = async function (customQuery) {
+  window.runWarRoom = function (customQuery) {
+    if (!customQuery || customQuery === '__WARROOM__' || customQuery === 'war room' || customQuery === 'warroom') {
+      window.promptWarRoomSku();
+      return;
+    }
+    const match = customQuery.match(/SKU\d{3}/i);
+    const targetSku = match ? match[0].toUpperCase() : null;
+    if (targetSku) {
+      window.runWarRoomForSku(targetSku, customQuery);
+    } else {
+      window.promptWarRoomSku();
+    }
+  };
+
+  window.runWarRoomForSku = async function (skuId, customQuery) {
     if (isSending) return;
-    const sku = window.state?.activeSku || window.state?.sku || 'SKU001';
-    const query = customQuery || `Conduct a comprehensive War Room analysis for ${sku} evaluating demand trajectory, inventory coverage, and rupee financial risk.`;
+    const sku = skuId || 'SKU001';
+    const prod = FMCG_CATALOG.find(p => p.id === sku);
+    const prodName = prod ? prod.name : sku;
+    const query = customQuery || `Conduct a comprehensive War Room analysis for ${sku} (${prodName}) evaluating demand trajectory, inventory coverage, and rupee financial risk.`;
 
     toggleChatPanel(true);
-    appendUserMessage(`🏛️ War Room Request: ${sku}`);
+    appendUserMessage(`🏛️ War Room Request: ${sku} — ${prodName}`);
 
-    const typingId = appendTypingIndicator('War Room: 3 specialists analyzing in parallel...');
+    const typingId = appendTypingIndicator(`War Room: Analyzing ${sku} across 3 specialists in parallel...`);
     isSending = true;
     if (chatSendBtn) chatSendBtn.disabled = true;
 
@@ -307,7 +460,7 @@
       msgEl.innerHTML = `
         <div class="msg-avatar">🏛️</div>
         <div class="msg-content">
-          <div class="msg-sender">WAR ROOM — SPECIALIST COLLABORATION</div>
+          <div class="msg-sender">WAR ROOM — SPECIALIST COLLABORATION (${escapeHtml(sku)})</div>
           <div class="warroom-grid">
             ${specialistCardsHtml}
           </div>
@@ -329,14 +482,21 @@
 
   // ── Mode E: Scenario Planning Copilot ──
   window.runScenarioCopilot = async function (skuId) {
+    if (!skuId || skuId === '__SCENARIOS__' || typeof skuId !== 'string' || !skuId.match(/SKU\d{3}/i)) {
+      window.promptScenarioSku();
+      return;
+    }
     if (isSending) return;
-    const targetSku = skuId || window.state?.activeSku || window.state?.sku || 'SKU001';
+    const match = skuId.match(/SKU\d{3}/i);
+    const targetSku = match ? match[0].toUpperCase() : 'SKU001';
+    const prod = FMCG_CATALOG.find(p => p.id === targetSku);
+    const prodName = prod ? prod.name : targetSku;
     const stock = window.state?.currentStock || window.state?.stock || 1500;
 
     toggleChatPanel(true);
-    appendUserMessage(`🔮 Scenario Copilot: Benchmark 4 Strategies for ${targetSku}`);
+    appendUserMessage(`🔮 Scenario Copilot: Benchmark 4 Strategies for ${targetSku} — ${prodName}`);
 
-    const typingId = appendTypingIndicator('Simulating 4 strategic scenarios & comparing...');
+    const typingId = appendTypingIndicator(`Simulating 4 strategic scenarios for ${targetSku}...`);
     isSending = true;
     if (chatSendBtn) chatSendBtn.disabled = true;
 
@@ -380,8 +540,8 @@
       msgEl.innerHTML = `
         <div class="msg-avatar">🔮</div>
         <div class="msg-content">
-          <div class="msg-sender">SCENARIO PLANNING COPILOT</div>
-          <p>Benchmarked 4 strategic scenarios for <strong>${escapeHtml(data.sku_id)}</strong> with ${stock.toLocaleString()} units on hand:</p>
+          <div class="msg-sender">SCENARIO PLANNING COPILOT (${escapeHtml(targetSku)})</div>
+          <p>Benchmarked 4 strategic scenarios for <strong>${escapeHtml(targetSku)} — ${escapeHtml(prodName)}</strong> with ${stock.toLocaleString()} units on hand:</p>
           <div class="scenario-table-wrap">
             <table class="scenario-table">
               <thead>

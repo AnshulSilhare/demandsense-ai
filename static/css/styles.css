@@ -6101,3 +6101,116 @@ body.dark .scenario-row.recommended {
   background: var(--accent);
   color: #fff;
 }
+
+/* ═══ SKU PICKER FOR WAR ROOM & SCENARIOS ═══ */
+.sku-picker-container {
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+  margin: 0.6rem 0;
+  background: var(--bg3, rgba(15, 23, 42, 0.04));
+  border: 1px solid var(--border, rgba(15, 23, 42, 0.1));
+  border-radius: 8px;
+  padding: 0.75rem;
+}
+
+body.dark .sku-picker-container {
+  background: rgba(15, 23, 42, 0.6);
+  border-color: rgba(255, 255, 255, 0.1);
+}
+
+.sku-picker-label {
+  font-family: var(--mono, monospace);
+  font-size: 0.72rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  color: var(--accent, #0d9488);
+}
+
+.sku-picker-quick {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem;
+}
+
+.sku-quick-btn {
+  font-family: var(--mono, monospace);
+  font-size: 0.72rem;
+  font-weight: 600;
+  padding: 0.35rem 0.65rem;
+  background: var(--surface, #fff);
+  color: var(--text, #0f172a);
+  border: 1px solid var(--border, rgba(15, 23, 42, 0.15));
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  -webkit-tap-highlight-color: transparent;
+}
+
+body.dark .sku-quick-btn {
+  background: rgba(30, 41, 59, 0.8);
+  color: #f1f5f9;
+  border-color: rgba(255, 255, 255, 0.15);
+}
+
+.sku-quick-btn:hover {
+  background: var(--accent, #0d9488);
+  color: #fff;
+  border-color: var(--accent, #0d9488);
+  transform: translateY(-1px);
+}
+
+.sku-picker-select-row {
+  display: flex;
+  gap: 0.4rem;
+  align-items: center;
+  margin-top: 0.2rem;
+}
+
+@media (max-width: 480px) {
+  .sku-picker-select-row {
+    flex-direction: column;
+    align-items: stretch;
+  }
+}
+
+.sku-picker-select {
+  flex: 1;
+  font-family: var(--mono, monospace);
+  font-size: 0.74rem;
+  padding: 0.45rem 0.6rem;
+  background: var(--surface, #fff);
+  color: var(--text, #0f172a);
+  border: 1px solid var(--border, rgba(15, 23, 42, 0.15));
+  border-radius: 6px;
+  outline: none;
+}
+
+body.dark .sku-picker-select {
+  background: rgba(30, 41, 59, 0.9);
+  color: #f1f5f9;
+  border-color: rgba(255, 255, 255, 0.2);
+}
+
+.sku-picker-launch-btn {
+  font-family: var(--mono, monospace);
+  font-size: 0.74rem;
+  font-weight: 700;
+  padding: 0.45rem 0.85rem;
+  background: linear-gradient(135deg, #0d9488, #1d4ed8);
+  color: #fff;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: all 0.2s ease;
+}
+
+.sku-picker-launch-btn:hover {
+  opacity: 0.9;
+  transform: scale(1.02);
+}
