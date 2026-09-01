@@ -202,6 +202,9 @@
         }),
       });
 
+      if (!response.ok) {
+        throw new Error(`Server returned ${response.status}. The agent may still be warming up — please retry in 30 seconds.`);
+      }
       const data = await response.json();
       removeTypingIndicator(typingId);
 
@@ -245,6 +248,9 @@
         body: JSON.stringify({ query: query, session_context: sessionContext }),
       });
 
+      if (!res.ok) {
+        throw new Error(`Server returned ${res.status}. The War Room may still be warming up — please retry in 30 seconds.`);
+      }
       const data = await res.json();
       removeTypingIndicator(typingId);
 
@@ -322,6 +328,9 @@
         body: JSON.stringify({ sku_id: targetSku, current_stock: stock }),
       });
 
+      if (!res.ok) {
+        throw new Error(`Server returned ${res.status}. Scenarios may still be warming up — please retry in 30 seconds.`);
+      }
       const data = await res.json();
       removeTypingIndicator(typingId);
 
