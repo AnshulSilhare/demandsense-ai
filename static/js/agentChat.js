@@ -15,6 +15,7 @@
   let chatPanel = null;
   let chatOverlay = null;
   let chatCloseBtn = null;
+  let chatExpandBtn = null;
   let chatResetBtn = null;
   let chatMessages = null;
   let chatInput = null;
@@ -35,6 +36,7 @@
     chatPanel = document.getElementById('aiChatPanel');
     chatOverlay = document.getElementById('aiChatOverlay');
     chatCloseBtn = document.getElementById('aiChatClose');
+    chatExpandBtn = document.getElementById('aiChatExpand');
     chatResetBtn = document.getElementById('aiChatReset');
     chatMessages = document.getElementById('aiChatMessages');
     chatInput = document.getElementById('aiChatInput');
@@ -48,6 +50,9 @@
     }
     if (chatCloseBtn) {
       chatCloseBtn.addEventListener('click', () => toggleChatPanel(false));
+    }
+    if (chatExpandBtn) {
+      chatExpandBtn.addEventListener('click', toggleExpandPanel);
     }
     if (chatOverlay) {
       chatOverlay.addEventListener('click', () => toggleChatPanel(false));
@@ -90,6 +95,15 @@
     }
   };
 
+    function toggleExpandPanel() {
+    if (!chatPanel) return;
+    const isExpanded = chatPanel.classList.toggle('expanded');
+    if (chatExpandBtn) {
+      chatExpandBtn.textContent = isExpanded ? '🗗' : '⛶';
+      chatExpandBtn.title = isExpanded ? 'Restore Standard View' : 'Toggle Wide Screen View';
+    }
+  }
+
   function toggleChatPanel(open) {
     if (!chatPanel) return;
     if (open) {
@@ -127,6 +141,7 @@
     if (!chatChipsContainer) return;
     const currentSku = window.state?.activeSku || window.state?.sku || 'SKU001';
     const chips = [
+      { label: '✨ 2-Min Recruiter Tour', query: '__TOUR__' },
       { label: '🏛️ War Room Analysis', query: '__WARROOM__' },
       { label: '🔮 Scenario Copilot', query: '__SCENARIOS__' },
       { label: '📋 Morning Portfolio Brief', query: 'Generate an executive portfolio brief for all 20 SKUs.' },
@@ -170,6 +185,10 @@
 
     // Route special keywords if typed directly
     const lower = query.toLowerCase();
+        if (lower === '__tour__' || lower === 'tour' || lower === 'demo' || lower === 'recruiter tour') {
+      window.runRecruiterTour();
+      return;
+    }
     if (lower === '__warroom__' || lower === 'war room' || lower === 'warroom') {
       window.runWarRoom();
       return;
