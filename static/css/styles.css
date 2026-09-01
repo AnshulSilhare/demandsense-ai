@@ -3156,32 +3156,40 @@ body.dark .guide-protip-box {
 
 
 /* ═══ ULTRA-THIN LIQUID GLASS FLOATING BOTTOM NAVIGATION BAR ═══ */
+/* Default: Hidden on Desktop (where Top Navigation is active) */
 .bottom-nav {
-  display: flex !important;
-  position: fixed !important;
-  bottom: 0.85rem !important;
-  bottom: calc(0.75rem + env(safe-area-inset-bottom, 0px)) !important;
-  left: 50% !important;
-  transform: translateX(-50%) !important;
-  width: calc(100% - 1.5rem) !important;
-  max-width: 440px !important;
-  height: 48px !important;
-  padding: 3px 4px !important;
-  align-items: center !important;
-  justify-content: space-between !important;
-  
-  /* True Translucent Liquid Glass */
-  background: rgba(255, 255, 255, 0.84) !important;
-  border: 1px solid rgba(255, 255, 255, 0.9) !important;
-  border-radius: 9999px !important;
-  backdrop-filter: blur(20px) saturate(180%) !important;
-  -webkit-backdrop-filter: blur(20px) saturate(180%) !important;
-  box-shadow: 0 10px 32px rgba(15, 23, 42, 0.18), inset 0 1px 1.5px rgba(255, 255, 255, 0.9) !important;
-  
-  z-index: 99999 !important;
-  pointer-events: auto !important;
-  box-sizing: border-box !important;
-  transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1), background 0.25s ease !important;
+  display: none !important;
+}
+
+/* Mobile & Tablet Only: Floating Liquid Bottom Nav */
+@media (max-width: 900px) {
+  .bottom-nav {
+    display: flex !important;
+    position: fixed !important;
+    bottom: 0.85rem !important;
+    bottom: calc(0.75rem + env(safe-area-inset-bottom, 0px)) !important;
+    left: 50% !important;
+    transform: translateX(-50%) !important;
+    width: calc(100% - 1.5rem) !important;
+    max-width: 440px !important;
+    height: 48px !important;
+    padding: 3px 4px !important;
+    align-items: center !important;
+    justify-content: space-between !important;
+    
+    /* True Translucent Liquid Glass */
+    background: rgba(255, 255, 255, 0.84) !important;
+    border: 1px solid rgba(255, 255, 255, 0.9) !important;
+    border-radius: 9999px !important;
+    backdrop-filter: blur(20px) saturate(180%) !important;
+    -webkit-backdrop-filter: blur(20px) saturate(180%) !important;
+    box-shadow: 0 10px 32px rgba(15, 23, 42, 0.18), inset 0 1px 1.5px rgba(255, 255, 255, 0.9) !important;
+    
+    z-index: 99999 !important;
+    pointer-events: auto !important;
+    box-sizing: border-box !important;
+    transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1), background 0.25s ease !important;
+  }
 }
 
 body.dark .bottom-nav {
