@@ -156,7 +156,7 @@
 
   // ═══ NAV TABS & MOBILE/TABLET BOTTOM TAB BAR ═══
   let _lastTabIndex = 0;
-  const _tabSequence = ['tab1', 'tab2', 'tab3', 'tab4', 'tab5'];
+  const _tabSequence = ['tab1', 'tab2', 'tab3', 'tab4', 'tab5', 'tab6'];
 
   function updateTopTabIndicator(target) {
     const indicator = el('navTabIndicator');
@@ -335,6 +335,13 @@ let _forecastRetryCount = 0;
       }
       if (target === 'tab5') {
         renderTab5();
+      }
+      if (target === 'tab6') {
+        // Optional initialization or scrolling when switching to the Agent tab
+        const tab6Messages = el('tab6Messages');
+        if (tab6Messages && tab6Messages.parentElement) {
+          tab6Messages.parentElement.scrollTop = tab6Messages.parentElement.scrollHeight;
+        }
       }
 
       // Trigger resize on all active chart instances

@@ -210,6 +210,7 @@ class MultiAgentWarRoom:
         stock = session_context.get("current_stock", 1500)
 
         tools_called = []
+        metrics = {}
 
         if spec_id == "demand_planner":
             fc_raw = self.tools.call("run_demand_forecast", {"sku_id": target_sku})
@@ -222,9 +223,15 @@ class MultiAgentWarRoom:
 
             upcoming_str = ""
             fest_list = fest.get("festivals", [])
+            upcoming_festival = None
             if fest_list:
                 top_f = fest_list[0]
                 upcoming_str = f" Approaching festival **{top_f['festival_name']}** in {top_f['days_until']} days will create an expected surge ({top_f['demand_impact']})."
+                upcoming_festival = {
+                    "name": top_f.get("festival_name", ""),
+                    "days_until": top_f.get("days_until", 0),
+                    "demand_impact": top_f.get("demand_impact", ""),
+                }
 
             analysis = (
                 f"**Demand Forecast & Seasonality ({target_sku}):**\n"
@@ -232,6 +239,15 @@ class MultiAgentWarRoom:
                 f"- **30-Day Forward Demand:** **{int(fc.get('total_30d_forecast_units', 0)):,} units** (Avg: **{fc.get('avg_daily_forecast', 0):.1f} units/day**)\n"
                 f"- **Trajectory:** **{fc.get('forecast_trend', 'stable').capitalize()}**.{upcoming_str}"
             )
+
+            metrics = {
+                "winning_model": fc.get("winning_model", "XGBoost"),
+                "mape_pct": round(fc.get("mape_pct", 0), 2),
+                "total_30d_forecast_units": int(fc.get("total_30d_forecast_units", 0)),
+                "avg_daily_forecast": round(fc.get("avg_daily_forecast", 0), 1),
+                "forecast_trend": fc.get("forecast_trend", "stable"),
+                "upcoming_festival": upcoming_festival,
+            }
 
         elif spec_id == "inventory_controller":
             inv_raw = self.tools.call("check_inventory_status", {"sku_id": target_sku, "current_stock": stock})
@@ -242,6 +258,7 @@ class MultiAgentWarRoom:
             ss = inv.get("safety_stock_units", 0)
             rop = inv.get("reorder_point_units", 0)
             po_qty = inv.get("recommended_po_qty_units", 0)
+            po_val = inv.get("recommended_po_value_inr", 0)
             status = inv.get("po_trigger_status", "STABLE")
 
             analysis = (
@@ -250,6 +267,16 @@ class MultiAgentWarRoom:
                 f"- **Safety Stock Required ($SS$):** **{ss:,} units** | **Reorder Point ($ROP$):** **{rop:,} units**\n"
                 f"- **Procurement Status:** **{status}** → Immediate PO recommendation for **{po_qty:,} units**."
             )
+
+            metrics = {
+                "current_stock": stock,
+                "days_of_supply": round(float(dos), 1),
+                "safety_stock_units": int(ss),
+                "reorder_point_units": int(rop),
+                "recommended_po_qty_units": int(po_qty),
+                "recommended_po_value_inr": round(float(po_val), 2),
+                "po_trigger_status": status,
+            }
 
         elif spec_id == "risk_analyst":
             inv_raw = self.tools.call("check_inventory_status", {"sku_id": target_sku, "current_stock": stock})
@@ -267,21 +294,59 @@ class MultiAgentWarRoom:
                 f"- **ROI on Action:** Acting now preserves **₹{risk_inr:,.2f}** in gross margin against holding cost of <₹5,000."
             )
 
+            metrics = {
+                "revenue_at_risk_inr": round(float(risk_inr), 2),
+                "required_capital_outlay_inr": round(float(po_val), 2),
+                "stockout_risk_units": int(stockout_units),
+                "holding_cost_inr": 5000,
+            }
+
         return {
             "specialist_id": spec_id,
             "role": spec["role"],
             "icon": spec["icon"],
             "analysis": analysis,
+            "metrics": metrics,
             "steps": [],
             "tools_called": tools_called,
         }
 
     def _synthesize_reports(self, query, reports):
+        """Build a dynamic executive synthesis from the specialist reports' metrics."""
+        # Extract key metrics from specialist reports for dynamic synthesis
+        demand_m = {}
+        inv_m = {}
+        risk_m = {}
+        for r in reports:
+            m = r.get("metrics", {})
+            if r.get("specialist_id") == "demand_planner":
+                demand_m = m
+            elif r.get("specialist_id") == "inventory_controller":
+                inv_m = m
+            elif r.get("specialist_id") == "risk_analyst":
+                risk_m = m
+
+        po_qty = inv_m.get("recommended_po_qty_units", 0)
+        po_val = inv_m.get("recommended_po_value_inr", 0)
+        status = inv_m.get("po_trigger_status", "STABLE")
+        model = demand_m.get("winning_model", "Auto-ML")
+        risk_inr = risk_m.get("revenue_at_risk_inr", 0)
+
+        # Build dynamic actions
+        actions = []
+        if po_qty > 0:
+            actions.append(f"1. **Procurement**: Authorize immediate PO for **{po_qty:,} units** (₹{po_val:,.0f}) — status: **{status}**.")
+        else:
+            actions.append(f"1. **Procurement**: No immediate PO required — stock coverage is healthy.")
+        actions.append(f"2. **Production Scheduling**: Align daily burn rates with the **{model}** forecast trajectory.")
+        if risk_inr > 0:
+            actions.append(f"3. **Risk Mitigation**: Release capital outlay to protect **₹{risk_inr:,.0f}** in revenue-at-risk.")
+        else:
+            actions.append(f"3. **Risk Mitigation**: No significant financial risk identified — maintain current procurement cadence.")
+
         lines = [
             "### 🏛️ War Room Unified Directive",
             "**Consensus Action Plan:**",
-            "1. **Procurement**: Authorize immediate PO placement based on the Inventory Controller's buffer calculation.",
-            "2. **Production Scheduling**: Ramp up daily burn rate allocations to align with the Demand Planner's Auto-ML forecast.",
-            "3. **Risk Mitigation**: Release capital outlay to eliminate the identified rupee revenue-at-risk.",
-        ]
+        ] + actions
         return "\n".join(lines)
+

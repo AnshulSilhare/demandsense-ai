@@ -72,6 +72,7 @@ if(localStorage.getItem('ds-theme')==='dark'||(!localStorage.getItem('ds-theme')
       <button class="nav-tab" data-tab="tab3">Inventory Control</button>
       <button class="nav-tab" data-tab="tab4">What-If Simulator</button>
       <button class="nav-tab" data-tab="tab5">AI Prescriptive Insights</button>
+      <button class="nav-tab" data-tab="tab6">Agentic AI</button>
     </nav>
 
     <!-- Right: Quick Actions Satellite Cluster -->
@@ -709,6 +710,34 @@ if(localStorage.getItem('ds-theme')==='dark'||(!localStorage.getItem('ds-theme')
     </div>
   </div>
 
+  <!-- TAB 6: Agentic AI Command Center -->
+  <div class="tab-content" id="tab6" style="display: none;">
+    <div class="section-header-row flex-between mb-16">
+      <div>
+        <div class="section-label">Module 06 — Autonomous Agent Command Center</div>
+        <div class="section-title">Agentic AI & War Room</div>
+        <div class="section-subtitle">Multi-agent supply chain intelligence, scenario planning, and autonomous execution.</div>
+      </div>
+    </div>
+    
+    <div class="agent-tab-container">
+      <div class="ai-chat-chips" id="tab6Chips" style="background:transparent; border:none; padding:0 0 1rem 0;">
+        <!-- Syncs with drawer chips -->
+      </div>
+      
+      <div class="agent-tab-messages-wrap" style="flex:1; overflow-y:auto; min-height:400px; padding-bottom: 2rem;">
+        <div class="ai-chat-messages" id="tab6Messages" style="padding: 0;">
+          <!-- Cloned messages go here -->
+        </div>
+      </div>
+
+      <div class="ai-chat-input-bar" style="border-radius:12px; margin-top:1rem; border:1px solid var(--border);">
+        <input type="text" id="tab6Input" placeholder="Ask anything about forecasts, inventory, risks..." autocomplete="off" />
+        <button class="ai-chat-send-btn" id="tab6Send" aria-label="Send Query">➔</button>
+      </div>
+    </div>
+  </div>
+
 </div> <!-- /app-container -->
 
 <!-- ═══ Focus Modal ═══ -->
@@ -802,6 +831,11 @@ if(localStorage.getItem('ds-theme')==='dark'||(!localStorage.getItem('ds-theme')
   <button class="bnav-btn" data-tab="tab5" aria-label="Prescriptive Insights">
     <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18h6"></path><path d="M10 22h4"></path><path d="M15.09 14c.18-.98.65-1.74 1.41-2.5A4.65 4.65 0 0 0 18 8 6 6 0 0 0 6 8c0 1 .23 2.23 1.5 3.5A4.61 4.61 0 0 1 8.91 14"></path></svg>
     <span>Insights</span>
+  </button>
+  
+  <button class="bnav-btn" data-tab="tab6" aria-label="Agentic AI">
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2a2 2 0 0 1 2 2v2a2 2 0 0 1-2 2 2 2 0 0 1-2-2V4a2 2 0 0 1 2-2z"/><path d="M4 11a2 2 0 0 1 2-2h12a2 2 0 0 1 2 2v7a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2v-7z"/><line x1="9" y1="13" x2="9.01" y2="13"/><line x1="15" y1="13" x2="15.01" y2="13"/><path d="M10 17s1 1 2 1 2-1 2-1"/></svg>
+    <span>Agent</span>
   </button>
 </nav>
 

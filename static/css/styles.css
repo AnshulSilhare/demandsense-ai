@@ -3204,7 +3204,7 @@ body.dark .bottom-nav {
   top: 3px !important;
   bottom: 3px !important;
   left: 0 !important;
-  width: 20% !important;
+  width: 16.666% !important;
   border-radius: 9999px !important;
   pointer-events: none !important;
   z-index: 1 !important;
@@ -3283,15 +3283,18 @@ body.dark .bnav-liquid-blob {
   flex-direction: column !important;
   align-items: center !important;
   justify-content: center !important;
-  gap: 2px !important;
-  padding: 2px 0.1rem !important;
+  gap: 1px !important;
+  padding: 2px 0.05rem !important;
   color: var(--text2) !important;
   font-family: var(--body) !important;
-  font-size: 0.62rem !important;
+  font-size: 0.58rem !important;
   font-weight: 600 !important;
   cursor: pointer !important;
   transition: color 0.2s ease, transform 0.15s ease !important;
   -webkit-tap-highlight-color: transparent !important;
+  overflow: hidden !important;
+  text-overflow: ellipsis !important;
+  white-space: nowrap !important;
 }
 
 .bnav-btn svg {
@@ -5635,12 +5638,14 @@ body.dark .msg-sender {
 .chat-h4 { font-size: 0.85rem; }
 
 .chat-ul {
-  margin: 0.4rem 0 0.6rem 1.2rem;
+  margin: 0.4rem 0 0.6rem 1.3rem;
   padding: 0;
+  list-style-type: disc;
 }
 
 .chat-li {
-  margin-bottom: 0.3rem;
+  margin-bottom: 0.35rem;
+  line-height: 1.5;
 }
 
 .chat-code {
@@ -6222,3 +6227,632 @@ body.dark .sku-picker-select {
   opacity: 0.9;
   transform: scale(1.02);
 }
+
+/* ═══════════════════════════════════════════════════════════════
+   AGENT CHAT V2 — RICH CARD DESIGN SYSTEM
+   ═══════════════════════════════════════════════════════════════ */
+
+/* ── Specialist Card V2: Structured KPI Cards ── */
+.specialist-card-v2 {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 0;
+  overflow: hidden;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.specialist-card-v2:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.08);
+}
+
+body.dark .specialist-card-v2:hover {
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.3);
+}
+
+/* Accent top bar per specialist theme */
+.specialist-card-v2 .specialist-accent-bar {
+  height: 4px;
+  width: 100%;
+  background: var(--accent);
+}
+
+.specialist-card-v2.theme-demand .specialist-accent-bar {
+  background: linear-gradient(90deg, #0d9488, #14b8a6);
+}
+.specialist-card-v2.theme-inventory .specialist-accent-bar {
+  background: linear-gradient(90deg, #1d4ed8, #3b82f6);
+}
+.specialist-card-v2.theme-risk .specialist-accent-bar {
+  background: linear-gradient(90deg, #d97706, #f59e0b);
+}
+
+.specialist-card-v2 .specialist-card-body {
+  padding: 0.85rem 1rem;
+}
+
+/* Card Header */
+.specialist-card-v2 .specialist-header-v2 {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-bottom: 0.75rem;
+}
+
+.specialist-card-v2 .specialist-icon-v2 {
+  width: 32px;
+  height: 32px;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.05rem;
+  flex-shrink: 0;
+}
+
+.specialist-card-v2.theme-demand .specialist-icon-v2 {
+  background: rgba(13, 148, 136, 0.12);
+}
+.specialist-card-v2.theme-inventory .specialist-icon-v2 {
+  background: rgba(29, 78, 216, 0.12);
+}
+.specialist-card-v2.theme-risk .specialist-icon-v2 {
+  background: rgba(245, 158, 11, 0.12);
+}
+
+body.dark .specialist-card-v2.theme-demand .specialist-icon-v2 {
+  background: rgba(20, 184, 166, 0.18);
+}
+body.dark .specialist-card-v2.theme-inventory .specialist-icon-v2 {
+  background: rgba(59, 130, 246, 0.18);
+}
+body.dark .specialist-card-v2.theme-risk .specialist-icon-v2 {
+  background: rgba(245, 158, 11, 0.18);
+}
+
+.specialist-card-v2 .specialist-role-v2 {
+  font-family: var(--mono);
+  font-size: 0.68rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.specialist-card-v2.theme-demand .specialist-role-v2 { color: #0d9488; }
+.specialist-card-v2.theme-inventory .specialist-role-v2 { color: #1d4ed8; }
+.specialist-card-v2.theme-risk .specialist-role-v2 { color: #d97706; }
+
+body.dark .specialist-card-v2.theme-demand .specialist-role-v2 { color: #2dd4bf; }
+body.dark .specialist-card-v2.theme-inventory .specialist-role-v2 { color: #60a5fa; }
+body.dark .specialist-card-v2.theme-risk .specialist-role-v2 { color: #fbbf24; }
+
+/* Hero Metric */
+.specialist-hero-metric {
+  display: flex;
+  align-items: baseline;
+  gap: 0.3rem;
+  margin-bottom: 0.6rem;
+}
+
+.specialist-hero-metric .hero-value {
+  font-family: var(--display);
+  font-size: 1.65rem;
+  font-weight: 800;
+  color: var(--text);
+  line-height: 1.1;
+  letter-spacing: -0.02em;
+}
+
+.specialist-hero-metric .hero-unit {
+  font-family: var(--mono);
+  font-size: 0.68rem;
+  font-weight: 600;
+  color: var(--text3);
+  text-transform: uppercase;
+}
+
+/* Sub-Metrics Row */
+.specialist-sub-metrics {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+  margin-bottom: 0.5rem;
+}
+
+.metric-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  font-family: var(--mono);
+  font-size: 0.64rem;
+  font-weight: 600;
+  padding: 0.2rem 0.5rem;
+  border-radius: 6px;
+  background: var(--bg3);
+  color: var(--text2);
+  border: 1px solid var(--border);
+  white-space: nowrap;
+}
+
+.metric-chip .chip-label {
+  font-weight: 500;
+  color: var(--text3);
+}
+
+.metric-chip .chip-value {
+  font-weight: 700;
+  color: var(--text);
+}
+
+/* Status Badges */
+.status-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  font-family: var(--mono);
+  font-size: 0.62rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  padding: 0.2rem 0.55rem;
+  border-radius: 99px;
+  white-space: nowrap;
+}
+
+.status-badge.status-stable {
+  background: rgba(22, 163, 74, 0.1);
+  color: #16a34a;
+  border: 1px solid rgba(22, 163, 74, 0.25);
+}
+
+.status-badge.status-warning {
+  background: rgba(245, 158, 11, 0.1);
+  color: #d97706;
+  border: 1px solid rgba(245, 158, 11, 0.25);
+}
+
+.status-badge.status-critical {
+  background: rgba(220, 38, 38, 0.1);
+  color: #dc2626;
+  border: 1px solid rgba(220, 38, 38, 0.25);
+  animation: pulseBadge 2s ease-in-out infinite;
+}
+
+body.dark .status-badge.status-stable {
+  background: rgba(34, 197, 94, 0.15);
+  color: #4ade80;
+  border-color: rgba(34, 197, 94, 0.3);
+}
+body.dark .status-badge.status-warning {
+  background: rgba(251, 191, 36, 0.15);
+  color: #fbbf24;
+  border-color: rgba(251, 191, 36, 0.3);
+}
+body.dark .status-badge.status-critical {
+  background: rgba(248, 113, 113, 0.15);
+  color: #f87171;
+  border-color: rgba(248, 113, 113, 0.3);
+}
+
+/* Trend Arrow */
+.trend-indicator {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.15rem;
+  font-family: var(--mono);
+  font-size: 0.62rem;
+  font-weight: 700;
+  padding: 0.15rem 0.45rem;
+  border-radius: 4px;
+}
+
+.trend-indicator.trend-up {
+  background: rgba(22, 163, 74, 0.1);
+  color: #16a34a;
+}
+.trend-indicator.trend-down {
+  background: rgba(220, 38, 38, 0.1);
+  color: #dc2626;
+}
+.trend-indicator.trend-stable {
+  background: rgba(100, 116, 139, 0.1);
+  color: #64748b;
+}
+
+body.dark .trend-indicator.trend-up {
+  background: rgba(34, 197, 94, 0.15);
+  color: #4ade80;
+}
+body.dark .trend-indicator.trend-down {
+  background: rgba(248, 113, 113, 0.15);
+  color: #f87171;
+}
+
+/* Festival Alert Badge */
+.festival-alert {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  font-family: var(--mono);
+  font-size: 0.64rem;
+  font-weight: 600;
+  padding: 0.3rem 0.6rem;
+  border-radius: 8px;
+  background: rgba(245, 158, 11, 0.08);
+  border: 1px solid rgba(245, 158, 11, 0.2);
+  color: #d97706;
+  margin-top: 0.4rem;
+}
+
+body.dark .festival-alert {
+  background: rgba(251, 191, 36, 0.12);
+  border-color: rgba(251, 191, 36, 0.25);
+  color: #fbbf24;
+}
+
+/* Days of Supply Ring */
+.dos-ring-container {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  margin-bottom: 0.5rem;
+}
+
+.dos-ring {
+  width: 56px;
+  height: 56px;
+  flex-shrink: 0;
+}
+
+.dos-ring circle {
+  fill: none;
+  stroke-width: 5;
+  stroke-linecap: round;
+  transform-origin: center;
+}
+
+.dos-ring .ring-bg {
+  stroke: var(--border);
+}
+
+.dos-ring .ring-fill {
+  transition: stroke-dashoffset 1s ease-out;
+}
+
+.dos-ring-label {
+  display: flex;
+  flex-direction: column;
+}
+
+.dos-ring-label .dos-value {
+  font-family: var(--display);
+  font-size: 1.3rem;
+  font-weight: 800;
+  color: var(--text);
+  line-height: 1.1;
+}
+
+.dos-ring-label .dos-unit {
+  font-family: var(--mono);
+  font-size: 0.62rem;
+  font-weight: 600;
+  color: var(--text3);
+  text-transform: uppercase;
+}
+
+/* PO Action Callout */
+.po-callout {
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+  font-family: var(--mono);
+  font-size: 0.72rem;
+  font-weight: 700;
+  padding: 0.45rem 0.7rem;
+  border-radius: 8px;
+  margin-top: 0.5rem;
+}
+
+.po-callout.po-required {
+  background: rgba(220, 38, 38, 0.06);
+  border: 1px solid rgba(220, 38, 38, 0.18);
+  color: #dc2626;
+}
+
+.po-callout.po-healthy {
+  background: rgba(22, 163, 74, 0.06);
+  border: 1px solid rgba(22, 163, 74, 0.18);
+  color: #16a34a;
+}
+
+body.dark .po-callout.po-required {
+  background: rgba(248, 113, 113, 0.1);
+  border-color: rgba(248, 113, 113, 0.2);
+  color: #f87171;
+}
+body.dark .po-callout.po-healthy {
+  background: rgba(34, 197, 94, 0.1);
+  border-color: rgba(34, 197, 94, 0.2);
+  color: #4ade80;
+}
+
+/* Risk Hero — Large Currency Display */
+.risk-hero {
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+  margin-bottom: 0.5rem;
+}
+
+.risk-hero .risk-value {
+  font-family: var(--display);
+  font-size: 1.5rem;
+  font-weight: 800;
+  line-height: 1.1;
+  letter-spacing: -0.02em;
+}
+
+.risk-hero .risk-value.risk-high {
+  color: #dc2626;
+}
+.risk-hero .risk-value.risk-low {
+  color: #16a34a;
+}
+
+body.dark .risk-hero .risk-value.risk-high { color: #f87171; }
+body.dark .risk-hero .risk-value.risk-low { color: #4ade80; }
+
+.risk-hero .risk-label {
+  font-family: var(--mono);
+  font-size: 0.62rem;
+  font-weight: 600;
+  color: var(--text3);
+  text-transform: uppercase;
+}
+
+/* ROI Callout */
+.roi-callout {
+  font-family: var(--mono);
+  font-size: 0.68rem;
+  font-weight: 600;
+  padding: 0.4rem 0.65rem;
+  border-radius: 8px;
+  background: rgba(22, 163, 74, 0.06);
+  border: 1px solid rgba(22, 163, 74, 0.18);
+  color: #16a34a;
+  margin-top: 0.4rem;
+  line-height: 1.4;
+}
+
+body.dark .roi-callout {
+  background: rgba(34, 197, 94, 0.1);
+  border-color: rgba(34, 197, 94, 0.2);
+  color: #4ade80;
+}
+
+/* ── Executive Directive Card ── */
+.executive-directive {
+  margin-top: 0.75rem;
+  background: #0f172a;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 12px;
+  padding: 1rem 1.1rem;
+  color: #f1f5f9;
+}
+
+body.dark .executive-directive {
+  background: rgba(15, 23, 42, 0.85);
+  border-color: rgba(255, 255, 255, 0.15);
+}
+
+.executive-directive .directive-header {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-family: var(--display);
+  font-size: 0.82rem;
+  font-weight: 700;
+  color: #f1f5f9;
+  margin-bottom: 0.65rem;
+  padding-bottom: 0.5rem;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.directive-action {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.5rem;
+  font-family: var(--body);
+  font-size: 0.76rem;
+  color: #cbd5e1;
+  line-height: 1.5;
+  margin-bottom: 0.5rem;
+}
+
+.directive-action:last-child {
+  margin-bottom: 0;
+}
+
+.directive-action .directive-num {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background: rgba(45, 212, 191, 0.2);
+  color: #2dd4bf;
+  font-family: var(--mono);
+  font-size: 0.6rem;
+  font-weight: 800;
+  flex-shrink: 0;
+  margin-top: 1px;
+}
+
+.directive-action .directive-text {
+  flex: 1;
+}
+
+.directive-action .directive-text strong {
+  color: #f1f5f9;
+}
+
+.directive-action .directive-text .directive-highlight {
+  color: #2dd4bf;
+  font-weight: 700;
+}
+
+/* ── Scenario Copilot V2 Enhancements ── */
+.scenario-row.recommended td:first-child {
+  border-left: 3px solid var(--green, #16a34a);
+}
+
+.scenario-status-chip {
+  display: inline-block;
+  font-family: var(--mono);
+  font-size: 0.56rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  padding: 0.12rem 0.4rem;
+  border-radius: 99px;
+  white-space: nowrap;
+}
+
+.scenario-status-chip.chip-stable {
+  background: rgba(22, 163, 74, 0.1);
+  color: #16a34a;
+}
+.scenario-status-chip.chip-warning {
+  background: rgba(245, 158, 11, 0.1);
+  color: #d97706;
+}
+.scenario-status-chip.chip-critical {
+  background: rgba(220, 38, 38, 0.1);
+  color: #dc2626;
+}
+
+body.dark .scenario-status-chip.chip-stable { background: rgba(34,197,94,0.15); color: #4ade80; }
+body.dark .scenario-status-chip.chip-warning { background: rgba(251,191,36,0.15); color: #fbbf24; }
+body.dark .scenario-status-chip.chip-critical { background: rgba(248,113,113,0.15); color: #f87171; }
+
+/* Mini demand bar */
+.demand-bar-cell {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+}
+
+.demand-mini-bar {
+  height: 6px;
+  border-radius: 3px;
+  background: var(--accent);
+  opacity: 0.6;
+  transition: width 0.5s ease-out;
+  min-width: 4px;
+}
+
+/* ── Stagger Entry Animations ── */
+@keyframes cardSlideUp {
+  from { opacity: 0; transform: translateY(12px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+.warroom-grid .specialist-card-v2 {
+  animation: cardSlideUp 0.4s ease-out both;
+}
+
+.warroom-grid .specialist-card-v2:nth-child(1) { animation-delay: 0s; }
+.warroom-grid .specialist-card-v2:nth-child(2) { animation-delay: 0.1s; }
+.warroom-grid .specialist-card-v2:nth-child(3) { animation-delay: 0.2s; }
+
+.executive-directive {
+  animation: cardSlideUp 0.4s ease-out 0.35s both;
+}
+
+/* ── Responsive: War Room Cards in Expanded View ── */
+@media (min-width: 769px) {
+  .ai-chat-panel.expanded .specialist-card-v2 .specialist-hero-metric .hero-value {
+    font-size: 1.85rem;
+  }
+}
+
+/* ── Responsive: Mobile cards ── */
+@media (max-width: 768px) {
+  .specialist-card-v2 .specialist-card-body {
+    padding: 0.7rem 0.8rem;
+  }
+
+  .specialist-hero-metric .hero-value {
+    font-size: 1.4rem;
+  }
+
+  .dos-ring {
+    width: 48px;
+    height: 48px;
+  }
+
+  .executive-directive {
+    padding: 0.85rem 0.95rem;
+  }
+
+  .specialist-sub-metrics {
+    gap: 0.3rem;
+  }
+
+  .metric-chip {
+    font-size: 0.6rem;
+    padding: 0.15rem 0.4rem;
+  }
+}
+
+/* ── Agent Command Center Tab (tab6) Layout ── */
+.agent-tab-container {
+  display: flex;
+  flex-direction: column;
+  min-height: 620px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  padding: 1.25rem;
+  box-shadow: 0 4px 24px rgba(0, 0, 0, 0.04);
+}
+
+body.dark .agent-tab-container {
+  background: rgba(15, 23, 42, 0.6);
+  box-shadow: 0 4px 24px rgba(0, 0, 0, 0.25);
+}
+
+.agent-tab-messages-wrap {
+  flex: 1;
+  overflow-y: auto;
+  padding-right: 0.5rem;
+}
+
+#tab6 .ai-msg-bubble {
+  max-width: 100%;
+}
+
+#tab6 .user-msg {
+  max-width: 70%;
+  align-self: flex-end;
+}
+
+#tab6 .warroom-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 1rem;
+}
+
+@media (max-width: 960px) {
+  #tab6 .warroom-grid {
+    grid-template-columns: 1fr;
+    gap: 0.75rem;
+  }
+  
+  .agent-tab-container {
+    padding: 0.85rem;
+    min-height: 520px;
+  }
+}
+

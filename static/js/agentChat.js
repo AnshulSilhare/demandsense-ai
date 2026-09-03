@@ -46,6 +46,10 @@
   let chatSendBtn = null;
   let chatChipsContainer = null;
   let isSending = false;
+  let tab6Messages = null;
+  let tab6Input = null;
+  let tab6SendBtn = null;
+  let tab6ChipsContainer = null;
 
   // ── Initialize on DOMContentLoaded ──
   document.addEventListener('DOMContentLoaded', () => {
@@ -66,6 +70,12 @@
     chatInput = document.getElementById('aiChatInput');
     chatSendBtn = document.getElementById('aiChatSend');
     chatChipsContainer = document.getElementById('aiChatChips');
+
+    // Tab 6 Dual-Surface Elements
+    tab6Messages = document.getElementById('tab6Messages');
+    tab6Input = document.getElementById('tab6Input');
+    tab6SendBtn = document.getElementById('tab6Send');
+    tab6ChipsContainer = document.getElementById('tab6Chips');
   }
 
   function initChatEventListeners() {
@@ -84,6 +94,8 @@
     if (chatResetBtn) {
       chatResetBtn.addEventListener('click', handleResetMemory);
     }
+    
+    // Primary Input
     if (chatSendBtn) {
       chatSendBtn.addEventListener('click', handleSendMessage);
     }
@@ -93,6 +105,25 @@
           e.preventDefault();
           handleSendMessage();
         }
+      });
+      chatInput.addEventListener('input', (e) => {
+        if (tab6Input) tab6Input.value = e.target.value;
+      });
+    }
+
+    // Tab 6 Command Center Input
+    if (tab6SendBtn) {
+      tab6SendBtn.addEventListener('click', handleSendMessage);
+    }
+    if (tab6Input) {
+      tab6Input.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter' && !e.shiftKey) {
+          e.preventDefault();
+          handleSendMessage();
+        }
+      });
+      tab6Input.addEventListener('input', (e) => {
+        if (chatInput) chatInput.value = e.target.value;
       });
     }
 
@@ -106,7 +137,9 @@
 
   // ── Open / Close Panel ──
   window.openAgentChat = function (initialQuery = null) {
-    toggleChatPanel(true);
+    if (window.state?.activeTab !== 'tab6') {
+      toggleChatPanel(true);
+    }
     if (initialQuery && typeof initialQuery === 'string') {
       if (initialQuery === '__WARROOM__') {
         window.runWarRoom();
@@ -114,6 +147,7 @@
         window.runScenarioCopilot();
       } else {
         if (chatInput) chatInput.value = initialQuery;
+        if (tab6Input) tab6Input.value = initialQuery;
         handleSendMessage();
       }
     }
@@ -146,8 +180,7 @@
 
   // ── Welcome Message & Starter Action Chips ──
   function renderWelcomeMessage() {
-    if (!chatMessages) return;
-    chatMessages.innerHTML = `
+    const welcomeHtml = `
       <div class="ai-msg-bubble agent-msg">
         <div class="msg-avatar">🤖</div>
         <div class="msg-content">
@@ -158,11 +191,13 @@
       </div>
     `;
 
+    if (chatMessages) chatMessages.innerHTML = welcomeHtml;
+    if (tab6Messages) tab6Messages.innerHTML = welcomeHtml;
+
     renderSuggestionChips();
   }
 
   function renderSuggestionChips() {
-    if (!chatChipsContainer) return;
     const currentSku = window.state?.activeSku || window.state?.sku || 'SKU001';
     const chips = [
       { label: '✨ 2-Min Recruiter Tour', query: '__TOUR__' },
@@ -174,7 +209,7 @@
       { label: '⚡ Run What-If Simulation', query: `Simulate a 15% promotion and 3-day supplier delay for ${currentSku}.` },
     ];
 
-    chatChipsContainer.innerHTML = chips
+    const chipsHtml = chips
       .map(
         (chip) => `
         <button class="chat-chip-btn" data-query="${escapeHtml(chip.query)}">
@@ -184,17 +219,22 @@
       )
       .join('');
 
-    chatChipsContainer.querySelectorAll('.chat-chip-btn').forEach((btn) => {
-      btn.addEventListener('click', () => {
-        const q = btn.getAttribute('data-query');
-        if (q === '__WARROOM__') {
-          window.runWarRoom();
-        } else if (q === '__SCENARIOS__') {
-          window.runScenarioCopilot();
-        } else {
-          if (chatInput) chatInput.value = q;
-          handleSendMessage();
-        }
+    [chatChipsContainer, tab6ChipsContainer].forEach((container) => {
+      if (!container) return;
+      container.innerHTML = chipsHtml;
+      container.querySelectorAll('.chat-chip-btn').forEach((btn) => {
+        btn.addEventListener('click', () => {
+          const q = btn.getAttribute('data-query');
+          if (q === '__WARROOM__') {
+            window.runWarRoom();
+          } else if (q === '__SCENARIOS__') {
+            window.runScenarioCopilot();
+          } else {
+            if (chatInput) chatInput.value = q;
+            if (tab6Input) tab6Input.value = q;
+            handleSendMessage();
+          }
+        });
       });
     });
   }
@@ -202,10 +242,11 @@
   // ── Send Message & Agent Execution ──
   async function handleSendMessage() {
     if (isSending) return;
-    const query = chatInput ? chatInput.value.trim() : '';
+    const query = (tab6Input && tab6Input.value.trim()) ? tab6Input.value.trim() : (chatInput ? chatInput.value.trim() : '');
     if (!query) return;
 
     if (chatInput) chatInput.value = '';
+    if (tab6Input) tab6Input.value = '';
 
     // Route special keywords if typed directly
     const lower = query.toLowerCase();
@@ -266,6 +307,70 @@
     }
   }
 
+  // ── Mode: Recruiter Interactive Tour ──
+  window.runRecruiterTour = function () {
+    if (window.state?.activeTab !== 'tab6') {
+      toggleChatPanel(true);
+    }
+    appendUserMessage('✨ Start 2-Minute Recruiter Interactive Tour');
+
+    const tourHtml = `
+      <div class="msg-avatar">🎯</div>
+      <div class="msg-content">
+        <div class="msg-sender">RECRUITER INTERACTIVE DEMO — 2-MIN TOUR</div>
+        <p>Welcome to <strong>DemandSense AI</strong>! This tour walks through the 4 flagship autonomous agent capabilities built into this platform:</p>
+        
+        <div class="tour-container">
+          <div class="tour-step-card">
+            <div class="tour-step-header">
+              <span>1. Multi-Agent War Room (Prophet + XGBoost + OR)</span>
+              <span style="font-size:0.65rem;opacity:0.7;">3 Specialists</span>
+            </div>
+            <div class="tour-step-desc">Orchestrates Demand Planner, Inventory Controller, and Risk Analyst in parallel to produce consensus directives.</div>
+            <button class="tour-step-action-btn" onclick="window.runWarRoomForSku('SKU001')">
+              🚀 Launch War Room (SKU001)
+            </button>
+          </div>
+
+          <div class="tour-step-card">
+            <div class="tour-step-header">
+              <span>2. Scenario Stress-Testing Copilot</span>
+              <span style="font-size:0.65rem;opacity:0.7;">Monte Carlo & Elasticity</span>
+            </div>
+            <div class="tour-step-desc">Simulates promotional lift, supplier disruption delays, and pricing shifts with rupee revenue-at-risk scoring.</div>
+            <button class="tour-step-action-btn" onclick="window.runScenarioCopilot('SKU001')">
+              🔮 Benchmark 4 Scenarios
+            </button>
+          </div>
+
+          <div class="tour-step-card">
+            <div class="tour-step-header">
+              <span>3. Executive Supply Chain Portfolio Brief</span>
+              <span style="font-size:0.65rem;opacity:0.7;">All 20 SKUs</span>
+            </div>
+            <div class="tour-step-desc">Autonomous scan across all 20 FMCG SKUs detecting imminent stockouts, Diwali surges, and required PO values.</div>
+            <button class="tour-step-action-btn" onclick="if(window.openAgentChat) window.openAgentChat('Generate an executive portfolio brief for all 20 SKUs.')">
+              📋 Generate 20-SKU Brief
+            </button>
+          </div>
+
+          <div class="tour-step-card">
+            <div class="tour-step-header">
+              <span>4. Indian Festival Demand Spike Forecast</span>
+              <span style="font-size:0.65rem;opacity:0.7;">Diwali / Ganesh Chaturthi</span>
+            </div>
+            <div class="tour-step-desc">Predicts holiday surge multipliers and recommends pre-festival buffer stock additions.</div>
+            <button class="tour-step-action-btn" onclick="if(window.openAgentChat) window.openAgentChat('What Indian festivals are coming up in the next 60 days and which SKUs will spike?')">
+              🎉 Inspect Festival Spikes
+            </button>
+          </div>
+        </div>
+      </div>
+    `;
+
+    appendAgentHtmlNode(tourHtml);
+  };
+
   // ── SKU Prompt Helpers ──
   window.promptWarRoomSku = function () {
     toggleChatPanel(true);
@@ -297,10 +402,10 @@
 
             <span class="sku-picker-label" style="margin-top:0.3rem;">📋 Or Select Any of 20 SKUs:</span>
             <div class="sku-picker-select-row">
-              <select class="sku-picker-select" id="warroomSkuSelect_${ts}">
+              <select class="sku-picker-select">
                 ${optionsHtml}
               </select>
-              <button class="sku-picker-launch-btn" onclick="window.runWarRoomFromSelect('warroomSkuSelect_${ts}')">
+              <button class="sku-picker-launch-btn" onclick="window.runWarRoomFromSelect(this)">
                 🚀 Launch War Room
               </button>
             </div>
@@ -309,24 +414,26 @@
       </div>
     `;
 
-    if (chatMessages) {
-      const wrapper = document.createElement('div');
-      wrapper.innerHTML = promptHtml;
-      chatMessages.appendChild(wrapper.firstElementChild);
-      scrollToBottom();
+    if (window.state?.activeTab !== 'tab6') {
+      toggleChatPanel(true);
     }
+    appendAgentHtmlNode(promptHtml);
   };
 
-  window.runWarRoomFromSelect = function (selectId) {
-    const el = document.getElementById(selectId);
-    const sku = el ? el.value : 'SKU001';
+  window.runWarRoomFromSelect = function (btnOrId) {
+    let sku = 'SKU001';
+    if (typeof btnOrId === 'string') {
+      const el = document.getElementById(btnOrId);
+      if (el) sku = el.value;
+    } else if (btnOrId && btnOrId.parentElement) {
+      const sel = btnOrId.parentElement.querySelector('select');
+      if (sel) sku = sel.value;
+    }
     window.runWarRoomForSku(sku);
   };
 
   window.promptScenarioSku = function () {
-    toggleChatPanel(true);
     const activeSku = window.state?.activeSku || window.state?.sku || 'SKU001';
-    const ts = Date.now();
 
     const optionsHtml = FMCG_CATALOG.map(p => 
       `<option value="${p.id}" ${p.id === activeSku ? 'selected' : ''}>${p.id} — ${escapeHtml(p.name)} (${p.category})</option>`
@@ -353,10 +460,10 @@
 
             <span class="sku-picker-label" style="margin-top:0.3rem;">📋 Or Select Any of 20 SKUs:</span>
             <div class="sku-picker-select-row">
-              <select class="sku-picker-select" id="scenarioSkuSelect_${ts}">
+              <select class="sku-picker-select">
                 ${optionsHtml}
               </select>
-              <button class="sku-picker-launch-btn" onclick="window.runScenarioFromSelect('scenarioSkuSelect_${ts}')">
+              <button class="sku-picker-launch-btn" onclick="window.runScenarioFromSelect(this)">
                 🚀 Run Scenarios
               </button>
             </div>
@@ -365,17 +472,21 @@
       </div>
     `;
 
-    if (chatMessages) {
-      const wrapper = document.createElement('div');
-      wrapper.innerHTML = promptHtml;
-      chatMessages.appendChild(wrapper.firstElementChild);
-      scrollToBottom();
+    if (window.state?.activeTab !== 'tab6') {
+      toggleChatPanel(true);
     }
+    appendAgentHtmlNode(promptHtml);
   };
 
-  window.runScenarioFromSelect = function (selectId) {
-    const el = document.getElementById(selectId);
-    const sku = el ? el.value : 'SKU001';
+  window.runScenarioFromSelect = function (btnOrId) {
+    let sku = 'SKU001';
+    if (typeof btnOrId === 'string') {
+      const el = document.getElementById(btnOrId);
+      if (el) sku = el.value;
+    } else if (btnOrId && btnOrId.parentElement) {
+      const sel = btnOrId.parentElement.querySelector('select');
+      if (sel) sku = sel.value;
+    }
     window.runScenarioCopilot(sku);
   };
 
@@ -401,7 +512,9 @@
     const prodName = prod ? prod.name : sku;
     const query = customQuery || `Conduct a comprehensive War Room analysis for ${sku} (${prodName}) evaluating demand trajectory, inventory coverage, and rupee financial risk.`;
 
-    toggleChatPanel(true);
+    if (window.state?.activeTab !== 'tab6') {
+      toggleChatPanel(true);
+    }
     appendUserMessage(`🏛️ War Room Request: ${sku} — ${prodName}`);
 
     const typingId = appendTypingIndicator(`War Room: Analyzing ${sku} across 3 specialists in parallel...`);
@@ -437,40 +550,179 @@
         data.specialist_reports.forEach((r) => {
           const icon = r.icon || '🤖';
           const role = r.role || 'Specialist';
-          const body = formatMarkdown(r.analysis || 'No analysis available.');
+          const m = r.metrics;
 
-          specialistCardsHtml += `
-            <div class="warroom-specialist-card">
-              <div class="specialist-header">
-                <span class="specialist-icon">${icon}</span>
-                <span>${escapeHtml(role)}</span>
+          if (m && Object.keys(m).length > 0) {
+            // -- RICH CARD RENDERER --
+            let themeClass = 'theme-demand';
+            let innerHtml = '';
+
+            if (r.specialist_id === 'demand_planner') {
+              themeClass = 'theme-demand';
+              const trend = String(m.forecast_trend || 'stable').toLowerCase();
+              const trendIcon = trend === 'up' ? '↑' : (trend === 'down' ? '↓' : '→');
+              const trendClass = trend === 'up' ? 'trend-up' : (trend === 'down' ? 'trend-down' : 'trend-stable');
+              
+              let festivalHtml = '';
+              if (m.upcoming_festival && m.upcoming_festival.name) {
+                festivalHtml = `<div class="festival-alert">🎉 ${escapeHtml(m.upcoming_festival.name)} in ${m.upcoming_festival.days_until} days → ${escapeHtml(m.upcoming_festival.demand_impact)}</div>`;
+              }
+
+              innerHtml = `
+                <div class="specialist-hero-metric">
+                  <span class="hero-value">${Number(m.total_30d_forecast_units || 0).toLocaleString()}</span>
+                  <span class="hero-unit">units (30d)</span>
+                </div>
+                <div class="specialist-sub-metrics">
+                  <div class="metric-chip"><span class="chip-label">Model:</span> <span class="chip-value">${escapeHtml(m.winning_model || 'Auto-ML')}</span></div>
+                  <div class="metric-chip"><span class="chip-label">MAPE:</span> <span class="chip-value">${m.mape_pct ?? 0}%</span></div>
+                  <div class="trend-indicator ${trendClass}">${trendIcon} ${escapeHtml(trend.toUpperCase())}</div>
+                </div>
+                ${festivalHtml}
+              `;
+            } 
+            else if (r.specialist_id === 'inventory_controller') {
+              themeClass = 'theme-inventory';
+              
+              const poStatus = String(m.po_trigger_status || 'STABLE').toUpperCase();
+              let statusClass = 'status-stable';
+              let badgeText = 'STABLE';
+              if (poStatus.includes('CRITICAL')) { statusClass = 'status-critical'; badgeText = 'CRITICAL'; }
+              else if (poStatus.includes('WARNING') || poStatus.includes('REORDER') || poStatus.includes('ACTION')) { statusClass = 'status-warning'; badgeText = 'WARNING'; }
+              
+              const dosVal = Number(m.days_of_supply || 0);
+              const dosPct = Math.min(100, Math.max(0, (dosVal / 60) * 100)); // normalized to 60 days
+              const strokeOffset = 157 - (157 * dosPct) / 100;
+              const ringColor = dosVal < 15 ? '#dc2626' : (dosVal < 30 ? '#f59e0b' : '#16a34a');
+
+              let poHtml = '';
+              const poQty = Number(m.recommended_po_qty_units || 0);
+              const poVal = Number(m.recommended_po_value_inr || 0);
+              if (poQty > 0) {
+                poHtml = `<div class="po-callout po-required">📦 ACTION: Place PO for ${poQty.toLocaleString()} units (₹${poVal.toLocaleString()})</div>`;
+              } else {
+                poHtml = `<div class="po-callout po-healthy">📦 NO PO REQUIRED — Coverage Healthy</div>`;
+              }
+
+              innerHtml = `
+                <div class="dos-ring-container">
+                  <svg class="dos-ring" viewBox="0 0 60 60">
+                    <circle class="ring-bg" cx="30" cy="30" r="25"></circle>
+                    <circle class="ring-fill" cx="30" cy="30" r="25" style="stroke: ${ringColor}; stroke-dasharray: 157; stroke-dashoffset: ${strokeOffset};" transform="rotate(-90 30 30)"></circle>
+                  </svg>
+                  <div class="dos-ring-label">
+                    <span class="dos-value">${dosVal}</span>
+                    <span class="dos-unit">Days of Supply</span>
+                  </div>
+                  <div style="margin-left:auto;"><span class="status-badge ${statusClass}">${badgeText}</span></div>
+                </div>
+                <div class="specialist-sub-metrics">
+                  <div class="metric-chip"><span class="chip-label">Stock:</span> <span class="chip-value">${Number(m.current_stock || 0).toLocaleString()}</span></div>
+                  <div class="metric-chip"><span class="chip-label">ROP:</span> <span class="chip-value">${Number(m.reorder_point_units || 0).toLocaleString()}</span></div>
+                </div>
+                ${poHtml}
+              `;
+            }
+            else if (r.specialist_id === 'risk_analyst') {
+              themeClass = 'theme-risk';
+              
+              const isRiskHigh = m.revenue_at_risk_inr > 0;
+              const valClass = isRiskHigh ? 'risk-high' : 'risk-low';
+              
+              let roiHtml = '';
+              if (isRiskHigh) {
+                roiHtml = `<div class="roi-callout">Acting now preserves ₹${Number(m.revenue_at_risk_inr).toLocaleString()} margin vs ₹${Number(m.holding_cost_inr).toLocaleString()} holding cost.</div>`;
+              }
+
+              innerHtml = `
+                <div class="risk-hero">
+                  <span class="risk-label">Projected Revenue at Risk</span>
+                  <span class="risk-value ${valClass}">₹${Number(m.revenue_at_risk_inr).toLocaleString(undefined, {minimumFractionDigits: 2})}</span>
+                </div>
+                <div class="specialist-sub-metrics">
+                  <div class="metric-chip"><span class="chip-label">Units at Risk:</span> <span class="chip-value">${Number(m.stockout_risk_units).toLocaleString()}</span></div>
+                  <div class="metric-chip"><span class="chip-label">Cap. Outlay:</span> <span class="chip-value">₹${Number(m.required_capital_outlay_inr).toLocaleString()}</span></div>
+                </div>
+                ${roiHtml}
+              `;
+            }
+
+            specialistCardsHtml += `
+              <div class="specialist-card-v2 ${themeClass}">
+                <div class="specialist-accent-bar"></div>
+                <div class="specialist-card-body">
+                  <div class="specialist-header-v2">
+                    <div class="specialist-icon-v2">${icon}</div>
+                    <div class="specialist-role-v2">${escapeHtml(role)}</div>
+                  </div>
+                  ${innerHtml}
+                </div>
               </div>
-              <div class="specialist-analysis">
-                ${body}
+            `;
+          } else {
+            // -- FALLBACK MARKDOWN RENDERER --
+            const body = formatMarkdown(r.analysis || 'No analysis available.');
+            specialistCardsHtml += `
+              <div class="warroom-specialist-card">
+                <div class="specialist-header">
+                  <span class="specialist-icon">${icon}</span>
+                  <span>${escapeHtml(role)}</span>
+                </div>
+                <div class="specialist-analysis">
+                  ${body}
+                </div>
               </div>
-            </div>
-          `;
+            `;
+          }
         });
       }
 
-      const synthesisHtml = formatMarkdown(data.synthesis || '');
+      let synthesisHtml = '';
+      if (data.synthesis) {
+        // Render executive directive dark card
+        const parsedMarkdown = formatMarkdown(data.synthesis);
+        // Transform the <li> items into directive-actions if it matches the new format
+        if (parsedMarkdown.includes('<strong>1.</strong>')) {
+          const actionItems = parsedMarkdown.match(/<li class="chat-li">.*?<\/li>/g);
+          if (actionItems) {
+            let actionsHtml = '';
+            actionItems.forEach((li, idx) => {
+              const cleanedText = li.replace(/<li class="chat-li"><strong>\d+\.<\/strong>\s*/, '').replace(/<\/li>/, '');
+              actionsHtml += `
+                <div class="directive-action">
+                  <div class="directive-num">${idx + 1}</div>
+                  <div class="directive-text">${cleanedText}</div>
+                </div>
+              `;
+            });
+            synthesisHtml = `
+              <div class="executive-directive">
+                <div class="directive-header">
+                  <span class="title-icon">🏛️</span>
+                  <span>War Room Unified Directive</span>
+                </div>
+                ${actionsHtml}
+              </div>
+            `;
+          } else {
+            synthesisHtml = `<div class="warroom-synthesis">${parsedMarkdown}</div>`;
+          }
+        } else {
+          synthesisHtml = `<div class="warroom-synthesis">${parsedMarkdown}</div>`;
+        }
+      }
 
-      const msgEl = document.createElement('div');
-      msgEl.className = 'ai-msg-bubble agent-msg';
-      msgEl.innerHTML = `
+      const htmlContent = `
         <div class="msg-avatar">🏛️</div>
-        <div class="msg-content">
-          <div class="msg-sender">WAR ROOM — SPECIALIST COLLABORATION (${escapeHtml(sku)})</div>
+        <div class="msg-content" style="background:transparent; border:none; box-shadow:none; padding:0;">
+          <div class="msg-sender" style="margin-left: 0.5rem; margin-bottom: 0.8rem;">WAR ROOM — SPECIALIST COLLABORATION (${escapeHtml(sku)})</div>
           <div class="warroom-grid">
             ${specialistCardsHtml}
           </div>
-          <div class="warroom-synthesis">
-            ${synthesisHtml}
-          </div>
+          ${synthesisHtml}
         </div>
       `;
-      if (chatMessages) chatMessages.appendChild(msgEl);
-      scrollToBottom();
+      appendAgentHtmlNode(htmlContent);
     } catch (err) {
       removeTypingIndicator(typingId);
       appendAgentMessage(`⚠️ **Connection Error:** Could not reach War Room. (${err.message})`);
@@ -493,7 +745,9 @@
     const prodName = prod ? prod.name : targetSku;
     const stock = window.state?.currentStock || window.state?.stock || 1500;
 
-    toggleChatPanel(true);
+    if (window.state?.activeTab !== 'tab6') {
+      toggleChatPanel(true);
+    }
     appendUserMessage(`🔮 Scenario Copilot: Benchmark 4 Strategies for ${targetSku} — ${prodName}`);
 
     const typingId = appendTypingIndicator(`Simulating 4 strategic scenarios for ${targetSku}...`);
@@ -519,14 +773,34 @@
       }
 
       let tableRows = '';
+      let maxDemand = 1;
+      (data.scenarios || []).forEach(s => {
+        if (s.total_30d_forecast > maxDemand) maxDemand = s.total_30d_forecast;
+      });
+
       (data.scenarios || []).forEach((s) => {
         const isRec = s.scenario_name === data.recommended_scenario;
         const rowClass = isRec ? 'scenario-row recommended' : 'scenario-row';
         const star = isRec ? ' ⭐' : '';
+        
+        let statusClass = 'chip-stable';
+        if (s.po_trigger_status && s.po_trigger_status.includes('CRITICAL')) statusClass = 'chip-critical';
+        else if (s.po_trigger_status && (s.po_trigger_status.includes('WARNING') || s.po_trigger_status.includes('REORDER'))) statusClass = 'chip-warning';
+        
+        const demandPct = Math.max(5, (s.total_30d_forecast / maxDemand) * 100);
+
         tableRows += `
           <tr class="${rowClass}">
-            <td><strong>${escapeHtml(s.scenario_name)}${star}</strong></td>
-            <td>${Number(s.total_30d_forecast || 0).toLocaleString()}</td>
+            <td>
+              <strong>${escapeHtml(s.scenario_name)}${star}</strong><br/>
+              <span class="scenario-status-chip ${statusClass}" style="margin-top:4px;">${escapeHtml(s.po_trigger_status || 'STABLE')}</span>
+            </td>
+            <td>
+              <div class="demand-bar-cell">
+                <span>${Number(s.total_30d_forecast || 0).toLocaleString()}</span>
+                <div class="demand-mini-bar" style="width: ${demandPct}px;"></div>
+              </div>
+            </td>
             <td>${s.days_of_supply || 0}d</td>
             <td>₹${Number(s.revenue_at_risk_inr || 0).toLocaleString()}</td>
             <td>${Number(s.recommended_po_qty || 0).toLocaleString()}</td>
@@ -535,9 +809,7 @@
         `;
       });
 
-      const msgEl = document.createElement('div');
-      msgEl.className = 'ai-msg-bubble agent-msg';
-      msgEl.innerHTML = `
+      const htmlContent = `
         <div class="msg-avatar">🔮</div>
         <div class="msg-content">
           <div class="msg-sender">SCENARIO PLANNING COPILOT (${escapeHtml(targetSku)})</div>
@@ -565,8 +837,7 @@
           </div>
         </div>
       `;
-      if (chatMessages) chatMessages.appendChild(msgEl);
-      scrollToBottom();
+      appendAgentHtmlNode(htmlContent);
     } catch (err) {
       removeTypingIndicator(typingId);
       appendAgentMessage(`⚠️ **Connection Error:** Could not run scenario copilot. (${err.message})`);
@@ -608,24 +879,30 @@
 
   // ── Message Renderers ──
   function appendUserMessage(text) {
-    if (!chatMessages) return;
-    const msgEl = document.createElement('div');
-    msgEl.className = 'ai-msg-bubble user-msg';
-    msgEl.innerHTML = `
+    const htmlContent = `
       <div class="msg-content">
         <p>${escapeHtml(text)}</p>
       </div>
       <div class="msg-avatar user-av">👤</div>
     `;
-    chatMessages.appendChild(msgEl);
+
+    if (chatMessages) {
+      const msgEl = document.createElement('div');
+      msgEl.className = 'ai-msg-bubble user-msg';
+      msgEl.innerHTML = htmlContent;
+      chatMessages.appendChild(msgEl);
+    }
+    
+    if (tab6Messages) {
+      const msgEl = document.createElement('div');
+      msgEl.className = 'ai-msg-bubble user-msg';
+      msgEl.innerHTML = htmlContent;
+      tab6Messages.appendChild(msgEl);
+    }
     scrollToBottom();
   }
 
   function appendAgentMessage(text, steps = [], toolsCalled = []) {
-    if (!chatMessages) return;
-    const msgEl = document.createElement('div');
-    msgEl.className = 'ai-msg-bubble agent-msg';
-
     let reasoningHtml = '';
     if (steps && steps.length > 0) {
       const toolSteps = steps.filter((s) => s.type === 'tool_call' || s.type === 'tool_result');
@@ -666,8 +943,7 @@
     }
 
     const formattedAnswer = formatMarkdown(text);
-
-    msgEl.innerHTML = `
+    const htmlContent = `
       <div class="msg-avatar">🤖</div>
       <div class="msg-content">
         <div class="msg-sender">DemandSense Agent</div>
@@ -675,17 +951,44 @@
         <div class="msg-body">${formattedAnswer}</div>
       </div>
     `;
-    chatMessages.appendChild(msgEl);
+
+    if (chatMessages) {
+      const msgEl = document.createElement('div');
+      msgEl.className = 'ai-msg-bubble agent-msg';
+      msgEl.innerHTML = htmlContent;
+      chatMessages.appendChild(msgEl);
+    }
+
+    if (tab6Messages) {
+      const msgEl = document.createElement('div');
+      msgEl.className = 'ai-msg-bubble agent-msg';
+      msgEl.innerHTML = htmlContent;
+      tab6Messages.appendChild(msgEl);
+    }
+
+    scrollToBottom();
+  }
+
+  function appendAgentHtmlNode(htmlString) {
+    if (chatMessages) {
+      const msgEl = document.createElement('div');
+      msgEl.className = 'ai-msg-bubble agent-msg';
+      msgEl.innerHTML = htmlString;
+      chatMessages.appendChild(msgEl);
+    }
+    
+    if (tab6Messages) {
+      const msgEl = document.createElement('div');
+      msgEl.className = 'ai-msg-bubble agent-msg';
+      msgEl.innerHTML = htmlString;
+      tab6Messages.appendChild(msgEl);
+    }
     scrollToBottom();
   }
 
   function appendTypingIndicator(label = 'Reasoning & executing tools...') {
-    if (!chatMessages) return null;
     const id = 'typing_' + Date.now();
-    const el = document.createElement('div');
-    el.id = id;
-    el.className = 'ai-msg-bubble agent-msg typing';
-    el.innerHTML = `
+    const html = `
       <div class="msg-avatar">🤖</div>
       <div class="msg-content">
         <div class="typing-indicator">
@@ -694,7 +997,23 @@
         <div class="typing-label">${escapeHtml(label)}</div>
       </div>
     `;
-    chatMessages.appendChild(el);
+
+    if (chatMessages) {
+      const el = document.createElement('div');
+      el.id = id;
+      el.className = 'ai-msg-bubble agent-msg typing';
+      el.innerHTML = html;
+      chatMessages.appendChild(el);
+    }
+
+    if (tab6Messages) {
+      const elTab = document.createElement('div');
+      elTab.id = id + '_tab';
+      elTab.className = 'ai-msg-bubble agent-msg typing';
+      elTab.innerHTML = html;
+      tab6Messages.appendChild(elTab);
+    }
+
     scrollToBottom();
     return id;
   }
@@ -703,6 +1022,8 @@
     if (!id) return;
     const el = document.getElementById(id);
     if (el) el.remove();
+    const elTab = document.getElementById(id + '_tab');
+    if (elTab) elTab.remove();
   }
 
   // ── Memory Reset ──
@@ -710,10 +1031,9 @@
     if (confirm('Reset agent conversation memory for a fresh session?')) {
       try {
         await fetch('/api/agent/reset', { method: 'POST' });
-        if (chatMessages) {
-          chatMessages.innerHTML = '';
-          renderWelcomeMessage();
-        }
+        if (chatMessages) chatMessages.innerHTML = '';
+        if (tab6Messages) tab6Messages.innerHTML = '';
+        renderWelcomeMessage();
       } catch (err) {
         console.error('Reset failed', err);
       }
@@ -724,6 +1044,9 @@
   function scrollToBottom() {
     if (chatMessages) {
       chatMessages.scrollTop = chatMessages.scrollHeight;
+    }
+    if (tab6Messages && tab6Messages.parentElement) {
+      tab6Messages.parentElement.scrollTop = tab6Messages.parentElement.scrollHeight;
     }
   }
 
@@ -763,13 +1086,18 @@
     // Numbered lists
     out = out.replace(/^(\d+)\.\s+(.*$)/gim, '<li class="chat-li"><strong>$1.</strong> $2</li>');
 
-    // Bullet lists
-    out = out.replace(/^\s*[-*]\s+(.*$)/gim, '<li class="chat-li">• $1</li>');
+    // Bullet lists (Strip redundant markers like -, *, • so native disc bullet never doubles)
+    out = out.replace(/^\s*[-*•]\s*(?:•\s*)?(.*$)/gim, '<li class="chat-li">$1</li>');
+
+    // Wrap consecutive list items in ul/ol if needed
+    out = out.replace(/(<li class="chat-li">.*?<\/li>\s*)+/g, '<ul class="chat-ul">$&</ul>');
 
     // Wrap in paragraphs
     out = out.replace(/\n\n/g, '</p><p>');
     out = '<p>' + out + '</p>';
     out = out.replace(/<p><\/p>/g, '');
+    out = out.replace(/<p>\s*<ul/g, '<ul');
+    out = out.replace(/<\/ul>\s*<\/p>/g, '</ul>');
 
     return out;
   }
