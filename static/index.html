@@ -97,7 +97,7 @@ if(localStorage.getItem('ds-theme')==='dark'||(!localStorage.getItem('ds-theme')
   <div class="agent-alert-banner" id="agentAlertBanner" style="display: none;">
     <span class="agent-alert-icon">🤖</span>
     <span class="agent-alert-text" id="agentAlertText">Scanning portfolio...</span>
-    <button class="agent-alert-action" id="agentAlertAction">View Briefing</button>
+    <button class="agent-alert-action" id="agentAlertAction" onclick="if(window.openAgentBriefing)window.openAgentBriefing();">View Briefing</button>
     <button class="agent-alert-dismiss" id="agentAlertDismiss" aria-label="Dismiss alert">✕</button>
   </div>
 

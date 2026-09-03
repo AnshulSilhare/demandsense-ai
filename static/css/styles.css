@@ -5556,7 +5556,7 @@ body.dark .ai-chat-panel {
 
 .ai-msg-bubble.user-msg {
   align-self: flex-end;
-  flex-direction: row-reverse;
+  justify-content: flex-end;
 }
 
 .ai-msg-bubble.agent-msg {
@@ -5577,9 +5577,7 @@ body.dark .ai-chat-panel {
 }
 
 .msg-avatar.user-av {
-  background: var(--accent);
-  color: #fff;
-  font-size: 0.85rem;
+  display: none !important;
 }
 
 .msg-content {

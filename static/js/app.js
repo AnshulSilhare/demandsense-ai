@@ -1746,8 +1746,10 @@ ${llm.model_rationale || 'N/A'}`;
 
         if (actionBtn) {
           actionBtn.onclick = () => {
-            if (window.openAgentChat) {
-              window.openAgentChat("Review the critical procurement directives and explain the risks.");
+            if (window.openAgentBriefing) {
+              window.openAgentBriefing();
+            } else if (window.switchTab) {
+              window.switchTab('tab6');
             }
           };
         }

@@ -136,11 +136,38 @@
     });
   }
 
-  // ── Open / Close Panel ──
-  window.openAgentChat = function (initialQuery = null) {
-    if (window.state?.activeTab !== 'tab6') {
-      toggleChatPanel(true);
+  // ── Open Briefing / Chat ──
+  window.openAgentBriefing = function () {
+    if (window.switchTab) {
+      window.switchTab('tab6');
+    } else {
+      const tabBtn = document.querySelector('[data-tab="tab6"]');
+      if (tabBtn) tabBtn.click();
     }
+    const subNav = document.getElementById('agentSubNav');
+    const briefBtn = subNav?.querySelector('[data-subtab="brief"]');
+    if (briefBtn) {
+      briefBtn.click();
+    } else {
+      loadAgentTabBrief();
+    }
+    setTimeout(() => {
+      const target = document.getElementById('agentViewBrief') || document.getElementById('tab6');
+      if (target) target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }, 150);
+  };
+
+  window.openAgentChat = function (initialQuery = null) {
+    if (window.switchTab) {
+      window.switchTab('tab6');
+    } else {
+      const tabBtn = document.querySelector('[data-tab="tab6"]');
+      if (tabBtn) tabBtn.click();
+    }
+    const subNav = document.getElementById('agentSubNav');
+    const chatBtn = subNav?.querySelector('[data-subtab="chat"]');
+    if (chatBtn) chatBtn.click();
+
     if (initialQuery && typeof initialQuery === 'string') {
       if (initialQuery === '__WARROOM__') {
         window.runWarRoom();
@@ -1241,7 +1268,6 @@
       <div class="msg-content">
         <p>${escapeHtml(text)}</p>
       </div>
-      <div class="msg-avatar user-av">👤</div>
     `;
 
     if (chatMessages) {
