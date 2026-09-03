@@ -33,9 +33,9 @@
   --text:                #0f172a;
   --text2:               #475569;
   --text3:               #94a3b8;
-  --mono:                'JetBrains Mono', 'DM Sans', monospace;
-  --display:             'Syne', sans-serif;
-  --body:                'DM Sans', sans-serif;
+  --mono:                'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  --display:             'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  --body:                'DM Sans', 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
   --radius:              6px;
   --radius2:             12px;
   --glow:                0 4px 24px rgba(15, 23, 42, .07);
@@ -5653,6 +5653,151 @@ body.dark .msg-sender {
   border-radius: 4px;
   background: var(--bg3);
   border: 1px solid var(--border);
+  font-variant-numeric: tabular-nums;
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   AGENT CHAT EXECUTIVE SUB-CARDS (Findings, Directives, Financial)
+   ═══════════════════════════════════════════════════════════════ */
+.agent-subcard {
+  border-radius: 8px;
+  padding: 0.85rem 1.05rem;
+  margin: 0.75rem 0;
+  border: 1px solid var(--border);
+  background: var(--bg2);
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.03);
+  font-family: var(--body);
+  font-size: 0.83rem;
+  line-height: 1.55;
+  transition: all 0.2s ease;
+  font-variant-numeric: tabular-nums;
+}
+
+body.dark .agent-subcard {
+  background: var(--surface2);
+  border-color: var(--border2);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.25);
+}
+
+/* Key Operational Metrics Card (Informational Baseline) */
+.agent-subcard.findings-card {
+  border-left: 3.5px solid var(--teal);
+  background: rgba(13, 148, 136, 0.035);
+}
+body.dark .agent-subcard.findings-card {
+  background: rgba(45, 212, 191, 0.06);
+}
+
+/* Executive Action Directive (Hero Card - stands out prominently) */
+.agent-subcard.directive-card {
+  border-left: 4px solid var(--accent);
+  background: rgba(30, 58, 95, 0.04);
+  box-shadow: 0 2px 8px rgba(15, 23, 42, 0.06);
+}
+
+.agent-subcard.directive-card.directive-urgent,
+.agent-subcard.directive-card.directive-critical {
+  border-left: 4px solid var(--red);
+  background: rgba(220, 38, 38, 0.05);
+  border-top: 1px solid rgba(220, 38, 38, 0.18);
+  box-shadow: 0 3px 12px rgba(220, 38, 38, 0.08);
+}
+body.dark .agent-subcard.directive-card.directive-urgent {
+  background: rgba(248, 113, 113, 0.08);
+  border-top-color: rgba(248, 113, 113, 0.25);
+}
+
+.agent-subcard.directive-card.directive-warning {
+  border-left: 4px solid var(--amber);
+  background: rgba(217, 119, 6, 0.05);
+  border-top: 1px solid rgba(217, 119, 6, 0.18);
+  box-shadow: 0 3px 12px rgba(217, 119, 6, 0.08);
+}
+body.dark .agent-subcard.directive-card.directive-warning {
+  background: rgba(251, 191, 36, 0.08);
+  border-top-color: rgba(251, 191, 36, 0.25);
+}
+
+.agent-subcard.directive-card.directive-healthy,
+.agent-subcard.directive-card.directive-info {
+  border-left: 4px solid var(--green);
+  background: rgba(22, 163, 74, 0.04);
+  border-top: 1px solid rgba(22, 163, 74, 0.18);
+}
+body.dark .agent-subcard.directive-card.directive-healthy {
+  background: rgba(52, 211, 153, 0.07);
+  border-top-color: rgba(52, 211, 153, 0.25);
+}
+
+/* Financial Summary Card */
+.agent-subcard.financial-card {
+  border-left: 3.5px solid var(--accent-title);
+  background: rgba(29, 78, 216, 0.035);
+}
+body.dark .agent-subcard.financial-card {
+  background: rgba(56, 189, 248, 0.06);
+}
+
+/* Sub-card Header Typography */
+.agent-subcard h5,
+.agent-subcard .chat-h5 {
+  margin: 0 0 0.45rem 0 !important;
+  font-family: var(--display) !important;
+  font-size: 0.78rem !important;
+  font-weight: 700 !important;
+  letter-spacing: 0.04em !important;
+  text-transform: uppercase !important;
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+}
+
+.directive-card.directive-urgent h5,
+.directive-card.directive-urgent .chat-h5 { color: var(--red) !important; }
+
+.directive-card.directive-warning h5,
+.directive-card.directive-warning .chat-h5 { color: var(--amber) !important; }
+
+.directive-card.directive-healthy h5,
+.directive-card.directive-healthy .chat-h5 { color: var(--green) !important; }
+
+.financial-card h5,
+.financial-card .chat-h5 { color: var(--accent-title) !important; }
+
+.findings-card h5,
+.findings-card .chat-h5 { color: var(--teal) !important; }
+
+.agent-subcard p {
+  margin: 0.25rem 0 !important;
+  line-height: 1.55 !important;
+  font-size: 0.83rem !important;
+  color: var(--text) !important;
+}
+
+.agent-subcard ul.chat-ul {
+  margin: 0.25rem 0 0.35rem 1.1rem !important;
+  padding: 0 !important;
+}
+
+.agent-subcard li.chat-li {
+  margin-bottom: 0.25rem !important;
+  line-height: 1.5 !important;
+  font-size: 0.82rem !important;
+}
+
+/* Standard Professional Numerals & Metrics */
+.kpi-value,
+.kpi-delta,
+.mono-value,
+.metric-value,
+.sim-metric-card .kpi-value,
+.table-val,
+.stat-val,
+.chat-code,
+.agent-subcard strong,
+td {
+  font-variant-numeric: tabular-nums;
+  font-feature-settings: "tnum";
 }
 
 /* Reasoning Trace Details */

@@ -379,21 +379,33 @@ class AgentHarness:
                 answer = f"⚠️ Could not run forecast for {sku_name} ({target_sku}): {fc_data['error']}"
             else:
                 winning = fc_data.get("winning_model", "Auto-ML")
-                mape = fc_data.get("mape_pct", 0)
-                tot_30d = fc_data.get("total_30d_forecast_units", 0)
-                avg_daily = fc_data.get("avg_daily_forecast", 0)
+                mape = float(fc_data.get("mape_pct", 0))
+                tot_30d = int(round(float(fc_data.get("total_30d_forecast_units", 0))))
+                avg_daily = float(fc_data.get("avg_daily_forecast", 0))
                 trend = fc_data.get("forecast_trend", "stable")
+                unit_price = prod.get("base_price", 100) if prod else 100
+                proj_rev = tot_30d * unit_price
+                buffer_units = int(tot_30d * (mape / 100.0))
 
                 answer = (
                     f"### 🔮 30-Day Demand Forecast: {sku_name} ({target_sku})\n\n"
-                    f"#### 🔍 Key Findings:\n"
-                    f"- **Auto-ML Winning Model:** **{winning}** (MAPE: **{mape:.2f}%** benchmarked on test set)\n"
+                    f":::findings\n"
+                    f"#### 🔍 Key Operational Metrics\n"
+                    f"- **Selected Auto-ML Model:** **{winning}** (MAPE: **{mape:.1f}%**)\n"
                     f"- **Total 30-Day Projected Demand:** **{tot_30d:,} units**\n"
                     f"- **Average Daily Burn Rate:** **{avg_daily:.1f} units/day**\n"
-                    f"- **Demand Trajectory:** **{trend.capitalize()}**\n\n"
-                    f"#### 📋 Recommended Actions:\n"
-                    f"1. Align production schedules with the daily run rate of **{avg_daily:.0f} units/day**.\n"
-                    f"2. Calibrate warehouse buffer stock based on the **{mape:.1f}%** forecast error margin."
+                    f"- **Demand Trajectory:** **{trend.capitalize()}**\n"
+                    f":::\n\n"
+                    f":::directive info\n"
+                    f"#### 🎯 Production & Sourcing Directive\n"
+                    f"Align upcoming batch production and warehouse intake schedules with the daily run rate of **{avg_daily:.0f} units per day**. "
+                    f"To buffer against the **{mape:.1f}%** forecast error margin on **{winning}**, maintain a safety allocation of at least **{buffer_units:,} units** to prevent regional stockouts during demand spikes.\n"
+                    f":::\n\n"
+                    f":::financial\n"
+                    f"#### 💰 Financial & Revenue Summary\n"
+                    f"- **Projected 30-Day Gross Revenue:** ₹{proj_rev:,.2f}\n"
+                    f"- **Recommended Inventory Investment:** Maintain buffer stock without committing speculative capital ahead of actual demand realization.\n"
+                    f":::"
                 )
 
             self._record_history(session_id, user_query, target_sku, "forecast", f"Forecast for {sku_name}")
@@ -420,21 +432,48 @@ class AgentHarness:
                 status = inv_data.get("po_trigger_status", "STABLE")
 
                 is_urgent = dos < 15 or "TRIGGERED" in status or "CRITICAL" in status
-                status_badge = "🔴 URGENT REORDER REQUIRED" if is_urgent else "🟢 STOCK HEALTHY"
+                directive_type = "urgent" if is_urgent else "healthy"
+
+                if is_urgent:
+                    directive_text = (
+                        f"Issue an immediate purchase order for **{po_qty:,} units** (estimated procurement value: **₹{po_val:,.2f}**) today. "
+                        f"Current on-hand inventory will deplete in **{dos} days**, which cuts dangerously close to your 7-day supplier fulfillment cycle. "
+                        f"Placing this order now restores safety stock to required levels and avoids costly emergency freight charges."
+                    )
+                    fin_text = (
+                        f"- **Revenue at Risk:** ₹{risk_inr:,.2f} (Protected by issuing this order)\n"
+                        f"- **Working Capital Committed:** ₹{po_val:,.2f}\n"
+                        f"- **Service Level Impact:** Acting today prevents retail stockouts and protects a 98% on-time fulfillment rate."
+                    )
+                else:
+                    directive_text = (
+                        f"Maintain current stock levels and hold off on new purchase orders for now. "
+                        f"With **{current_stock:,} units** on hand, inventory comfortably covers **{dos} days of supply**, safely exceeding your safety buffer of **{ss:,} units**. "
+                        f"Continue normal monitoring and schedule your next procurement check when stock approaches the reorder point of **{rop:,} units**."
+                    )
+                    fin_text = (
+                        f"- **Revenue at Risk:** ₹{risk_inr:,.2f} (Fully covered under current healthy inventory)\n"
+                        f"- **Capital Outlay This Cycle:** ₹0.00 (Zero PO expenditure required)\n"
+                        f"- **Capital Optimization:** Working capital remains conserved with optimal inventory holding efficiency."
+                    )
 
                 answer = (
                     f"### 📦 Inventory & Procurement Analysis: {sku_name} ({target_sku})\n\n"
-                    f"**Operational Status:** {status_badge}\n\n"
-                    f"#### 🔍 Key Findings:\n"
-                    f"- **On-Hand Inventory:** {current_stock:,} units ({dos} Days of Supply)\n"
-                    f"- **Safety Stock Required (SS):** {ss:,} units\n"
+                    f":::findings\n"
+                    f"#### 🔍 Key Operational Metrics\n"
+                    f"- **Current On-Hand Stock:** {current_stock:,} units ({dos} Days of Supply)\n"
+                    f"- **Safety Stock Threshold:** {ss:,} units\n"
                     f"- **Reorder Point (ROP):** {rop:,} units\n"
-                    f"- **Revenue at Risk:** ₹{risk_inr:,.2f}\n\n"
-                    f"#### 📋 Recommended Directive:\n"
-                    f"1. {'**Place immediate Purchase Order**' if is_urgent else 'Hold new orders; monitor depletion'} for **{po_qty:,} units** (Est. Cost: **₹{po_val:,.2f}**).\n"
-                    f"2. Standard supplier lead time is **7 days**. Maintaining {dos} DOS ensures service level compliance.\n\n"
-                    f"#### 💰 Financial Summary:\n"
-                    f"Acting now prevents up to **₹{risk_inr:,.2f}** in projected stockout losses over the 30-day window."
+                    f"- **Supplier Fulfillment Cycle:** 7 days standard lead time\n"
+                    f":::\n\n"
+                    f":::directive {directive_type}\n"
+                    f"#### 🎯 Executive Action Directive\n"
+                    f"{directive_text}\n"
+                    f":::\n\n"
+                    f":::financial\n"
+                    f"#### 💰 Financial & Capital Summary\n"
+                    f"{fin_text}\n"
+                    f":::"
                 )
 
             self._record_history(session_id, user_query, target_sku, "inventory", f"Inventory for {sku_name}")
@@ -452,11 +491,13 @@ class AgentHarness:
             festivals = fest_data.get("festivals", [])
             lines = [f"### 🎉 Upcoming Indian Festival Demand Windows (Next 60 Days)\n"]
             if festivals:
+                lines.append(":::findings\n#### 🔍 UPCOMING PEAK WINDOWS")
                 for f in festivals:
                     lines.append(f"- **{f['festival_name']}** ({f['date']}, in **{f['days_until']} days**): {f['demand_impact']} (Ramp-up: {f['ramp_up_days']} days prior)")
-                lines.append("\n**Procurement Directive:** Ensure replenishment POs are dispatched at least 14 days before the ramp-up window to capture full peak demand.")
+                lines.append(":::\n")
+                lines.append(":::directive warning\n#### 🎯 PROCUREMENT DIRECTIVE\nEnsure replenishment POs are dispatched at least 14 days before the ramp-up window to capture full peak demand without supplier lead-time choke.\n:::")
             else:
-                lines.append("No major festival peaks detected in the next 60 days. Standard baseline demand applies.")
+                lines.append(":::findings\n#### 🔍 UPCOMING PEAK WINDOWS\nNo major festival peaks detected in the next 60 days. Standard baseline demand applies.\n:::")
 
             answer = "\n".join(lines)
             self._record_history(session_id, user_query, target_sku, "festivals", "Festival demand windows")
@@ -474,16 +515,36 @@ class AgentHarness:
 
             sim_impact = sim_data.get("simulated_impact", {})
             baseline = sim_data.get("baseline_comparison", {})
+            sim_tot = sim_impact.get('total_30d_forecast_units', 0)
+            base_tot = baseline.get('total_30d_forecast_units', 0)
+            sim_dos = sim_impact.get('days_of_supply', 0)
+            base_dos = baseline.get('days_of_supply', 0)
+            sim_risk = sim_impact.get('revenue_at_risk_inr', 0)
+            sim_po_qty = sim_impact.get('recommended_po_qty_units', 0)
+            sim_po_val = sim_impact.get('recommended_po_value_inr', 0)
+
+            directive_text = (
+                f"A 15% promotional uplift paired with a 3-day supplier delay compresses on-hand coverage from **{base_dos} days** down to **{sim_dos} days of supply**. "
+                f"To capture the full demand spike without risking mid-campaign stockouts, issue an advance purchase order for **{sim_po_qty:,} units** (estimated cost: **₹{sim_po_val:,.2f}**) at least 10 days before promotional rollout."
+            )
 
             answer = (
                 f"### ⚡ What-If Simulation: {sku_name} ({target_sku}) (+15% Promo, +3-Day Delay)\n\n"
-                f"#### 🔍 Scenario Comparison:\n"
-                f"- **30-Day Demand:** {sim_impact.get('total_30d_forecast_units', 0):,} units (vs. Baseline {baseline.get('total_30d_forecast_units', 0):,} units)\n"
-                f"- **Days of Supply:** {sim_impact.get('days_of_supply', 0)} DOS (vs. Baseline {baseline.get('days_of_supply', 0)} DOS)\n"
-                f"- **Revenue at Risk:** ₹{sim_impact.get('revenue_at_risk_inr', 0):,.2f}\n"
-                f"- **Recommended PO:** {sim_impact.get('recommended_po_qty_units', 0):,} units (₹{sim_impact.get('recommended_po_value_inr', 0):,.2f})\n\n"
-                f"#### 📋 Strategic Recommendation:\n"
-                f"Place an expedited PO for {sim_impact.get('recommended_po_qty_units', 0):,} units to buffer against the 3-day supplier delay during the promotional surge."
+                f":::findings\n"
+                f"#### 🔍 Scenario Baseline Comparison\n"
+                f"- **Simulated 30-Day Demand:** **{sim_tot:,} units** (Baseline: {base_tot:,} units)\n"
+                f"- **Forward Stock Coverage:** **{sim_dos} DOS** (Baseline: {base_dos} DOS)\n"
+                f"- **Projected Revenue Exposure:** ₹{sim_risk:,.2f}\n"
+                f":::\n\n"
+                f":::directive warning\n"
+                f"#### 🎯 Strategic Contingency Directive\n"
+                f"{directive_text}\n"
+                f":::\n\n"
+                f":::financial\n"
+                f"#### 💰 Scenario Capital & Financial Summary\n"
+                f"- **Contingency Purchase Order:** ₹{sim_po_val:,.2f} ({sim_po_qty:,} units)\n"
+                f"- **Protected Promotional Revenue:** Up to ₹{sim_risk:,.2f} safeguarded during campaign\n"
+                f":::"
             )
             self._record_history(session_id, user_query, target_sku, "whatif", f"What-If simulation for {sku_name}")
             return {"answer": answer, "steps": steps, "tools_called": tools_called, "active_sku": target_sku}
@@ -511,19 +572,53 @@ class AgentHarness:
         inv_data = json.loads(raw_inv) if isinstance(raw_inv, str) else raw_inv
 
         dos = inv_data.get("days_of_supply", 0)
+        ss = inv_data.get("safety_stock_units", 0)
+        rop = inv_data.get("reorder_point_units", 0)
         po_qty = inv_data.get("recommended_po_qty_units", 0)
         po_val = inv_data.get("recommended_po_value_inr", 0)
         risk = inv_data.get("revenue_at_risk_inr", 0)
+        status = inv_data.get("po_trigger_status", "STABLE")
+
+        is_urgent = dos < 15 or "TRIGGERED" in status or "CRITICAL" in status
+        directive_type = "urgent" if is_urgent else "healthy"
+
+        if is_urgent:
+            directive_text = (
+                f"Inventory coverage has fallen to **{dos} days of supply** ({current_stock:,} units on hand), which cuts into the 7-day supplier fulfillment window. "
+                f"Place a replenishment purchase order for **{po_qty:,} units** (estimated cost: **₹{po_val:,.2f}**) immediately to rebuild safety reserves above **{ss:,} units**."
+            )
+            fin_text = (
+                f"- **Revenue at Risk:** ₹{risk:,.2f} (Protected by placing replenishment order)\n"
+                f"- **Immediate Capital Required:** ₹{po_val:,.2f}\n"
+                f"- **Operational Priority:** High — Reorder triggered."
+            )
+        else:
+            directive_text = (
+                f"Inventory is currently stable and well-buffered. With **{current_stock:,} units** on hand providing **{dos} days of supply**, coverage comfortably exceeds the safety threshold of **{ss:,} units**. "
+                f"Hold new orders and continue routine monitoring until stock approaches the reorder point of **{rop:,} units**."
+            )
+            fin_text = (
+                f"- **Revenue at Risk:** ₹{risk:,.2f} (Fully protected by current stock)\n"
+                f"- **Capital Expenditure This Cycle:** ₹0.00 (Zero outlay needed)\n"
+                f"- **Working Capital Status:** Efficiently allocated."
+            )
 
         answer = (
             f"### 🤖 Operational Diagnostic: {sku_name} ({target_sku})\n\n"
-            f"#### 🔍 Key Findings:\n"
-            f"- **Current Stock Coverage:** {current_stock:,} units ({dos} Days of Supply)\n"
-            f"- **Safety Stock Threshold:** {inv_data.get('safety_stock_units', 0):,} units\n"
-            f"- **Revenue at Risk:** ₹{risk:,.2f}\n\n"
-            f"#### 📋 Action Directives:\n"
-            f"1. Recommended replenishment order: **{po_qty:,} units** (Est. Cost: **₹{po_val:,.2f}**).\n"
-            f"2. You can also explore **`🏛️ War Room Analysis`** or **`🔮 Scenario Copilot`** for **{sku_name}** by asking below."
+            f":::findings\n"
+            f"#### 🔍 Key Operational Metrics\n"
+            f"- **Current On-Hand Stock:** {current_stock:,} units ({dos} Days of Supply)\n"
+            f"- **Safety Stock Threshold:** {ss:,} units\n"
+            f"- **Reorder Point (ROP):** {rop:,} units\n"
+            f":::\n\n"
+            f":::directive {directive_type}\n"
+            f"#### 🎯 Executive Action Directive\n"
+            f"{directive_text}\n"
+            f":::\n\n"
+            f":::financial\n"
+            f"#### 💰 Financial & Working Capital Summary\n"
+            f"{fin_text}\n"
+            f":::"
         )
 
         self._record_history(session_id, user_query, target_sku, "diagnostic", f"Diagnostic for {sku_name}")

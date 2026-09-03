@@ -1464,10 +1464,50 @@
 
   function formatMarkdown(text) {
     if (!text) return '';
+
+    // 1. Process custom card blocks: :::directive [type] ... :::
+    text = text.replace(/:::directive(?:\s+(\w+))?\s*\n([\s\S]*?)\n:::/gi, (match, type, content) => {
+      const cardType = type ? `directive-${type.toLowerCase()}` : 'directive-info';
+      return `<div class="agent-subcard directive-card ${cardType}">\n${content.trim()}\n</div>`;
+    });
+
+    text = text.replace(/:::financial\s*\n([\s\S]*?)\n:::/gi, (match, content) => {
+      return `<div class="agent-subcard financial-card">\n${content.trim()}\n</div>`;
+    });
+
+    text = text.replace(/:::findings\s*\n([\s\S]*?)\n:::/gi, (match, content) => {
+      return `<div class="agent-subcard findings-card">\n${content.trim()}\n</div>`;
+    });
+
+    // 2. Fallback for standard markdown headers:
+    // If text has `#### ` and not already cardified, wrap sections into separate cards
+    if (!text.includes('class="agent-subcard')) {
+      const sections = text.split(/(?=(?:^|\n)####\s+)/g);
+      if (sections.length > 1) {
+        text = sections.map((sec) => {
+          const s = sec.trim();
+          if (!s) return '';
+          if (/^####\s+.*(?:directive|action|recommendation)/i.test(s)) {
+            const urgency = /urgent|immediate|critical/i.test(s) ? 'urgent' : 'info';
+            return `<div class="agent-subcard directive-card directive-${urgency}">\n${s}\n</div>`;
+          } else if (/^####\s+.*(?:financial|capital|revenue|cost|risk)/i.test(s)) {
+            return `<div class="agent-subcard financial-card">\n${s}\n</div>`;
+          } else if (/^####\s+.*(?:findings|metrics|status|coverage)/i.test(s)) {
+            return `<div class="agent-subcard findings-card">\n${s}\n</div>`;
+          }
+          return sec;
+        }).join('\n\n');
+      }
+    }
+
     let out = escapeHtml(text);
 
+    // Unescape HTML tags introduced for our cards
+    out = out.replace(/&lt;div class=&quot;([^&]+)&quot;&gt;/g, '<div class="$1">');
+    out = out.replace(/&lt;\/div&gt;/g, '</div>');
+
     // Headers
-    out = out.replace(/^#### (.*$)/gim, '<h5 class="chat-h5" style="margin:0.6rem 0 0.2rem 0;font-size:0.8rem;font-weight:700;">$1</h5>');
+    out = out.replace(/^#### (.*$)/gim, '<h5 class="chat-h5" style="margin:0.5rem 0 0.25rem 0;font-size:0.78rem;font-weight:700;letter-spacing:0.04em;text-transform:uppercase;">$1</h5>');
     out = out.replace(/^### (.*$)/gim, '<h4 class="chat-h4" style="margin:0.8rem 0 0.3rem 0;font-size:0.88rem;font-weight:700;">$1</h4>');
     out = out.replace(/^## (.*$)/gim, '<h3 class="chat-h3" style="margin:0.9rem 0 0.4rem 0;font-size:0.95rem;font-weight:700;">$1</h3>');
     out = out.replace(/^# (.*$)/gim, '<h2 class="chat-h2" style="margin:1rem 0 0.5rem 0;font-size:1.05rem;font-weight:700;">$1</h2>');
@@ -1488,12 +1528,16 @@
     // Wrap consecutive list items in ul/ol if needed
     out = out.replace(/(<li class="chat-li">.*?<\/li>\s*)+/g, '<ul class="chat-ul">$&</ul>');
 
-    // Wrap in paragraphs
+    // Wrap in paragraphs outside cards
     out = out.replace(/\n\n/g, '</p><p>');
     out = '<p>' + out + '</p>';
     out = out.replace(/<p><\/p>/g, '');
+    out = out.replace(/<p>\s*<div/g, '<div');
+    out = out.replace(/<\/div>\s*<\/p>/g, '</div>');
     out = out.replace(/<p>\s*<ul/g, '<ul');
     out = out.replace(/<\/ul>\s*<\/p>/g, '</ul>');
+    out = out.replace(/<p>\s*<h/g, '<h');
+    out = out.replace(/<\/h(\d)>\s*<\/p>/g, '</h$1>');
 
     return out;
   }
