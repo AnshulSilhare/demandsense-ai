@@ -258,22 +258,71 @@ class AgentHarness:
         tools_called = []
         steps = []
 
-        # 1. Greetings & Help
-        if any(w in lower_query for w in ["hi", "hello", "hey", "who are you", "what can you do", "help"]):
-            answer = (
-                "👋 **Hello! I am the DemandSense Autonomous Supply Chain Agent.**\n\n"
-                "I operate in both **Live Gemini AI Mode** and **High-Availability Engine Mode**. Here is what I can do:\n\n"
-                "1. 🔮 **Demand Forecasting**: Benchmark 5 ML models & forecast 30-day demand (`run_demand_forecast`)\n"
-                "2. 📦 **Inventory & Reorder Decisions**: Calculate safety stock, ROP, days of supply, and POs (`check_inventory_status`)\n"
-                "3. 🎉 **Festival Surge Analysis**: Check upcoming Indian festival demand multipliers (`get_upcoming_festivals`)\n"
-                "4. ⚡ **What-If Simulations**: Model price elasticity, promotional lift, and supply delays (`run_whatif_scenario`)\n"
-                "5. 🏛️ **War Room**: Multi-agent specialist review combining demand, inventory, and risk\n\n"
-                "💡 *Try clicking any quick-action chip above or asking: 'Should I reorder SKU007 for Navratri?'*"
-            )
-            return {"answer": answer, "steps": [], "tools_called": []}
+        def match_words(pattern: str) -> bool:
+            return bool(re.search(r'\b(?:' + pattern + r')\b', lower_query, re.IGNORECASE))
 
-        # 2. Reorder / Inventory Intent
-        if any(w in lower_query for w in ["inventory", "stock", "reorder", "order", "purchase order", "po", "shortage", "stockout"]):
+        # 1. War Room Intent
+        if match_words(r"war\s*room|warroom|specialist|specialists|council|convene"):
+            tools_called.append("run_warroom")
+            steps.append({"type": "warroom_consensus", "sku": target_sku})
+            try:
+                from src.agent_warroom import MultiAgentWarRoom, SPECIALISTS
+                warroom = MultiAgentWarRoom(tools=self.tools)
+                reports = [
+                    warroom._run_offline_specialist(sid, SPECIALISTS[sid], user_query, session_context={"sku_id": target_sku, "current_stock": current_stock})
+                    for sid in ["demand_planner", "inventory_controller", "risk_analyst"]
+                ]
+                synthesis = warroom._synthesize_reports(user_query, reports)
+                answer = f"### 🏛️ Multi-Agent War Room Executive Consensus: {target_sku}\n\n{synthesis}"
+                return {"answer": answer, "steps": steps, "tools_called": tools_called}
+            except Exception as e:
+                logger.error(f"Offline war room failed: {e}")
+
+        # 2. Portfolio Brief Intent
+        if match_words(r"brief|portfolio|all skus|morning brief|overview"):
+            tools_called.append("generate_portfolio_brief")
+            raw_brief = self.tools.call("generate_portfolio_brief", {})
+            steps.append({"type": "tool_call", "tool": "generate_portfolio_brief", "args": {}})
+            steps.append({"type": "tool_result", "tool": "generate_portfolio_brief", "result": raw_brief})
+            brief_data = json.loads(raw_brief) if isinstance(raw_brief, str) else raw_brief
+            brief_text = brief_data.get("brief", "Portfolio scan complete.")
+            return {"answer": brief_text, "steps": steps, "tools_called": tools_called}
+
+        # 3. Forecast Intent
+        if match_words(r"forecast|predict|prediction|trend|demand|model|mape|burn rate|accuracy|sales|trajectory"):
+            tools_called.append("run_demand_forecast")
+            steps.append({"type": "tool_call", "tool": "run_demand_forecast", "args": {"sku_id": target_sku}})
+
+            raw_fc = self.tools.call("run_demand_forecast", {"sku_id": target_sku})
+            steps.append({"type": "tool_result", "tool": "run_demand_forecast", "result": raw_fc})
+            fc_data = json.loads(raw_fc) if isinstance(raw_fc, str) else raw_fc
+
+            if "error" in fc_data:
+                answer = f"⚠️ Could not run forecast for {target_sku}: {fc_data['error']}"
+            else:
+                winning = fc_data.get("winning_model", "Auto-ML")
+                mape = fc_data.get("mape_pct", 0)
+                tot_30d = fc_data.get("total_30d_forecast_units", 0)
+                avg_daily = fc_data.get("avg_daily_forecast", 0)
+                trend = fc_data.get("forecast_trend", "stable")
+                name = fc_data.get("sku_name", target_sku)
+
+                answer = (
+                    f"### 🔮 30-Day Demand Forecast: {name} ({target_sku})\n\n"
+                    f"#### 🔍 Key Findings:\n"
+                    f"- **Auto-ML Winning Model:** **{winning}** (MAPE: **{mape:.2f}%** benchmarked on test set)\n"
+                    f"- **Total 30-Day Projected Demand:** **{tot_30d:,} units**\n"
+                    f"- **Average Daily Burn Rate:** **{avg_daily:.1f} units/day**\n"
+                    f"- **Demand Trajectory:** **{trend.capitalize()}**\n\n"
+                    f"#### 📋 Recommended Actions:\n"
+                    f"1. Align production schedules with the daily run rate of **{avg_daily:.0f} units/day**.\n"
+                    f"2. Calibrate warehouse buffer stock based on the **{mape:.1f}%** forecast error margin."
+                )
+
+            return {"answer": answer, "steps": steps, "tools_called": tools_called}
+
+        # 4. Reorder / Inventory Intent
+        if match_words(r"inventory|stock|reorder|order|purchase order|\bpo\b|shortage|stockout|rop|safety stock|dos|coverage|replenish"):
             tools_called.append("check_inventory_status")
             steps.append({"type": "tool_call", "tool": "check_inventory_status", "args": {"sku_id": target_sku, "current_stock": current_stock}})
 
@@ -293,7 +342,7 @@ class AgentHarness:
                 status = inv_data.get("po_trigger_status", "STABLE")
                 name = inv_data.get("sku_name", target_sku)
 
-                is_urgent = dos < 15 or "TRIGGERED" in status
+                is_urgent = dos < 15 or "TRIGGERED" in status or "CRITICAL" in status
                 status_badge = "🔴 URGENT REORDER REQUIRED" if is_urgent else "🟢 STOCK HEALTHY"
 
                 answer = (
@@ -313,41 +362,8 @@ class AgentHarness:
 
             return {"answer": answer, "steps": steps, "tools_called": tools_called}
 
-        # 3. Forecast Intent
-        if any(w in lower_query for w in ["forecast", "predict", "trend", "demand", "model", "mape"]):
-            tools_called.append("run_demand_forecast")
-            steps.append({"type": "tool_call", "tool": "run_demand_forecast", "args": {"sku_id": target_sku}})
-
-            raw_fc = self.tools.call("run_demand_forecast", {"sku_id": target_sku})
-            steps.append({"type": "tool_result", "tool": "run_demand_forecast", "result": raw_fc})
-            fc_data = json.loads(raw_fc) if isinstance(raw_fc, str) else raw_fc
-
-            if "error" in fc_data:
-                answer = f"⚠️ Could not run forecast for {target_sku}: {fc_data['error']}"
-            else:
-                winning = fc_data.get("winning_model", "XGBoost")
-                mape = fc_data.get("mape_pct", 0)
-                tot_30d = fc_data.get("total_30d_forecast_units", 0)
-                avg_daily = fc_data.get("avg_daily_forecast", 0)
-                trend = fc_data.get("forecast_trend", "stable")
-                name = fc_data.get("sku_name", target_sku)
-
-                answer = (
-                    f"### 🔮 30-Day Demand Forecast: {name} ({target_sku})\n\n"
-                    f"#### 🔍 Key Findings:\n"
-                    f"- **Auto-ML Winning Model:** **{winning}** (MAPE: **{mape:.2f}%** benchmarked on 60-day test set)\n"
-                    f"- **Total 30-Day Projected Demand:** **{tot_30d:,} units**\n"
-                    f"- **Average Daily Burn Rate:** **{avg_daily:.1f} units/day**\n"
-                    f"- **Demand Trajectory:** **{trend.capitalize()}**\n\n"
-                    f"#### 📋 Recommended Actions:\n"
-                    f"1. Align production schedules with the daily run rate of {avg_daily:.0f} units.\n"
-                    f"2. Calibrate warehouse buffer stock based on the {mape:.1f}% forecast error margin."
-                )
-
-            return {"answer": answer, "steps": steps, "tools_called": tools_called}
-
-        # 4. Festival Intent
-        if any(w in lower_query for w in ["festival", "holiday", "diwali", "holi", "navratri", "eid", "spike"]):
+        # 5. Festival Intent
+        if match_words(r"festivals?|holidays?|diwali|holi|navratri|eid|spike|surge"):
             tools_called.append("get_upcoming_festivals")
             steps.append({"type": "tool_call", "tool": "get_upcoming_festivals", "args": {"days_ahead": 60}})
 
@@ -367,8 +383,8 @@ class AgentHarness:
             answer = "\n".join(lines)
             return {"answer": answer, "steps": steps, "tools_called": tools_called}
 
-        # 5. What-If Intent
-        if any(w in lower_query for w in ["simulate", "what-if", "what if", "scenario", "delay", "promo", "promotion", "price"]):
+        # 6. What-If Intent
+        if match_words(r"simulate|simulation|what-if|what if|scenario|delay|promo|promotion|elasticity|price"):
             tools_called.append("run_whatif_scenario")
             params = {"sku_id": target_sku, "promo_lift_pct": 15, "lead_time_change_days": 3, "current_stock": current_stock}
             steps.append({"type": "tool_call", "tool": "run_whatif_scenario", "args": params})
@@ -392,7 +408,21 @@ class AgentHarness:
             )
             return {"answer": answer, "steps": steps, "tools_called": tools_called}
 
-        # 6. Default Diagnostic
+        # 7. Greetings & Help (Only when no domain intent was matched)
+        if match_words(r"hi|hello|hey|greetings|help|who are you|what can you do"):
+            answer = (
+                "👋 **Hello! I am the DemandSense Autonomous Supply Chain Agent.**\n\n"
+                "I operate in both **Live Gemini AI Mode** and **High-Availability Engine Mode**. Here is what I can do:\n\n"
+                "1. 🔮 **Demand Forecasting**: Benchmark 5 ML models & forecast 30-day demand (`run_demand_forecast`)\n"
+                "2. 📦 **Inventory & Reorder Decisions**: Calculate safety stock, ROP, days of supply, and POs (`check_inventory_status`)\n"
+                "3. 🎉 **Festival Surge Analysis**: Check upcoming Indian festival demand multipliers (`get_upcoming_festivals`)\n"
+                "4. ⚡ **What-If Simulations**: Model price elasticity, promotional lift, and supply delays (`run_whatif_scenario`)\n"
+                "5. 🏛️ **War Room**: Multi-agent specialist review combining demand, inventory, and risk\n\n"
+                "💡 *Try clicking any quick-action chip above or asking: 'Should I reorder SKU007 for Navratri?'*"
+            )
+            return {"answer": answer, "steps": [], "tools_called": []}
+
+        # 8. Default Diagnostic
         tools_called.append("check_inventory_status")
         steps.append({"type": "tool_call", "tool": "check_inventory_status", "args": {"sku_id": target_sku, "current_stock": current_stock}})
         raw_inv = self.tools.call("check_inventory_status", {"sku_id": target_sku, "current_stock": current_stock})

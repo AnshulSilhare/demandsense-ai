@@ -270,10 +270,12 @@
     isSending = true;
     if (chatSendBtn) chatSendBtn.disabled = true;
 
+    const activeSku = document.getElementById('agentSkuSelect')?.value || window.state?.activeSku || window.state?.sku || 'SKU001';
+    const activeStock = window.state?.currentStock || window.state?.stock || 25000;
     const sessionContext = {
-      sku_id: window.state?.activeSku || window.state?.sku || 'SKU001',
+      sku_id: activeSku,
       region: window.state?.activeRegion || window.state?.region || 'ALL',
-      current_stock: window.state?.currentStock || window.state?.stock || 1500,
+      current_stock: activeStock,
       lead_time: window.state?.leadTime || 7,
     };
 
