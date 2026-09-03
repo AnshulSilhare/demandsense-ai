@@ -210,11 +210,11 @@
   function renderWelcomeMessage() {
     const welcomeHtml = `
       <div class="ai-msg-bubble agent-msg">
-        <div class="msg-avatar">🤖</div>
         <div class="msg-content">
-          <div class="msg-sender">DemandSense Autonomous Agent</div>
-          <p>Hello! I am your <strong>Supply Chain Intelligence Agent</strong>. I can autonomously run forecasts, check warehouse inventory, calculate stockout risks, and simulate what-if scenarios across all 20 FMCG SKUs.</p>
-          <p>Select an action below or ask any question in plain English:</p>
+          <div class="msg-body">
+            <p>👋 Hello! I am your <strong>Supply Chain Intelligence Agent</strong>. I can autonomously run forecasts, check warehouse inventory, calculate stockout risks, and simulate what-if scenarios across all 20 FMCG SKUs.</p>
+            <p>Select an action below or ask any question in plain English:</p>
+          </div>
         </div>
       </div>
     `;
@@ -1340,9 +1340,7 @@
 
     const formattedAnswer = formatMarkdown(text);
     const htmlContent = `
-      <div class="msg-avatar">🤖</div>
       <div class="msg-content">
-        <div class="msg-sender">DemandSense Agent</div>
         ${reasoningHtml}
         <div class="msg-body">${formattedAnswer}</div>
       </div>
@@ -1385,7 +1383,6 @@
   function appendTypingIndicator(label = 'Reasoning & executing tools...') {
     const id = 'typing_' + Date.now();
     const html = `
-      <div class="msg-avatar">🤖</div>
       <div class="msg-content">
         <div class="typing-indicator">
           <span></span><span></span><span></span>
