@@ -1096,7 +1096,14 @@
       skuSelect.addEventListener('change', () => {
         const currentActive = subNav?.querySelector('.agent-subnav-btn.active')?.dataset.subtab || 'warroom';
         const newSku = skuSelect.value;
-        if (window.state) window.state.sku = newSku;
+        if (window.state) {
+          window.state.sku = newSku;
+          const globalSku = document.getElementById('skuSelect');
+          if (globalSku && globalSku.value !== newSku) {
+            globalSku.value = newSku;
+            globalSku.dispatchEvent(new Event('change'));
+          }
+        }
         if (currentActive === 'warroom') {
           loadAgentTabWarRoom(newSku, true);
         } else if (currentActive === 'scenarios') {
@@ -1179,7 +1186,14 @@
   window.selectAgentSkuAndRunWarRoom = function (sku) {
     const skuSelect = document.getElementById('agentSkuSelect');
     if (skuSelect) skuSelect.value = sku;
-    if (window.state) window.state.sku = sku;
+    if (window.state) {
+      window.state.sku = sku;
+      const globalSku = document.getElementById('skuSelect');
+      if (globalSku && globalSku.value !== sku) {
+        globalSku.value = sku;
+        globalSku.dispatchEvent(new Event('change'));
+      }
+    }
     const warroomBtn = document.querySelector('.agent-subnav-btn[data-subtab="warroom"]');
     if (warroomBtn) warroomBtn.click();
     else loadAgentTabWarRoom(sku, true);

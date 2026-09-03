@@ -712,41 +712,40 @@ if(localStorage.getItem('ds-theme')==='dark'||(!localStorage.getItem('ds-theme')
 
   <!-- TAB 6: Agentic AI Command Center -->
   <div class="tab-content" id="tab6">
-    <div class="section-header-row flex-between mb-16">
-      <div>
-        <div class="section-label">Module 06 — Autonomous Agent Command Center</div>
-        <div class="section-title">Agentic AI & War Room</div>
-        <div class="section-subtitle">Multi-agent supply chain intelligence, scenario planning, and autonomous execution.</div>
-      </div>
-      <!-- Agent Product Selector -->
-      <div class="agent-controls-bar">
-        <div class="agent-sku-selector-wrap">
-          <label for="agentSkuSelect" class="agent-sku-label">Target Product:</label>
-          <select class="custom-select agent-sku-select" id="agentSkuSelect">
-            <!-- Populated dynamically with 20 FMCG SKUs -->
-          </select>
-        </div>
-      </div>
+    <div class="agent-command-header">
+      <div class="section-label">Module 06 — Autonomous Agent Command Center</div>
+      <div class="section-title">Agentic AI & War Room</div>
+      <div class="section-subtitle">Multi-agent supply chain intelligence, scenario planning, and autonomous execution.</div>
     </div>
 
-    <!-- Agent Sub-Navigation Tabs Ribbon -->
-    <div class="agent-subnav-capsule mb-16" id="agentSubNav">
-      <button class="agent-subnav-btn active" data-subtab="warroom">
-        <span class="subnav-icon">🏛️</span>
-        <span>Multi-Agent War Room</span>
-      </button>
-      <button class="agent-subnav-btn" data-subtab="scenarios">
-        <span class="subnav-icon">🔮</span>
-        <span>Scenario Copilot</span>
-      </button>
-      <button class="agent-subnav-btn" data-subtab="brief">
-        <span class="subnav-icon">📋</span>
-        <span>Executive Brief</span>
-      </button>
-      <button class="agent-subnav-btn" data-subtab="chat">
-        <span class="subnav-icon">💬</span>
-        <span>Autonomous Chat</span>
-      </button>
+    <!-- Agent Command Toolbar: Sub-Nav on Left, Product Selector on Right -->
+    <div class="agent-command-toolbar mb-16">
+      <div class="agent-subnav-capsule" id="agentSubNav">
+        <button class="agent-subnav-btn active" data-subtab="warroom">
+          <span class="subnav-icon">🏛️</span>
+          <span>Multi-Agent War Room</span>
+        </button>
+        <button class="agent-subnav-btn" data-subtab="scenarios">
+          <span class="subnav-icon">🔮</span>
+          <span>Scenario Copilot</span>
+        </button>
+        <button class="agent-subnav-btn" data-subtab="brief">
+          <span class="subnav-icon">📋</span>
+          <span>Executive Brief</span>
+        </button>
+        <button class="agent-subnav-btn" data-subtab="chat">
+          <span class="subnav-icon">💬</span>
+          <span>Autonomous Chat</span>
+        </button>
+      </div>
+
+      <!-- Agent Product Selector -->
+      <div class="agent-sku-selector-wrap">
+        <label for="agentSkuSelect" class="agent-sku-label">Target Product:</label>
+        <select class="custom-select agent-sku-select" id="agentSkuSelect">
+          <!-- Populated dynamically with 20 FMCG SKUs -->
+        </select>
+      </div>
     </div>
 
     <!-- Sub-Tab 1: Multi-Agent War Room View -->

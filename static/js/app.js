@@ -285,6 +285,26 @@ let _forecastRetryCount = 0;
     activePanel?.classList.add('active');
     state.activeTab = target;
 
+    // Toggle Agent Command Center layout isolation
+    if (target === 'tab6') {
+      document.body.classList.add('agent-mode-active');
+      // Reset any active KPI conveyor cards & transforms immediately
+      const kpiCards = [el('kpi0'), el('kpi1'), el('kpi2'), el('kpi3')];
+      kpiCards.forEach((c, i) => {
+        if (!c) return;
+        c.style.transform = '';
+        c.style.opacity = '';
+        c.classList.remove('is-beam-morph', 'is-docked-rail');
+        const snake = el(`snake${i}`);
+        if (snake) snake.style.opacity = '0';
+      });
+      $$('.tab-content').forEach(tc => {
+        tc.style.transform = '';
+      });
+    } else {
+      document.body.classList.remove('agent-mode-active');
+    }
+
     function refreshTabCharts() {
       if (activeForecastPromise && !state.forecastData) {
         activeForecastPromise.then(() => {
@@ -479,6 +499,11 @@ let _forecastRetryCount = 0;
       if (shouldScrollNav !== isNavScrolled) {
         nav?.classList.toggle('scrolled', shouldScrollNav);
         isNavScrolled = shouldScrollNav;
+      }
+
+      // If Agent Command Center is active, skip all KPI docking
+      if (document.body.classList.contains('agent-mode-active') || state.activeTab === 'tab6') {
+        return;
       }
 
       // Check widescreen desktop viewport (Docking only on wide displays >= 1360px)
