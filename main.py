@@ -1087,7 +1087,8 @@ async def agent_chat_endpoint(request: Request):
             raise HTTPException(status_code=400, detail="Query string is required.")
 
         session_context = body.get("session_context", {})
-        result = await agent_instance.run(user_query=query, session_context=session_context)
+        session_id = request.cookies.get("ds_session_id") or body.get("session_id", "default")
+        result = await agent_instance.run(user_query=query, session_context=session_context, session_id=session_id)
         return JSONResponse(content=result)
     except HTTPException:
         raise
@@ -1206,9 +1207,10 @@ async def agent_brief_endpoint(request: Request):
 
 
 @app.post("/api/agent/reset")
-async def agent_reset_endpoint():
+async def agent_reset_endpoint(request: Request):
     """Reset agent conversation memory."""
-    agent_instance.reset_memory()
+    sid = request.cookies.get("ds_session_id") or "default"
+    agent_instance.reset_memory(session_id=sid)
     return JSONResponse(content={"status": "ok", "message": "Agent memory reset successfully."})
 
 

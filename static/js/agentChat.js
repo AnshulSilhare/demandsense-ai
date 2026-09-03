@@ -322,6 +322,18 @@
       const data = await response.json();
       removeTypingIndicator(typingId);
 
+      if (data.active_sku) {
+        if (window.state) window.state.sku = data.active_sku;
+        const agentSkuSelect = document.getElementById('agentSkuSelect');
+        if (agentSkuSelect && agentSkuSelect.value !== data.active_sku) {
+          agentSkuSelect.value = data.active_sku;
+        }
+        const mainSkuSelect = document.getElementById('skuSelect');
+        if (mainSkuSelect && mainSkuSelect.value !== data.active_sku) {
+          mainSkuSelect.value = data.active_sku;
+        }
+      }
+
       if (data.error && !data.answer) {
         appendAgentMessage(`⚠️ **Agent Error:** ${data.error}`, []);
       } else {

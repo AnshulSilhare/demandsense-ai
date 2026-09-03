@@ -13,6 +13,7 @@ import json
 import re
 import logging
 from typing import Callable, Any, Dict, List, Optional
+from datetime import datetime
 
 try:
     from dotenv import load_dotenv
@@ -103,8 +104,61 @@ class AgentHarness:
         self.use_gemini = False
         self.model = None
         self._memory = []
+        self._sessions = {}  # session_id -> {"active_sku": str, "history": list}
 
         self._try_init_gemini()
+
+    def get_session(self, session_id: str = "default") -> dict:
+        """Get or initialize conversation session memory."""
+        if session_id not in self._sessions:
+            self._sessions[session_id] = {
+                "active_sku": "SKU001",
+                "history": []
+            }
+        return self._sessions[session_id]
+
+    def get_active_sku(self, session_id: str = "default") -> str:
+        """Get the current conversation's focus SKU."""
+        return self.get_session(session_id).get("active_sku", "SKU001")
+
+    def _record_history(self, session_id: str, query: str, sku: str, intent: str, summary: str = ""):
+        """Record turn in multi-turn conversation history."""
+        sess = self.get_session(session_id)
+        sess["history"].append({
+            "query": query,
+            "sku": sku,
+            "intent": intent,
+            "summary": summary,
+            "timestamp": datetime.now().isoformat()
+        })
+        if len(sess["history"]) > 20:
+            sess["history"] = sess["history"][-20:]
+
+    def _resolve_sku_from_text(self, text: str) -> tuple[Optional[str], Optional[str]]:
+        """Extract SKU code or product name from user query for seamless natural conversation."""
+        from config import PRODUCTS
+
+        # 1. Match SKU pattern: SKU001..SKU020, sku003, SKU 003, sku 3, #3
+        m = re.search(r'\bSKU[\s\-#]?(\d{1,3})\b', text, re.IGNORECASE)
+        if m:
+            num = int(m.group(1))
+            sku_id = f"SKU{num:03d}"
+            prod = next((p for p in PRODUCTS if p["sku_id"] == sku_id), None)
+            return sku_id, (prod["name"] if prod else sku_id)
+
+        # 2. Match product name / distinctive keywords
+        lower = text.lower()
+        stop_words = {"pack", "grams", "gram", "bottle", "citrus", "powder", "gentle", "pure", "order", "stock", "price", "delay"}
+        for p in PRODUCTS:
+            p_name_lower = p["name"].lower()
+            if p_name_lower in lower:
+                return p["sku_id"], p["name"]
+
+            words = [w for w in re.split(r'[\s\d\-]+', p_name_lower) if len(w) > 3 and w not in stop_words]
+            if any(w in lower for w in words):
+                return p["sku_id"], p["name"]
+
+        return None, None
 
     def _try_init_gemini(self):
         """Attempt to initialize Gemini if key is present."""
@@ -153,19 +207,31 @@ class AgentHarness:
         except Exception:
             return None
 
-    async def run(self, user_query: str, session_context: dict = None) -> dict:
+    async def run(self, user_query: str, session_context: dict = None, session_id: str = "default") -> dict:
         """Run agent with Gemini ReAct loop, fallback to intelligent offline engine."""
+        sess = self.get_session(session_id)
+        detected_sku, detected_name = self._resolve_sku_from_text(user_query)
+        if detected_sku:
+            sess["active_sku"] = detected_sku
+
+        session_context = session_context or {}
+        if "sku_id" not in session_context or detected_sku:
+            session_context["sku_id"] = sess["active_sku"]
+
         if not self.use_gemini and os.environ.get("GEMINI_API_KEY"):
             self._try_init_gemini()
 
         if self.use_gemini:
             try:
-                return await self._run_gemini_agent(user_query, session_context)
+                res = await self._run_gemini_agent(user_query, session_context)
+                res["active_sku"] = sess["active_sku"]
+                self._record_history(session_id, user_query, sess["active_sku"], "gemini", res.get("answer", "")[:100])
+                return res
             except Exception as e:
                 logger.error(f"[Agent Harness] Gemini runtime error: {e}. Falling back to offline.")
-                return self._run_offline_agent(user_query, session_context)
+                return self._run_offline_agent(user_query, session_context, session_id=session_id)
         else:
-            return self._run_offline_agent(user_query, session_context)
+            return self._run_offline_agent(user_query, session_context, session_id=session_id)
 
     async def _run_gemini_agent(self, user_query: str, session_context: dict = None) -> dict:
         import google.generativeai as genai
@@ -246,13 +312,23 @@ class AgentHarness:
                 "tools_called": tools_called
             }
 
-    def _run_offline_agent(self, user_query: str, session_context: dict = None) -> dict:
+    def _run_offline_agent(self, user_query: str, session_context: dict = None, session_id: str = "default") -> dict:
         session_context = session_context or {}
-        default_sku = session_context.get("sku_id", "SKU001")
-        current_stock = session_context.get("current_stock", 1500)
+        sess = self.get_session(session_id)
 
-        skus = re.findall(r'SKU\d{3}', user_query.upper())
-        target_sku = skus[0] if skus else default_sku
+        # 1. Resolve SKU from text or maintain continuous conversation thread
+        detected_sku, detected_name = self._resolve_sku_from_text(user_query)
+        if detected_sku:
+            target_sku = detected_sku
+            sess["active_sku"] = target_sku
+        else:
+            target_sku = sess.get("active_sku") or session_context.get("sku_id", "SKU001")
+            sess["active_sku"] = target_sku
+
+        from config import PRODUCTS
+        prod = next((p for p in PRODUCTS if p["sku_id"] == target_sku), None)
+        sku_name = prod["name"] if prod else target_sku
+        current_stock = session_context.get("current_stock", 25000)
 
         lower_query = user_query.lower()
         tools_called = []
@@ -273,8 +349,9 @@ class AgentHarness:
                     for sid in ["demand_planner", "inventory_controller", "risk_analyst"]
                 ]
                 synthesis = warroom._synthesize_reports(user_query, reports)
-                answer = f"### 🏛️ Multi-Agent War Room Executive Consensus: {target_sku}\n\n{synthesis}"
-                return {"answer": answer, "steps": steps, "tools_called": tools_called}
+                answer = f"### 🏛️ Multi-Agent War Room Executive Consensus: {sku_name} ({target_sku})\n\n{synthesis}"
+                self._record_history(session_id, user_query, target_sku, "warroom", f"War Room for {sku_name}")
+                return {"answer": answer, "steps": steps, "tools_called": tools_called, "active_sku": target_sku}
             except Exception as e:
                 logger.error(f"Offline war room failed: {e}")
 
@@ -286,7 +363,8 @@ class AgentHarness:
             steps.append({"type": "tool_result", "tool": "generate_portfolio_brief", "result": raw_brief})
             brief_data = json.loads(raw_brief) if isinstance(raw_brief, str) else raw_brief
             brief_text = brief_data.get("brief", "Portfolio scan complete.")
-            return {"answer": brief_text, "steps": steps, "tools_called": tools_called}
+            self._record_history(session_id, user_query, target_sku, "brief", "Executive portfolio brief")
+            return {"answer": brief_text, "steps": steps, "tools_called": tools_called, "active_sku": target_sku}
 
         # 3. Forecast Intent
         if match_words(r"forecast|predict|prediction|trend|demand|model|mape|burn rate|accuracy|sales|trajectory"):
@@ -298,17 +376,16 @@ class AgentHarness:
             fc_data = json.loads(raw_fc) if isinstance(raw_fc, str) else raw_fc
 
             if "error" in fc_data:
-                answer = f"⚠️ Could not run forecast for {target_sku}: {fc_data['error']}"
+                answer = f"⚠️ Could not run forecast for {sku_name} ({target_sku}): {fc_data['error']}"
             else:
                 winning = fc_data.get("winning_model", "Auto-ML")
                 mape = fc_data.get("mape_pct", 0)
                 tot_30d = fc_data.get("total_30d_forecast_units", 0)
                 avg_daily = fc_data.get("avg_daily_forecast", 0)
                 trend = fc_data.get("forecast_trend", "stable")
-                name = fc_data.get("sku_name", target_sku)
 
                 answer = (
-                    f"### 🔮 30-Day Demand Forecast: {name} ({target_sku})\n\n"
+                    f"### 🔮 30-Day Demand Forecast: {sku_name} ({target_sku})\n\n"
                     f"#### 🔍 Key Findings:\n"
                     f"- **Auto-ML Winning Model:** **{winning}** (MAPE: **{mape:.2f}%** benchmarked on test set)\n"
                     f"- **Total 30-Day Projected Demand:** **{tot_30d:,} units**\n"
@@ -319,7 +396,8 @@ class AgentHarness:
                     f"2. Calibrate warehouse buffer stock based on the **{mape:.1f}%** forecast error margin."
                 )
 
-            return {"answer": answer, "steps": steps, "tools_called": tools_called}
+            self._record_history(session_id, user_query, target_sku, "forecast", f"Forecast for {sku_name}")
+            return {"answer": answer, "steps": steps, "tools_called": tools_called, "active_sku": target_sku}
 
         # 4. Reorder / Inventory Intent
         if match_words(r"inventory|stock|reorder|order|purchase order|\bpo\b|shortage|stockout|rop|safety stock|dos|coverage|replenish"):
@@ -331,7 +409,7 @@ class AgentHarness:
             inv_data = json.loads(raw_inv) if isinstance(raw_inv, str) else raw_inv
 
             if "error" in inv_data:
-                answer = f"⚠️ Could not retrieve inventory for {target_sku}: {inv_data['error']}"
+                answer = f"⚠️ Could not retrieve inventory for {sku_name} ({target_sku}): {inv_data['error']}"
             else:
                 dos = inv_data.get("days_of_supply", 0)
                 ss = inv_data.get("safety_stock_units", 0)
@@ -340,13 +418,12 @@ class AgentHarness:
                 po_val = inv_data.get("recommended_po_value_inr", 0)
                 risk_inr = inv_data.get("revenue_at_risk_inr", 0)
                 status = inv_data.get("po_trigger_status", "STABLE")
-                name = inv_data.get("sku_name", target_sku)
 
                 is_urgent = dos < 15 or "TRIGGERED" in status or "CRITICAL" in status
                 status_badge = "🔴 URGENT REORDER REQUIRED" if is_urgent else "🟢 STOCK HEALTHY"
 
                 answer = (
-                    f"### 📦 Inventory & Procurement Analysis: {name} ({target_sku})\n\n"
+                    f"### 📦 Inventory & Procurement Analysis: {sku_name} ({target_sku})\n\n"
                     f"**Operational Status:** {status_badge}\n\n"
                     f"#### 🔍 Key Findings:\n"
                     f"- **On-Hand Inventory:** {current_stock:,} units ({dos} Days of Supply)\n"
@@ -360,7 +437,8 @@ class AgentHarness:
                     f"Acting now prevents up to **₹{risk_inr:,.2f}** in projected stockout losses over the 30-day window."
                 )
 
-            return {"answer": answer, "steps": steps, "tools_called": tools_called}
+            self._record_history(session_id, user_query, target_sku, "inventory", f"Inventory for {sku_name}")
+            return {"answer": answer, "steps": steps, "tools_called": tools_called, "active_sku": target_sku}
 
         # 5. Festival Intent
         if match_words(r"festivals?|holidays?|diwali|holi|navratri|eid|spike|surge"):
@@ -381,7 +459,8 @@ class AgentHarness:
                 lines.append("No major festival peaks detected in the next 60 days. Standard baseline demand applies.")
 
             answer = "\n".join(lines)
-            return {"answer": answer, "steps": steps, "tools_called": tools_called}
+            self._record_history(session_id, user_query, target_sku, "festivals", "Festival demand windows")
+            return {"answer": answer, "steps": steps, "tools_called": tools_called, "active_sku": target_sku}
 
         # 6. What-If Intent
         if match_words(r"simulate|simulation|what-if|what if|scenario|delay|promo|promotion|elasticity|price"):
@@ -397,7 +476,7 @@ class AgentHarness:
             baseline = sim_data.get("baseline_comparison", {})
 
             answer = (
-                f"### ⚡ What-If Simulation: {target_sku} (+15% Promo, +3-Day Supplier Delay)\n\n"
+                f"### ⚡ What-If Simulation: {sku_name} ({target_sku}) (+15% Promo, +3-Day Delay)\n\n"
                 f"#### 🔍 Scenario Comparison:\n"
                 f"- **30-Day Demand:** {sim_impact.get('total_30d_forecast_units', 0):,} units (vs. Baseline {baseline.get('total_30d_forecast_units', 0):,} units)\n"
                 f"- **Days of Supply:** {sim_impact.get('days_of_supply', 0)} DOS (vs. Baseline {baseline.get('days_of_supply', 0)} DOS)\n"
@@ -406,7 +485,8 @@ class AgentHarness:
                 f"#### 📋 Strategic Recommendation:\n"
                 f"Place an expedited PO for {sim_impact.get('recommended_po_qty_units', 0):,} units to buffer against the 3-day supplier delay during the promotional surge."
             )
-            return {"answer": answer, "steps": steps, "tools_called": tools_called}
+            self._record_history(session_id, user_query, target_sku, "whatif", f"What-If simulation for {sku_name}")
+            return {"answer": answer, "steps": steps, "tools_called": tools_called, "active_sku": target_sku}
 
         # 7. Greetings & Help (Only when no domain intent was matched)
         if match_words(r"hi|hello|hey|greetings|help|who are you|what can you do"):
@@ -420,34 +500,39 @@ class AgentHarness:
                 "5. 🏛️ **War Room**: Multi-agent specialist review combining demand, inventory, and risk\n\n"
                 "💡 *Try clicking any quick-action chip above or asking: 'Should I reorder SKU007 for Navratri?'*"
             )
-            return {"answer": answer, "steps": [], "tools_called": []}
+            self._record_history(session_id, user_query, target_sku, "greeting", "Intro greeting")
+            return {"answer": answer, "steps": [], "tools_called": [], "active_sku": target_sku}
 
-        # 8. Default Diagnostic
+        # 8. Default Diagnostic (or SKU switch)
         tools_called.append("check_inventory_status")
         steps.append({"type": "tool_call", "tool": "check_inventory_status", "args": {"sku_id": target_sku, "current_stock": current_stock}})
         raw_inv = self.tools.call("check_inventory_status", {"sku_id": target_sku, "current_stock": current_stock})
         steps.append({"type": "tool_result", "tool": "check_inventory_status", "result": raw_inv})
         inv_data = json.loads(raw_inv) if isinstance(raw_inv, str) else raw_inv
 
-        name = inv_data.get("sku_name", target_sku)
         dos = inv_data.get("days_of_supply", 0)
         po_qty = inv_data.get("recommended_po_qty_units", 0)
         po_val = inv_data.get("recommended_po_value_inr", 0)
         risk = inv_data.get("revenue_at_risk_inr", 0)
 
         answer = (
-            f"### 🤖 Operational Diagnostic: {name} ({target_sku})\n\n"
+            f"### 🤖 Operational Diagnostic: {sku_name} ({target_sku})\n\n"
             f"#### 🔍 Key Findings:\n"
             f"- **Current Stock Coverage:** {current_stock:,} units ({dos} Days of Supply)\n"
             f"- **Safety Stock Threshold:** {inv_data.get('safety_stock_units', 0):,} units\n"
             f"- **Revenue at Risk:** ₹{risk:,.2f}\n\n"
             f"#### 📋 Action Directives:\n"
             f"1. Recommended replenishment order: **{po_qty:,} units** (Est. Cost: **₹{po_val:,.2f}**).\n"
-            f"2. You can also explore **`🏛️ War Room Analysis`** or **`🔮 Scenario Copilot`** using the quick action chips above."
+            f"2. You can also explore **`🏛️ War Room Analysis`** or **`🔮 Scenario Copilot`** for **{sku_name}** by asking below."
         )
 
-        return {"answer": answer, "steps": steps, "tools_called": tools_called}
+        self._record_history(session_id, user_query, target_sku, "diagnostic", f"Diagnostic for {sku_name}")
+        return {"answer": answer, "steps": steps, "tools_called": tools_called, "active_sku": target_sku}
 
-    def reset_memory(self):
+    def reset_memory(self, session_id: Optional[str] = None):
         self._memory = []
-        logger.info("[Agent Harness] Conversation memory reset.")
+        if session_id and session_id in self._sessions:
+            del self._sessions[session_id]
+        else:
+            self._sessions.clear()
+        logger.info(f"[Agent Harness] Conversation memory reset (session={session_id or 'all'}).")
