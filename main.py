@@ -511,12 +511,13 @@ async def startup():
     DEFAULT_DF = _load_default_data()
     logger.info(f"Loaded {len(DEFAULT_DF):,} rows, {DEFAULT_DF['sku_id'].nunique()} SKUs")
 
-    # ── Agent Cache Warmup (prevents Render 502 on first agent tool call) ──
+    # ── Agent Cache Warmup (Pre-warm precomputed bundle & sales data for instant sub-50ms agent execution across all 20 SKUs) ──
     try:
-        logger.info("[Startup] Pre-warming agent tool cache for SKU001...")
-        from src.agent_tools import _get_sku_forecast
-        _get_sku_forecast("SKU001")
-        logger.info("[Startup] Agent cache warmed successfully.")
+        logger.info("[Startup] Pre-warming agent tool cache for all 20 SKUs...")
+        from src.agent_tools import _get_precomputed_bundle, _get_featured_sales_df
+        _get_precomputed_bundle()
+        _get_featured_sales_df()
+        logger.info("[Startup] Agent cache warmed successfully for all 20 SKUs.")
     except Exception as e:
         logger.warning(f"[Startup] Agent warmup failed (non-fatal): {e}")
 

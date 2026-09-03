@@ -2,7 +2,7 @@
 Author: Anshul Silhare
 """
 
-import os, sys, logging
+import os, sys, logging, json, gzip
 from datetime import datetime, timedelta
 import numpy as np, pandas as pd
 
@@ -21,12 +21,44 @@ from src.feature_engine import IndianSeasonalityEngine
 from src.forecasting.auto_selector import ModelAutoSelector
 from src.business_impact import OperationsImpactCalculator
 
-# ── IN-MEMORY CACHE (Avoids re-generating 109k rows on every tool call) ──
+import gzip
+
+# ── IN-MEMORY CACHE & PRECOMPUTED ARTIFACT INTEGRATION ──
 _CACHE = {
     "raw_df": None,
     "featured_dfs": {},
     "forecast_cache": {},
 }
+
+_PRECOMPUTED_BUNDLE = None
+_FEATURED_SALES_DF = None
+
+def _get_precomputed_bundle():
+    global _PRECOMPUTED_BUNDLE
+    if _PRECOMPUTED_BUNDLE is None:
+        cache_path = os.path.join(_PROJECT_ROOT, "data", "processed", "precomputed_forecasts.json.gz")
+        if os.path.exists(cache_path):
+            try:
+                with gzip.open(cache_path, "rt", encoding="utf-8") as f:
+                    _PRECOMPUTED_BUNDLE = json.load(f)
+            except Exception as e:
+                logger.warning(f"[Agent Tools] Failed loading precomputed bundle: {e}")
+                _PRECOMPUTED_BUNDLE = {}
+        else:
+            _PRECOMPUTED_BUNDLE = {}
+    return _PRECOMPUTED_BUNDLE
+
+def _get_featured_sales_df():
+    global _FEATURED_SALES_DF
+    if _FEATURED_SALES_DF is None:
+        csv_path = os.path.join(_PROJECT_ROOT, "data", "processed", "featured_sales.csv")
+        if os.path.exists(csv_path):
+            try:
+                _FEATURED_SALES_DF = pd.read_csv(csv_path, parse_dates=["date"])
+            except Exception as e:
+                logger.warning(f"[Agent Tools] Failed loading featured_sales.csv: {e}")
+                _FEATURED_SALES_DF = None
+    return _FEATURED_SALES_DF
 
 def _get_raw_data() -> pd.DataFrame:
     if _CACHE["raw_df"] is None:
@@ -37,6 +69,21 @@ def _get_raw_data() -> pd.DataFrame:
 
 def _get_featured_sku_data(sku_id: str) -> pd.DataFrame:
     if sku_id not in _CACHE["featured_dfs"]:
+        featured_all = _get_featured_sales_df()
+        if featured_all is not None and "sku_id" in featured_all:
+            sku_df = featured_all[featured_all["sku_id"] == sku_id].copy()
+            if not sku_df.empty:
+                agg_df = sku_df.groupby("date").agg({
+                    "units_sold": "sum",
+                    "revenue_inr": "sum"
+                }).reset_index()
+                agg_df["sku_id"] = sku_id
+                agg_df["region_id"] = "ALL"
+                engine = IndianSeasonalityEngine()
+                _CACHE["featured_dfs"][sku_id] = engine.engineer_features(agg_df)
+                return _CACHE["featured_dfs"][sku_id]
+
+        # Fallback to generator
         df = _get_raw_data()
         sku_df = df[df["sku_id"] == sku_id].copy()
         agg_df = sku_df.groupby("date").agg({
@@ -47,11 +94,26 @@ def _get_featured_sku_data(sku_id: str) -> pd.DataFrame:
         agg_df["region_id"] = "ALL"
         engine = IndianSeasonalityEngine()
         _CACHE["featured_dfs"][sku_id] = engine.engineer_features(agg_df)
-        _CACHE["raw_df"] = None
     return _CACHE["featured_dfs"][sku_id]
 
 def _get_sku_forecast(sku_id: str) -> dict:
     if sku_id not in _CACHE["forecast_cache"]:
+        bundle = _get_precomputed_bundle()
+        # Look up default_SKUxxx or SKUxxx
+        key = f"default_{sku_id}" if f"default_{sku_id}" in bundle else (sku_id if sku_id in bundle else None)
+        if key and key in bundle:
+            entry = bundle[key]
+            fc_res = entry.get("forecast_res", {})
+            winning_forecast = pd.DataFrame(fc_res.get("winning_forecast", []))
+            _CACHE["forecast_cache"][sku_id] = {
+                "winning_model_name": fc_res.get("winning_model_name", "Prophet"),
+                "winning_metrics": fc_res.get("winning_metrics", {}),
+                "winning_forecast": winning_forecast,
+                "all_models_metrics": fc_res.get("all_models_metrics", {})
+            }
+            return _CACHE["forecast_cache"][sku_id]
+
+        # Fallback to on-the-fly training
         featured_df = _get_featured_sku_data(sku_id)
         selector = ModelAutoSelector(test_days=60)
         _CACHE["forecast_cache"][sku_id] = selector.evaluate_and_select(featured_df)
