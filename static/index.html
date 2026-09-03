@@ -711,29 +711,100 @@ if(localStorage.getItem('ds-theme')==='dark'||(!localStorage.getItem('ds-theme')
   </div>
 
   <!-- TAB 6: Agentic AI Command Center -->
-  <div class="tab-content" id="tab6" style="display: none;">
+  <div class="tab-content" id="tab6">
     <div class="section-header-row flex-between mb-16">
       <div>
         <div class="section-label">Module 06 — Autonomous Agent Command Center</div>
         <div class="section-title">Agentic AI & War Room</div>
         <div class="section-subtitle">Multi-agent supply chain intelligence, scenario planning, and autonomous execution.</div>
       </div>
-    </div>
-    
-    <div class="agent-tab-container">
-      <div class="ai-chat-chips" id="tab6Chips" style="background:transparent; border:none; padding:0 0 1rem 0;">
-        <!-- Syncs with drawer chips -->
-      </div>
-      
-      <div class="agent-tab-messages-wrap" style="flex:1; overflow-y:auto; min-height:400px; padding-bottom: 2rem;">
-        <div class="ai-chat-messages" id="tab6Messages" style="padding: 0;">
-          <!-- Cloned messages go here -->
+      <!-- Agent Product Selector -->
+      <div class="agent-controls-bar">
+        <div class="agent-sku-selector-wrap">
+          <label for="agentSkuSelect" class="agent-sku-label">Target Product:</label>
+          <select class="custom-select agent-sku-select" id="agentSkuSelect">
+            <!-- Populated dynamically with 20 FMCG SKUs -->
+          </select>
         </div>
       </div>
+    </div>
 
-      <div class="ai-chat-input-bar" style="border-radius:12px; margin-top:1rem; border:1px solid var(--border);">
-        <input type="text" id="tab6Input" placeholder="Ask anything about forecasts, inventory, risks..." autocomplete="off" />
-        <button class="ai-chat-send-btn" id="tab6Send" aria-label="Send Query">➔</button>
+    <!-- Agent Sub-Navigation Tabs Ribbon -->
+    <div class="agent-subnav-capsule mb-16" id="agentSubNav">
+      <button class="agent-subnav-btn active" data-subtab="warroom">
+        <span class="subnav-icon">🏛️</span>
+        <span>Multi-Agent War Room</span>
+      </button>
+      <button class="agent-subnav-btn" data-subtab="scenarios">
+        <span class="subnav-icon">🔮</span>
+        <span>Scenario Copilot</span>
+      </button>
+      <button class="agent-subnav-btn" data-subtab="brief">
+        <span class="subnav-icon">📋</span>
+        <span>Executive Brief</span>
+      </button>
+      <button class="agent-subnav-btn" data-subtab="chat">
+        <span class="subnav-icon">💬</span>
+        <span>Autonomous Chat</span>
+      </button>
+    </div>
+
+    <!-- Sub-Tab 1: Multi-Agent War Room View -->
+    <div class="agent-view-panel active" id="agentViewWarroom">
+      <div class="agent-view-header flex-between mb-12">
+        <div class="agent-view-title" id="warroomTargetTitle">Multi-Agent Specialist Collaboration</div>
+        <button class="agent-action-primary-btn" id="agentRunWarroomBtn">
+          <span>🚀 Re-run War Room</span>
+        </button>
+      </div>
+      <div class="agent-card-workspace" id="agentWarroomContainer">
+        <!-- Rendered dynamically -->
+      </div>
+    </div>
+
+    <!-- Sub-Tab 2: Scenario Stress-Testing View -->
+    <div class="agent-view-panel" id="agentViewScenarios" style="display:none;">
+      <div class="agent-view-header flex-between mb-12">
+        <div class="agent-view-title" id="scenariosTargetTitle">Scenario Stress-Testing Copilot (4 Strategies)</div>
+        <button class="agent-action-primary-btn" id="agentRunScenariosBtn">
+          <span>🔮 Re-simulate Scenarios</span>
+        </button>
+      </div>
+      <div class="agent-card-workspace" id="agentScenariosContainer">
+        <!-- Rendered dynamically -->
+      </div>
+    </div>
+
+    <!-- Sub-Tab 3: Executive 20-SKU Portfolio Brief View -->
+    <div class="agent-view-panel" id="agentViewBrief" style="display:none;">
+      <div class="agent-view-header flex-between mb-12">
+        <div class="agent-view-title">Executive 20-SKU Portfolio Intelligence Brief</div>
+        <button class="agent-action-primary-btn" id="agentRunBriefBtn">
+          <span>📋 Refresh Portfolio Scan</span>
+        </button>
+      </div>
+      <div class="agent-card-workspace" id="agentBriefContainer">
+        <!-- Rendered dynamically -->
+      </div>
+    </div>
+
+    <!-- Sub-Tab 4: Interactive Autonomous Chat Stream View -->
+    <div class="agent-view-panel" id="agentViewChat" style="display:none;">
+      <div class="agent-tab-container">
+        <div class="ai-chat-chips" id="tab6Chips" style="background:transparent; border:none; padding:0 0 1rem 0;">
+          <!-- Syncs with drawer chips -->
+        </div>
+        
+        <div class="agent-tab-messages-wrap" style="flex:1; overflow-y:auto; min-height:400px; padding-bottom: 2rem;">
+          <div class="ai-chat-messages" id="tab6Messages" style="padding: 0;">
+            <!-- Cloned messages go here -->
+          </div>
+        </div>
+
+        <div class="ai-chat-input-bar" style="border-radius:12px; margin-top:1rem; border:1px solid var(--border);">
+          <input type="text" id="tab6Input" placeholder="Ask anything about forecasts, inventory, risks..." autocomplete="off" />
+          <button class="ai-chat-send-btn" id="tab6Send" aria-label="Send Query">➔</button>
+        </div>
       </div>
     </div>
   </div>

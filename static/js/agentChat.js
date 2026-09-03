@@ -56,6 +56,7 @@
     initChatElements();
     initChatEventListeners();
     renderWelcomeMessage();
+    setupAgentSubNav();
     startAutonomousMonitoring();
   });
 
@@ -544,185 +545,21 @@
         return;
       }
 
-      // Render specialist reports
-      let specialistCardsHtml = '';
-      if (data.specialist_reports && data.specialist_reports.length > 0) {
-        data.specialist_reports.forEach((r) => {
-          const icon = r.icon || '🤖';
-          const role = r.role || 'Specialist';
-          const m = r.metrics;
-
-          if (m && Object.keys(m).length > 0) {
-            // -- RICH CARD RENDERER --
-            let themeClass = 'theme-demand';
-            let innerHtml = '';
-
-            if (r.specialist_id === 'demand_planner') {
-              themeClass = 'theme-demand';
-              const trend = String(m.forecast_trend || 'stable').toLowerCase();
-              const trendIcon = trend === 'up' ? '↑' : (trend === 'down' ? '↓' : '→');
-              const trendClass = trend === 'up' ? 'trend-up' : (trend === 'down' ? 'trend-down' : 'trend-stable');
-              
-              let festivalHtml = '';
-              if (m.upcoming_festival && m.upcoming_festival.name) {
-                festivalHtml = `<div class="festival-alert">🎉 ${escapeHtml(m.upcoming_festival.name)} in ${m.upcoming_festival.days_until} days → ${escapeHtml(m.upcoming_festival.demand_impact)}</div>`;
-              }
-
-              innerHtml = `
-                <div class="specialist-hero-metric">
-                  <span class="hero-value">${Number(m.total_30d_forecast_units || 0).toLocaleString()}</span>
-                  <span class="hero-unit">units (30d)</span>
-                </div>
-                <div class="specialist-sub-metrics">
-                  <div class="metric-chip"><span class="chip-label">Model:</span> <span class="chip-value">${escapeHtml(m.winning_model || 'Auto-ML')}</span></div>
-                  <div class="metric-chip"><span class="chip-label">MAPE:</span> <span class="chip-value">${m.mape_pct ?? 0}%</span></div>
-                  <div class="trend-indicator ${trendClass}">${trendIcon} ${escapeHtml(trend.toUpperCase())}</div>
-                </div>
-                ${festivalHtml}
-              `;
-            } 
-            else if (r.specialist_id === 'inventory_controller') {
-              themeClass = 'theme-inventory';
-              
-              const poStatus = String(m.po_trigger_status || 'STABLE').toUpperCase();
-              let statusClass = 'status-stable';
-              let badgeText = 'STABLE';
-              if (poStatus.includes('CRITICAL')) { statusClass = 'status-critical'; badgeText = 'CRITICAL'; }
-              else if (poStatus.includes('WARNING') || poStatus.includes('REORDER') || poStatus.includes('ACTION')) { statusClass = 'status-warning'; badgeText = 'WARNING'; }
-              
-              const dosVal = Number(m.days_of_supply || 0);
-              const dosPct = Math.min(100, Math.max(0, (dosVal / 60) * 100)); // normalized to 60 days
-              const strokeOffset = 157 - (157 * dosPct) / 100;
-              const ringColor = dosVal < 15 ? '#dc2626' : (dosVal < 30 ? '#f59e0b' : '#16a34a');
-
-              let poHtml = '';
-              const poQty = Number(m.recommended_po_qty_units || 0);
-              const poVal = Number(m.recommended_po_value_inr || 0);
-              if (poQty > 0) {
-                poHtml = `<div class="po-callout po-required">📦 ACTION: Place PO for ${poQty.toLocaleString()} units (₹${poVal.toLocaleString()})</div>`;
-              } else {
-                poHtml = `<div class="po-callout po-healthy">📦 NO PO REQUIRED — Coverage Healthy</div>`;
-              }
-
-              innerHtml = `
-                <div class="dos-ring-container">
-                  <svg class="dos-ring" viewBox="0 0 60 60">
-                    <circle class="ring-bg" cx="30" cy="30" r="25"></circle>
-                    <circle class="ring-fill" cx="30" cy="30" r="25" style="stroke: ${ringColor}; stroke-dasharray: 157; stroke-dashoffset: ${strokeOffset};" transform="rotate(-90 30 30)"></circle>
-                  </svg>
-                  <div class="dos-ring-label">
-                    <span class="dos-value">${dosVal}</span>
-                    <span class="dos-unit">Days of Supply</span>
-                  </div>
-                  <div style="margin-left:auto;"><span class="status-badge ${statusClass}">${badgeText}</span></div>
-                </div>
-                <div class="specialist-sub-metrics">
-                  <div class="metric-chip"><span class="chip-label">Stock:</span> <span class="chip-value">${Number(m.current_stock || 0).toLocaleString()}</span></div>
-                  <div class="metric-chip"><span class="chip-label">ROP:</span> <span class="chip-value">${Number(m.reorder_point_units || 0).toLocaleString()}</span></div>
-                </div>
-                ${poHtml}
-              `;
-            }
-            else if (r.specialist_id === 'risk_analyst') {
-              themeClass = 'theme-risk';
-              
-              const isRiskHigh = m.revenue_at_risk_inr > 0;
-              const valClass = isRiskHigh ? 'risk-high' : 'risk-low';
-              
-              let roiHtml = '';
-              if (isRiskHigh) {
-                roiHtml = `<div class="roi-callout">Acting now preserves ₹${Number(m.revenue_at_risk_inr).toLocaleString()} margin vs ₹${Number(m.holding_cost_inr).toLocaleString()} holding cost.</div>`;
-              }
-
-              innerHtml = `
-                <div class="risk-hero">
-                  <span class="risk-label">Projected Revenue at Risk</span>
-                  <span class="risk-value ${valClass}">₹${Number(m.revenue_at_risk_inr).toLocaleString(undefined, {minimumFractionDigits: 2})}</span>
-                </div>
-                <div class="specialist-sub-metrics">
-                  <div class="metric-chip"><span class="chip-label">Units at Risk:</span> <span class="chip-value">${Number(m.stockout_risk_units).toLocaleString()}</span></div>
-                  <div class="metric-chip"><span class="chip-label">Cap. Outlay:</span> <span class="chip-value">₹${Number(m.required_capital_outlay_inr).toLocaleString()}</span></div>
-                </div>
-                ${roiHtml}
-              `;
-            }
-
-            specialistCardsHtml += `
-              <div class="specialist-card-v2 ${themeClass}">
-                <div class="specialist-accent-bar"></div>
-                <div class="specialist-card-body">
-                  <div class="specialist-header-v2">
-                    <div class="specialist-icon-v2">${icon}</div>
-                    <div class="specialist-role-v2">${escapeHtml(role)}</div>
-                  </div>
-                  ${innerHtml}
-                </div>
-              </div>
-            `;
-          } else {
-            // -- FALLBACK MARKDOWN RENDERER --
-            const body = formatMarkdown(r.analysis || 'No analysis available.');
-            specialistCardsHtml += `
-              <div class="warroom-specialist-card">
-                <div class="specialist-header">
-                  <span class="specialist-icon">${icon}</span>
-                  <span>${escapeHtml(role)}</span>
-                </div>
-                <div class="specialist-analysis">
-                  ${body}
-                </div>
-              </div>
-            `;
-          }
-        });
-      }
-
-      let synthesisHtml = '';
-      if (data.synthesis) {
-        // Render executive directive dark card
-        const parsedMarkdown = formatMarkdown(data.synthesis);
-        // Transform the <li> items into directive-actions if it matches the new format
-        if (parsedMarkdown.includes('<strong>1.</strong>')) {
-          const actionItems = parsedMarkdown.match(/<li class="chat-li">.*?<\/li>/g);
-          if (actionItems) {
-            let actionsHtml = '';
-            actionItems.forEach((li, idx) => {
-              const cleanedText = li.replace(/<li class="chat-li"><strong>\d+\.<\/strong>\s*/, '').replace(/<\/li>/, '');
-              actionsHtml += `
-                <div class="directive-action">
-                  <div class="directive-num">${idx + 1}</div>
-                  <div class="directive-text">${cleanedText}</div>
-                </div>
-              `;
-            });
-            synthesisHtml = `
-              <div class="executive-directive">
-                <div class="directive-header">
-                  <span class="title-icon">🏛️</span>
-                  <span>War Room Unified Directive</span>
-                </div>
-                ${actionsHtml}
-              </div>
-            `;
-          } else {
-            synthesisHtml = `<div class="warroom-synthesis">${parsedMarkdown}</div>`;
-          }
-        } else {
-          synthesisHtml = `<div class="warroom-synthesis">${parsedMarkdown}</div>`;
-        }
-      }
-
+      const reportHtml = buildWarRoomReportHtml(data, sku);
       const htmlContent = `
         <div class="msg-avatar">🏛️</div>
         <div class="msg-content" style="background:transparent; border:none; box-shadow:none; padding:0;">
           <div class="msg-sender" style="margin-left: 0.5rem; margin-bottom: 0.8rem;">WAR ROOM — SPECIALIST COLLABORATION (${escapeHtml(sku)})</div>
-          <div class="warroom-grid">
-            ${specialistCardsHtml}
-          </div>
-          ${synthesisHtml}
+          ${reportHtml}
         </div>
       `;
       appendAgentHtmlNode(htmlContent);
+
+      const container = document.getElementById('agentWarroomContainer');
+      if (container) {
+        container.dataset.loadedSku = sku;
+        container.innerHTML = reportHtml;
+      }
     } catch (err) {
       removeTypingIndicator(typingId);
       appendAgentMessage(`⚠️ **Connection Error:** Could not reach War Room. (${err.message})`);
@@ -731,6 +568,178 @@
       if (chatSendBtn) chatSendBtn.disabled = false;
     }
   };
+
+  function buildWarRoomReportHtml(data, sku) {
+    let specialistCardsHtml = '';
+    if (data.specialist_reports && data.specialist_reports.length > 0) {
+      data.specialist_reports.forEach((r) => {
+        const icon = r.icon || '🤖';
+        const role = r.role || 'Specialist';
+        const m = r.metrics;
+
+        if (m && Object.keys(m).length > 0) {
+          let themeClass = 'theme-demand';
+          let innerHtml = '';
+
+          if (r.specialist_id === 'demand_planner') {
+            themeClass = 'theme-demand';
+            const trend = String(m.forecast_trend || 'stable').toLowerCase();
+            const trendIcon = trend === 'up' ? '↑' : (trend === 'down' ? '↓' : '→');
+            const trendClass = trend === 'up' ? 'trend-up' : (trend === 'down' ? 'trend-down' : 'trend-stable');
+            
+            let festivalHtml = '';
+            if (m.upcoming_festival && m.upcoming_festival.name) {
+              festivalHtml = `<div class="festival-alert">🎉 ${escapeHtml(m.upcoming_festival.name)} in ${m.upcoming_festival.days_until} days → ${escapeHtml(m.upcoming_festival.demand_impact)}</div>`;
+            }
+
+            innerHtml = `
+              <div class="specialist-hero-metric">
+                <span class="hero-value">${Number(m.total_30d_forecast_units || 0).toLocaleString()}</span>
+                <span class="hero-unit">units (30d)</span>
+              </div>
+              <div class="specialist-sub-metrics">
+                <div class="metric-chip"><span class="chip-label">Model:</span> <span class="chip-value">${escapeHtml(m.winning_model || 'Auto-ML')}</span></div>
+                <div class="metric-chip"><span class="chip-label">MAPE:</span> <span class="chip-value">${m.mape_pct ?? 0}%</span></div>
+                <div class="trend-indicator ${trendClass}">${trendIcon} ${escapeHtml(trend.toUpperCase())}</div>
+              </div>
+              ${festivalHtml}
+            `;
+          } 
+          else if (r.specialist_id === 'inventory_controller') {
+            themeClass = 'theme-inventory';
+            
+            const poStatus = String(m.po_trigger_status || 'STABLE').toUpperCase();
+            let statusClass = 'status-stable';
+            let badgeText = 'STABLE';
+            if (poStatus.includes('CRITICAL')) { statusClass = 'status-critical'; badgeText = 'CRITICAL'; }
+            else if (poStatus.includes('WARNING') || poStatus.includes('REORDER') || poStatus.includes('ACTION')) { statusClass = 'status-warning'; badgeText = 'WARNING'; }
+            
+            const dosVal = Number(m.days_of_supply || 0);
+            const dosPct = Math.min(100, Math.max(0, (dosVal / 60) * 100));
+            const strokeOffset = 157 - (157 * dosPct) / 100;
+            const ringColor = dosVal < 15 ? '#dc2626' : (dosVal < 30 ? '#f59e0b' : '#16a34a');
+
+            let poHtml = '';
+            const poQty = Number(m.recommended_po_qty_units || 0);
+            const poVal = Number(m.recommended_po_value_inr || 0);
+            if (poQty > 0) {
+              poHtml = `<div class="po-callout po-required">📦 ACTION: Place PO for ${poQty.toLocaleString()} units (₹${poVal.toLocaleString()})</div>`;
+            } else {
+              poHtml = `<div class="po-callout po-healthy">📦 NO PO REQUIRED — Coverage Healthy</div>`;
+            }
+
+            innerHtml = `
+              <div class="dos-ring-container">
+                <svg class="dos-ring" viewBox="0 0 60 60">
+                  <circle class="ring-bg" cx="30" cy="30" r="25"></circle>
+                  <circle class="ring-fill" cx="30" cy="30" r="25" style="stroke: ${ringColor}; stroke-dasharray: 157; stroke-dashoffset: ${strokeOffset};" transform="rotate(-90 30 30)"></circle>
+                </svg>
+                <div class="dos-ring-label">
+                  <span class="dos-value">${dosVal}</span>
+                  <span class="dos-unit">Days of Supply</span>
+                </div>
+                <div style="margin-left:auto;"><span class="status-badge ${statusClass}">${badgeText}</span></div>
+              </div>
+              <div class="specialist-sub-metrics">
+                <div class="metric-chip"><span class="chip-label">Stock:</span> <span class="chip-value">${Number(m.current_stock || 0).toLocaleString()}</span></div>
+                <div class="metric-chip"><span class="chip-label">ROP:</span> <span class="chip-value">${Number(m.reorder_point_units || 0).toLocaleString()}</span></div>
+              </div>
+              ${poHtml}
+            `;
+          }
+          else if (r.specialist_id === 'risk_analyst') {
+            themeClass = 'theme-risk';
+            
+            const isRiskHigh = m.revenue_at_risk_inr > 0;
+            const valClass = isRiskHigh ? 'risk-high' : 'risk-low';
+            
+            let roiHtml = '';
+            if (isRiskHigh) {
+              roiHtml = `<div class="roi-callout">Acting now preserves ₹${Number(m.revenue_at_risk_inr).toLocaleString()} margin vs ₹${Number(m.holding_cost_inr).toLocaleString()} holding cost.</div>`;
+            }
+
+            innerHtml = `
+              <div class="risk-hero">
+                <span class="risk-label">Projected Revenue at Risk</span>
+                <span class="risk-value ${valClass}">₹${Number(m.revenue_at_risk_inr).toLocaleString(undefined, {minimumFractionDigits: 2})}</span>
+              </div>
+              <div class="specialist-sub-metrics">
+                <div class="metric-chip"><span class="chip-label">Units at Risk:</span> <span class="chip-value">${Number(m.stockout_risk_units || 0).toLocaleString()}</span></div>
+                <div class="metric-chip"><span class="chip-label">Cap. Outlay:</span> <span class="chip-value">₹${Number(m.required_capital_outlay_inr || 0).toLocaleString()}</span></div>
+              </div>
+              ${roiHtml}
+            `;
+          }
+
+          specialistCardsHtml += `
+            <div class="specialist-card-v2 ${themeClass}">
+              <div class="specialist-accent-bar"></div>
+              <div class="specialist-card-body">
+                <div class="specialist-header-v2">
+                  <div class="specialist-icon-v2">${icon}</div>
+                  <div class="specialist-role-v2">${escapeHtml(role)}</div>
+                </div>
+                ${innerHtml}
+              </div>
+            </div>
+          `;
+        } else {
+          const body = formatMarkdown(r.analysis || 'No analysis available.');
+          specialistCardsHtml += `
+            <div class="warroom-specialist-card">
+              <div class="specialist-header">
+                <span class="specialist-icon">${icon}</span>
+                <span>${escapeHtml(role)}</span>
+              </div>
+              <div class="specialist-analysis">
+                ${body}
+              </div>
+            </div>
+          `;
+        }
+      });
+    }
+
+    let synthesisHtml = '';
+    if (data.synthesis) {
+      const parsedMarkdown = formatMarkdown(data.synthesis);
+      if (parsedMarkdown.includes('<strong>1.</strong>')) {
+        const actionItems = parsedMarkdown.match(/<li class="chat-li">.*?<\/li>/g);
+        if (actionItems) {
+          let actionsHtml = '';
+          actionItems.forEach((li, idx) => {
+            const cleanedText = li.replace(/<li class="chat-li"><strong>\d+\.<\/strong>\s*/, '').replace(/<\/li>/, '');
+            actionsHtml += `
+              <div class="directive-action">
+                <div class="directive-num">${idx + 1}</div>
+                <div class="directive-text">${cleanedText}</div>
+              </div>
+            `;
+          });
+          synthesisHtml = `
+            <div class="executive-directive">
+              <div class="directive-header">
+                <span class="title-icon">🏛️</span>
+                <span>War Room Unified Directive</span>
+              </div>
+              ${actionsHtml}
+            </div>
+          `;
+        } else {
+          synthesisHtml = `<div class="warroom-synthesis">${parsedMarkdown}</div>`;
+        }
+      } else {
+        synthesisHtml = `<div class="warroom-synthesis">${parsedMarkdown}</div>`;
+      }
+    }
+
+    return `
+      <div class="warroom-grid">
+        ${specialistCardsHtml}
+      </div>
+      ${synthesisHtml}
+    `;
+  }
 
   // ── Mode E: Scenario Planning Copilot ──
   window.runScenarioCopilot = async function (skuId) {
@@ -772,72 +781,21 @@
         return;
       }
 
-      let tableRows = '';
-      let maxDemand = 1;
-      (data.scenarios || []).forEach(s => {
-        if (s.total_30d_forecast > maxDemand) maxDemand = s.total_30d_forecast;
-      });
-
-      (data.scenarios || []).forEach((s) => {
-        const isRec = s.scenario_name === data.recommended_scenario;
-        const rowClass = isRec ? 'scenario-row recommended' : 'scenario-row';
-        const star = isRec ? ' ⭐' : '';
-        
-        let statusClass = 'chip-stable';
-        if (s.po_trigger_status && s.po_trigger_status.includes('CRITICAL')) statusClass = 'chip-critical';
-        else if (s.po_trigger_status && (s.po_trigger_status.includes('WARNING') || s.po_trigger_status.includes('REORDER'))) statusClass = 'chip-warning';
-        
-        const demandPct = Math.max(5, (s.total_30d_forecast / maxDemand) * 100);
-
-        tableRows += `
-          <tr class="${rowClass}">
-            <td>
-              <strong>${escapeHtml(s.scenario_name)}${star}</strong><br/>
-              <span class="scenario-status-chip ${statusClass}" style="margin-top:4px;">${escapeHtml(s.po_trigger_status || 'STABLE')}</span>
-            </td>
-            <td>
-              <div class="demand-bar-cell">
-                <span>${Number(s.total_30d_forecast || 0).toLocaleString()}</span>
-                <div class="demand-mini-bar" style="width: ${demandPct}px;"></div>
-              </div>
-            </td>
-            <td>${s.days_of_supply || 0}d</td>
-            <td>₹${Number(s.revenue_at_risk_inr || 0).toLocaleString()}</td>
-            <td>${Number(s.recommended_po_qty || 0).toLocaleString()}</td>
-            <td>₹${Number(s.recommended_po_value_inr || 0).toLocaleString()}</td>
-          </tr>
-        `;
-      });
-
+      const reportHtml = buildScenariosReportHtml(data, targetSku, prodName, stock);
       const htmlContent = `
         <div class="msg-avatar">🔮</div>
         <div class="msg-content">
           <div class="msg-sender">SCENARIO PLANNING COPILOT (${escapeHtml(targetSku)})</div>
-          <p>Benchmarked 4 strategic scenarios for <strong>${escapeHtml(targetSku)} — ${escapeHtml(prodName)}</strong> with ${stock.toLocaleString()} units on hand:</p>
-          <div class="scenario-table-wrap">
-            <table class="scenario-table">
-              <thead>
-                <tr>
-                  <th>Scenario</th>
-                  <th>30d Demand</th>
-                  <th>Coverage</th>
-                  <th>Rev. at Risk</th>
-                  <th>PO Qty</th>
-                  <th>PO Value</th>
-                </tr>
-              </thead>
-              <tbody>
-                ${tableRows}
-              </tbody>
-            </table>
-          </div>
-          <div class="scenario-recommendation">
-            <strong>🏆 Recommended Path:</strong> ${escapeHtml(data.recommended_scenario || 'N/A')}<br>
-            <span style="font-size:0.76rem;color:var(--text2);margin-top:4px;display:block;">${escapeHtml(data.recommendation_rationale || '')}</span>
-          </div>
+          ${reportHtml}
         </div>
       `;
       appendAgentHtmlNode(htmlContent);
+
+      const container = document.getElementById('agentScenariosContainer');
+      if (container) {
+        container.dataset.loadedSku = targetSku;
+        container.innerHTML = reportHtml;
+      }
     } catch (err) {
       removeTypingIndicator(typingId);
       appendAgentMessage(`⚠️ **Connection Error:** Could not run scenario copilot. (${err.message})`);
@@ -846,6 +804,390 @@
       if (chatSendBtn) chatSendBtn.disabled = false;
     }
   };
+
+  function buildScenariosReportHtml(data, targetSku, prodName, stock) {
+    let tableRows = '';
+    let maxDemand = 1;
+    (data.scenarios || []).forEach(s => {
+      if (s.total_30d_forecast > maxDemand) maxDemand = s.total_30d_forecast;
+    });
+
+    (data.scenarios || []).forEach((s) => {
+      const isRec = s.scenario_name === data.recommended_scenario;
+      const rowClass = isRec ? 'scenario-row recommended' : 'scenario-row';
+      const star = isRec ? ' ⭐' : '';
+      
+      let statusClass = 'chip-stable';
+      if (s.po_trigger_status && s.po_trigger_status.includes('CRITICAL')) statusClass = 'chip-critical';
+      else if (s.po_trigger_status && (s.po_trigger_status.includes('WARNING') || s.po_trigger_status.includes('REORDER'))) statusClass = 'chip-warning';
+      
+      const demandPct = Math.max(5, (s.total_30d_forecast / maxDemand) * 100);
+
+      tableRows += `
+        <tr class="${rowClass}">
+          <td>
+            <strong>${escapeHtml(s.scenario_name)}${star}</strong><br/>
+            <span class="scenario-status-chip ${statusClass}" style="margin-top:4px;">${escapeHtml(s.po_trigger_status || 'STABLE')}</span>
+          </td>
+          <td>
+            <div class="demand-bar-cell">
+              <span>${Number(s.total_30d_forecast || 0).toLocaleString()}</span>
+              <div class="demand-mini-bar" style="width: ${demandPct}px;"></div>
+            </div>
+          </td>
+          <td>${s.days_of_supply || 0}d</td>
+          <td>₹${Number(s.revenue_at_risk_inr || 0).toLocaleString()}</td>
+          <td>${Number(s.recommended_po_qty || 0).toLocaleString()}</td>
+          <td>₹${Number(s.recommended_po_value_inr || 0).toLocaleString()}</td>
+        </tr>
+      `;
+    });
+
+    return `
+      <p style="margin-bottom:1rem;color:var(--text2);font-size:0.85rem;">
+        Benchmarked 4 strategic scenarios for <strong>${escapeHtml(targetSku)} — ${escapeHtml(prodName)}</strong> with ${(stock || 25000).toLocaleString()} units on hand:
+      </p>
+      <div class="scenario-table-wrap">
+        <table class="scenario-table">
+          <thead>
+            <tr>
+              <th>Scenario</th>
+              <th>30d Demand</th>
+              <th>Coverage</th>
+              <th>Rev. at Risk</th>
+              <th>PO Qty</th>
+              <th>PO Value</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${tableRows}
+          </tbody>
+        </table>
+      </div>
+      <div class="scenario-recommendation" style="margin-top:1rem;">
+        <strong>🏆 Recommended Path:</strong> ${escapeHtml(data.recommended_scenario || 'N/A')}<br>
+        <span style="font-size:0.78rem;color:var(--text2);margin-top:4px;display:block;">${escapeHtml(data.recommendation_rationale || '')}</span>
+      </div>
+    `;
+  }
+
+  function buildBriefReportHtml(data) {
+    const critCount = data.critical_skus ? data.critical_skus.length : 0;
+    const watchCount = data.watch_skus ? data.watch_skus.length : 0;
+    const healthyCount = data.healthy_count || 0;
+    const totalRisk = Number(data.total_risk_inr || 0);
+
+    let criticalRows = '';
+    if (data.critical_skus && data.critical_skus.length > 0) {
+      criticalRows = data.critical_skus.map(s => `
+        <tr class="scenario-row">
+          <td><strong>${escapeHtml(s.sku_id)} — ${escapeHtml(s.name)}</strong></td>
+          <td><span class="scenario-status-chip chip-critical">${s.days_of_supply} DOS</span></td>
+          <td>₹${Number(s.revenue_at_risk_inr || 0).toLocaleString()}</td>
+          <td>${Number(s.recommended_po_qty_units || 0).toLocaleString()} units</td>
+          <td>
+            <button class="agent-action-primary-btn" style="padding:0.25rem 0.65rem; font-size:0.72rem;" onclick="window.selectAgentSkuAndRunWarRoom('${s.sku_id}')">
+              Launch War Room ➔
+            </button>
+          </td>
+        </tr>
+      `).join('');
+    }
+
+    const narrativeHtml = formatMarkdown(data.brief || 'Portfolio scan complete.');
+
+    return `
+      <div class="agent-brief-kpis">
+        <div class="agent-brief-card" style="border-left: 3px solid var(--red);">
+          <div style="font-size:0.72rem; color:var(--text3); font-weight:700; text-transform:uppercase;">Critical Stockouts</div>
+          <div style="font-size:1.6rem; font-weight:800; color:var(--red); margin-top:4px;">${critCount}</div>
+          <div style="font-size:0.7rem; color:var(--text3);">Immediate PO required</div>
+        </div>
+        <div class="agent-brief-card" style="border-left: 3px solid var(--amber);">
+          <div style="font-size:0.72rem; color:var(--text3); font-weight:700; text-transform:uppercase;">Watchlist SKUs</div>
+          <div style="font-size:1.6rem; font-weight:800; color:var(--amber); margin-top:4px;">${watchCount}</div>
+          <div style="font-size:0.7rem; color:var(--text3);">Approaching ROP</div>
+        </div>
+        <div class="agent-brief-card" style="border-left: 3px solid var(--green);">
+          <div style="font-size:0.72rem; color:var(--text3); font-weight:700; text-transform:uppercase;">Healthy Coverage</div>
+          <div style="font-size:1.6rem; font-weight:800; color:var(--green); margin-top:4px;">${healthyCount}</div>
+          <div style="font-size:0.7rem; color:var(--text3);">> 30 days buffer</div>
+        </div>
+        <div class="agent-brief-card" style="border-left: 3px solid var(--teal);">
+          <div style="font-size:0.72rem; color:var(--text3); font-weight:700; text-transform:uppercase;">Total Rupee Risk</div>
+          <div style="font-size:1.6rem; font-weight:800; color:var(--accent); margin-top:4px;">₹${totalRisk.toLocaleString()}</div>
+          <div style="font-size:0.7rem; color:var(--text3);">Portfolio exposure</div>
+        </div>
+      </div>
+
+      ${criticalRows ? `
+        <div style="margin-bottom: 1.25rem;">
+          <h4 style="font-size:0.9rem; font-weight:700; margin-bottom:0.6rem;">⚠️ Priority SKUs Requiring Immediate Procurement Action</h4>
+          <div class="scenario-table-wrap">
+            <table class="scenario-table">
+              <thead>
+                <tr>
+                  <th>Product</th>
+                  <th>Coverage</th>
+                  <th>Rupee Risk</th>
+                  <th>PO Recommendation</th>
+                  <th>Action</th>
+                </tr>
+              </thead>
+              <tbody>
+                ${criticalRows}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      ` : ''}
+
+      <div class="warroom-synthesis">
+        <h4 style="font-size:0.9rem; font-weight:700; margin-bottom:0.6rem;">📋 Executive Narrative Summary</h4>
+        ${narrativeHtml}
+      </div>
+    `;
+  }
+
+  // ── Tab 6 View Loaders & Sub-Nav Controllers ──
+  async function loadAgentTabWarRoom(sku, force = false) {
+    const container = document.getElementById('agentWarroomContainer');
+    const title = document.getElementById('warroomTargetTitle');
+    if (!container) return;
+
+    if (!force && container.dataset.loadedSku === sku && container.children.length > 0) {
+      return;
+    }
+
+    const prod = FMCG_CATALOG.find(p => p.id === sku);
+    const prodName = prod ? prod.name : sku;
+    if (title) title.textContent = `Multi-Agent Specialist Collaboration — ${sku} (${prodName})`;
+
+    container.innerHTML = `
+      <div style="padding: 3rem; text-align: center; color: var(--text2);">
+        <div style="font-size: 2.2rem; margin-bottom: 0.75rem; animation: pulse-dot 1.5s infinite;">🏛️</div>
+        <div style="font-weight: 700; font-size: 1.05rem; color: var(--text);">Convening Multi-Agent War Room for ${escapeHtml(sku)}...</div>
+        <div style="font-size: 0.8rem; margin-top: 0.35rem; color: var(--text3);">Demand Planner, Inventory Controller, and Risk Analyst running in parallel...</div>
+      </div>
+    `;
+
+    try {
+      const res = await fetch('/api/agent/warroom', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          query: `Conduct comprehensive War Room analysis for ${sku}`,
+          session_context: { sku_id: sku, current_stock: window.state?.stock || 25000 }
+        })
+      });
+      if (!res.ok) throw new Error(`Server returned ${res.status}`);
+      const data = await res.json();
+      container.dataset.loadedSku = sku;
+      container.innerHTML = buildWarRoomReportHtml(data, sku);
+    } catch (err) {
+      container.innerHTML = `
+        <div style="padding: 2.5rem; text-align: center; color: var(--red);">
+          ⚠️ Could not load War Room for ${escapeHtml(sku)} (${err.message}).
+          <div style="margin-top: 1rem;">
+            <button class="agent-action-primary-btn" onclick="window.loadAgentTabWarRoom('${sku}', true)">Retry</button>
+          </div>
+        </div>
+      `;
+    }
+  }
+
+  async function loadAgentTabScenarios(sku, force = false) {
+    const container = document.getElementById('agentScenariosContainer');
+    const title = document.getElementById('scenariosTargetTitle');
+    if (!container) return;
+
+    if (!force && container.dataset.loadedSku === sku && container.children.length > 0) {
+      return;
+    }
+
+    const prod = FMCG_CATALOG.find(p => p.id === sku);
+    const prodName = prod ? prod.name : sku;
+    if (title) title.textContent = `Scenario Stress-Testing Copilot (4 Strategies) — ${sku} (${prodName})`;
+
+    container.innerHTML = `
+      <div style="padding: 3rem; text-align: center; color: var(--text2);">
+        <div style="font-size: 2.2rem; margin-bottom: 0.75rem; animation: pulse-dot 1.5s infinite;">🔮</div>
+        <div style="font-weight: 700; font-size: 1.05rem; color: var(--text);">Simulating 4 Strategic Scenarios for ${escapeHtml(sku)}...</div>
+        <div style="font-size: 0.8rem; margin-top: 0.35rem; color: var(--text3);">Benchmarking baseline, promotion, supplier delay, and price elasticity...</div>
+      </div>
+    `;
+
+    try {
+      const res = await fetch('/api/agent/scenarios', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          sku_id: sku,
+          current_stock: window.state?.stock || 25000
+        })
+      });
+      if (!res.ok) throw new Error(`Server returned ${res.status}`);
+      const data = await res.json();
+      container.dataset.loadedSku = sku;
+      container.innerHTML = buildScenariosReportHtml(data, sku, prodName, window.state?.stock || 25000);
+    } catch (err) {
+      container.innerHTML = `
+        <div style="padding: 2.5rem; text-align: center; color: var(--red);">
+          ⚠️ Could not load scenarios for ${escapeHtml(sku)} (${err.message}).
+          <div style="margin-top: 1rem;">
+            <button class="agent-action-primary-btn" onclick="window.loadAgentTabScenarios('${sku}', true)">Retry</button>
+          </div>
+        </div>
+      `;
+    }
+  }
+
+  async function loadAgentTabBrief(force = false) {
+    const container = document.getElementById('agentBriefContainer');
+    if (!container) return;
+
+    if (!force && container.dataset.loaded && container.children.length > 0) {
+      return;
+    }
+
+    container.innerHTML = `
+      <div style="padding: 3rem; text-align: center; color: var(--text2);">
+        <div style="font-size: 2.2rem; margin-bottom: 0.75rem; animation: pulse-dot 1.5s infinite;">📋</div>
+        <div style="font-weight: 700; font-size: 1.05rem; color: var(--text);">Scanning 20-SKU Portfolio...</div>
+        <div style="font-size: 0.8rem; margin-top: 0.35rem; color: var(--text3);">Evaluating stockout risks, safety thresholds, and capital requirements...</div>
+      </div>
+    `;
+
+    try {
+      const res = await fetch('/api/agent/brief', { method: 'POST' });
+      if (!res.ok) throw new Error(`Server returned ${res.status}`);
+      const data = await res.json();
+      container.dataset.loaded = 'true';
+      container.innerHTML = buildBriefReportHtml(data);
+    } catch (err) {
+      container.innerHTML = `
+        <div style="padding: 2.5rem; text-align: center; color: var(--red);">
+          ⚠️ Could not load portfolio brief (${err.message}).
+          <div style="margin-top: 1rem;">
+            <button class="agent-action-primary-btn" onclick="window.loadAgentTabBrief(true)">Retry</button>
+          </div>
+        </div>
+      `;
+    }
+  }
+
+  function setupAgentSubNav() {
+    const skuSelect = document.getElementById('agentSkuSelect');
+    const subNav = document.getElementById('agentSubNav');
+    const runWarroomBtn = document.getElementById('agentRunWarroomBtn');
+    const runScenariosBtn = document.getElementById('agentRunScenariosBtn');
+    const runBriefBtn = document.getElementById('agentRunBriefBtn');
+
+    if (skuSelect && skuSelect.options.length === 0) {
+      const activeSku = window.state?.sku || 'SKU001';
+      FMCG_CATALOG.forEach(p => {
+        const opt = document.createElement('option');
+        opt.value = p.id;
+        opt.textContent = `${p.id} — ${p.name} (${p.category})`;
+        if (p.id === activeSku) opt.selected = true;
+        skuSelect.appendChild(opt);
+      });
+
+      skuSelect.addEventListener('change', () => {
+        const currentActive = subNav?.querySelector('.agent-subnav-btn.active')?.dataset.subtab || 'warroom';
+        const newSku = skuSelect.value;
+        if (window.state) window.state.sku = newSku;
+        if (currentActive === 'warroom') {
+          loadAgentTabWarRoom(newSku, true);
+        } else if (currentActive === 'scenarios') {
+          loadAgentTabScenarios(newSku, true);
+        }
+      });
+    }
+
+    if (subNav && !subNav.dataset.bound) {
+      subNav.dataset.bound = 'true';
+      subNav.querySelectorAll('.agent-subnav-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+          const target = btn.dataset.subtab;
+          subNav.querySelectorAll('.agent-subnav-btn').forEach(b => b.classList.remove('active'));
+          btn.classList.add('active');
+
+          const panels = {
+            'warroom': document.getElementById('agentViewWarroom'),
+            'scenarios': document.getElementById('agentViewScenarios'),
+            'brief': document.getElementById('agentViewBrief'),
+            'chat': document.getElementById('agentViewChat'),
+          };
+
+          Object.keys(panels).forEach(k => {
+            if (panels[k]) {
+              panels[k].style.display = (k === target) ? 'block' : 'none';
+              panels[k].classList.toggle('active', k === target);
+            }
+          });
+
+          const currentSku = skuSelect ? skuSelect.value : (window.state?.sku || 'SKU001');
+          if (target === 'warroom') {
+            loadAgentTabWarRoom(currentSku);
+          } else if (target === 'scenarios') {
+            loadAgentTabScenarios(currentSku);
+          } else if (target === 'brief') {
+            loadAgentTabBrief();
+          }
+        });
+      });
+    }
+
+    if (runWarroomBtn && !runWarroomBtn.dataset.bound) {
+      runWarroomBtn.dataset.bound = 'true';
+      runWarroomBtn.addEventListener('click', () => {
+        const currentSku = skuSelect ? skuSelect.value : (window.state?.sku || 'SKU001');
+        loadAgentTabWarRoom(currentSku, true);
+      });
+    }
+
+    if (runScenariosBtn && !runScenariosBtn.dataset.bound) {
+      runScenariosBtn.dataset.bound = 'true';
+      runScenariosBtn.addEventListener('click', () => {
+        const currentSku = skuSelect ? skuSelect.value : (window.state?.sku || 'SKU001');
+        loadAgentTabScenarios(currentSku, true);
+      });
+    }
+
+    if (runBriefBtn && !runBriefBtn.dataset.bound) {
+      runBriefBtn.dataset.bound = 'true';
+      runBriefBtn.addEventListener('click', () => {
+        loadAgentTabBrief(true);
+      });
+    }
+  }
+
+  window.initAgentTab = function () {
+    setupAgentSubNav();
+    const skuSelect = document.getElementById('agentSkuSelect');
+    const activeSku = window.state?.sku || 'SKU001';
+    if (skuSelect) {
+      skuSelect.value = activeSku;
+    }
+    const warroomContainer = document.getElementById('agentWarroomContainer');
+    if (warroomContainer && (!warroomContainer.innerHTML.trim() || warroomContainer.dataset.loadedSku !== activeSku)) {
+      loadAgentTabWarRoom(activeSku);
+    }
+  };
+
+  window.selectAgentSkuAndRunWarRoom = function (sku) {
+    const skuSelect = document.getElementById('agentSkuSelect');
+    if (skuSelect) skuSelect.value = sku;
+    if (window.state) window.state.sku = sku;
+    const warroomBtn = document.querySelector('.agent-subnav-btn[data-subtab="warroom"]');
+    if (warroomBtn) warroomBtn.click();
+    else loadAgentTabWarRoom(sku, true);
+  };
+
+  window.loadAgentTabWarRoom = loadAgentTabWarRoom;
+  window.loadAgentTabScenarios = loadAgentTabScenarios;
+  window.loadAgentTabBrief = loadAgentTabBrief;
 
   // ── Mode A: Live Autonomous Sentinel Monitoring ──
   function startAutonomousMonitoring() {

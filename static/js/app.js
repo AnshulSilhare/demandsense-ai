@@ -337,10 +337,8 @@ let _forecastRetryCount = 0;
         renderTab5();
       }
       if (target === 'tab6') {
-        // Optional initialization or scrolling when switching to the Agent tab
-        const tab6Messages = el('tab6Messages');
-        if (tab6Messages && tab6Messages.parentElement) {
-          tab6Messages.parentElement.scrollTop = tab6Messages.parentElement.scrollHeight;
+        if (window.initAgentTab) {
+          window.initAgentTab();
         }
       }
 

@@ -6856,3 +6856,191 @@ body.dark .agent-tab-container {
   }
 }
 
+/* ── Agent Controls & Product Selector ── */
+.agent-controls-bar {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.agent-sku-selector-wrap {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  padding: 0.35rem 0.85rem;
+  border-radius: 99px;
+  box-shadow: 0 2px 10px rgba(15, 23, 42, 0.05);
+}
+
+body.dark .agent-sku-selector-wrap {
+  background: rgba(15, 23, 42, 0.7);
+  border-color: rgba(255, 255, 255, 0.12);
+}
+
+.agent-sku-label {
+  font-family: var(--mono);
+  font-size: 0.74rem;
+  font-weight: 700;
+  color: var(--teal);
+  white-space: nowrap;
+}
+
+.agent-sku-select {
+  height: 32px;
+  min-width: 220px;
+  border-radius: 99px;
+  font-size: 0.78rem;
+}
+
+/* ── Agent Sub-Navigation Tabs Ribbon ── */
+.agent-subnav-capsule {
+  display: inline-flex;
+  gap: 0.35rem;
+  padding: 4px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 99px;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.04);
+  max-width: 100%;
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+
+body.dark .agent-subnav-capsule {
+  background: rgba(15, 23, 42, 0.7);
+  border-color: rgba(255, 255, 255, 0.1);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.3);
+}
+
+.agent-subnav-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  padding: 0.42rem 1.05rem;
+  border-radius: 99px;
+  border: none;
+  background: transparent;
+  color: var(--text2);
+  font-family: var(--body);
+  font-size: 0.8rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.25s ease;
+  white-space: nowrap;
+}
+
+.agent-subnav-btn:hover {
+  color: var(--text);
+  background: var(--bg3);
+}
+
+.agent-subnav-btn.active {
+  background: linear-gradient(135deg, var(--teal), var(--accent-title));
+  color: #fff;
+  box-shadow: 0 4px 12px rgba(13, 148, 136, 0.3);
+}
+
+body.dark .agent-subnav-btn.active {
+  background: linear-gradient(135deg, #0d9488, #2563eb);
+  box-shadow: 0 4px 16px rgba(56, 189, 248, 0.3);
+}
+
+/* ── Agent View Panels ── */
+.agent-view-panel {
+  display: none;
+  animation: cardSlideUp 0.3s ease-out both;
+}
+
+.agent-view-panel.active {
+  display: block;
+}
+
+.agent-view-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.3rem 0.2rem 0.6rem 0.2rem;
+}
+
+.agent-view-title {
+  font-family: var(--display);
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: var(--text);
+}
+
+.agent-action-primary-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.45rem 1.15rem;
+  border-radius: 99px;
+  background: linear-gradient(135deg, var(--teal), var(--accent-title));
+  color: #fff;
+  font-family: var(--body);
+  font-size: 0.8rem;
+  font-weight: 600;
+  border: none;
+  cursor: pointer;
+  box-shadow: 0 4px 14px rgba(13, 148, 136, 0.3);
+  transition: all 0.2s ease;
+}
+
+.agent-action-primary-btn:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 6px 18px rgba(13, 148, 136, 0.45);
+}
+
+.agent-card-workspace {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  padding: 1.25rem;
+  box-shadow: 0 4px 24px rgba(0, 0, 0, 0.04);
+  min-height: 480px;
+}
+
+body.dark .agent-card-workspace {
+  background: rgba(15, 23, 42, 0.6);
+  box-shadow: 0 4px 24px rgba(0, 0, 0, 0.25);
+}
+
+/* Brief Dashboard Grid */
+.agent-brief-kpis {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 1rem;
+  margin-bottom: 1.25rem;
+}
+
+.agent-brief-card {
+  padding: 1rem;
+  border-radius: 12px;
+  background: var(--bg3);
+  border: 1px solid var(--border);
+}
+
+@media (max-width: 768px) {
+  .agent-controls-bar {
+    width: 100%;
+    margin-top: 0.5rem;
+  }
+
+  .agent-sku-selector-wrap {
+    width: 100%;
+    justify-content: space-between;
+  }
+
+  .agent-sku-select {
+    min-width: unset;
+    flex: 1;
+  }
+
+  .agent-brief-kpis {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+
